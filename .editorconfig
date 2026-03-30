@@ -1,0 +1,57 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.cs]
+# Namespace declarations — must be file-scoped
+csharp_style_namespace_declarations = file_scoped:error
+
+# var usage — only when type is immediately apparent from the right-hand side
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# Pattern matching over as/cast chains
+csharp_style_pattern_matching_over_as_with_null_check = true:error
+csharp_style_pattern_matching_over_is_with_cast_check = true:error
+
+# Require explicit accessibility modifiers
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:error
+
+# Expression-bodied members
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_accessors = true:suggestion
+
+# Null-safety preferences
+dotnet_style_null_propagation = true:suggestion
+dotnet_style_coalesce_expression = true:suggestion
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true:error
+
+# Unused code warnings
+dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.IDE0051.severity = warning
+dotnet_diagnostic.IDE0059.severity = warning
+
+# Private fields must be _camelCase
+dotnet_naming_rule.private_fields_underscore_camel.severity = error
+dotnet_naming_rule.private_fields_underscore_camel.symbols = private_instance_fields
+dotnet_naming_rule.private_fields_underscore_camel.style = underscore_camel_case_style
+
+dotnet_naming_symbols.private_instance_fields.applicable_kinds = field
+dotnet_naming_symbols.private_instance_fields.applicable_accessibilities = private
+
+dotnet_naming_style.underscore_camel_case_style.capitalization = camel_case
+dotnet_naming_style.underscore_camel_case_style.required_prefix = _
+
+[*.{xaml,xml,csproj,props,targets}]
+indent_size = 4
+
+[*.{json,yml,yaml}]
+indent_size = 2

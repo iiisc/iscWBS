@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "iscWBS (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "iscWBS (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

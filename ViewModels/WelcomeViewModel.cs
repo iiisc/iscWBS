@@ -13,7 +13,7 @@ public sealed partial class WelcomeViewModel : ObservableObject
     private readonly IDialogService _dialogService;
 
     [ObservableProperty]
-    private ObservableCollection<string> _recentProjects = new();
+    public partial ObservableCollection<string> RecentProjects { get; set; } = new();
 
     public bool HasRecentProjects => RecentProjects.Count > 0;
 

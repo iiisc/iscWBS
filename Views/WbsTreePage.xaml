@@ -2,12 +2,132 @@
 <Page
     x:Class="iscWBS.Views.WbsTreePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:iscWBS.ViewModels"
+    xmlns:controls="using:iscWBS.Views.Controls"
+    xmlns:converters="using:iscWBS.Converters">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </Page.Resources>
+
     <Grid>
-        <TextBlock
-            Text="WBS Tree"
-            Style="{ThemeResource TitleLargeTextBlockStyle}"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <StackPanel
+            Grid.Row="0"
+            Orientation="Horizontal"
+            Spacing="8"
+            Padding="12,8">
+            <Button
+                Content="Add Root Node"
+                Command="{x:Bind ViewModel.AddRootNodeCommand}"
+                AutomationProperties.Name="Add root node" />
+        </StackPanel>
+
+        <!-- Content: TreeView + Detail Panel -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="240" />
+                <ColumnDefinition Width="1" />
+                <ColumnDefinition Width="320" />
+            </Grid.ColumnDefinitions>
+
+            <!-- TreeView -->
+            <TreeView
+                x:Name="WbsTreeView"
+                Grid.Column="0"
+                ItemsSource="{x:Bind ViewModel.RootNodes, Mode=OneWay}"
+                SelectionMode="Single"
+                Expanding="WbsTreeView_Expanding"
+                Collapsed="WbsTreeView_Collapsed"
+                ItemInvoked="WbsTreeView_ItemInvoked"
+                RightTapped="WbsTreeView_RightTapped">
+
+                <FlyoutBase.AttachedFlyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem
+                            Text="Add Child"
+                            Command="{x:Bind ViewModel.AddChildNodeCommand}"
+                            CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
+                            AutomationProperties.Name="Add child node" />
+                        <MenuFlyoutItem
+                            Text="Add Sibling"
+                            Command="{x:Bind ViewModel.AddSiblingNodeCommand}"
+                            CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
+                            AutomationProperties.Name="Add sibling node" />
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem
+                            Text="Edit Title"
+                            Command="{x:Bind ViewModel.BeginEditNodeCommand}"
+                            CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
+                            AutomationProperties.Name="Edit node title" />
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem
+                            Text="Move Up"
+                            Command="{x:Bind ViewModel.MoveNodeUpCommand}"
+                            CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
+                            AutomationProperties.Name="Move node up" />
+                        <MenuFlyoutItem
+                            Text="Move Down"
+                            Command="{x:Bind ViewModel.MoveNodeDownCommand}"
+                            CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
+                            AutomationProperties.Name="Move node down" />
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem
+                            Text="Delete"
+                            Command="{x:Bind ViewModel.DeleteNodeCommand}"
+                            CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
+                            AutomationProperties.Name="Delete node" />
+                    </MenuFlyout>
+                </FlyoutBase.AttachedFlyout>
+
+                <TreeView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:WbsNodeViewModel">
+                        <TreeViewItem
+                            ItemsSource="{x:Bind Children, Mode=OneWay}"
+                            HorizontalContentAlignment="Stretch">
+                            <StackPanel Orientation="Horizontal" Spacing="8" Padding="0,4">
+                                <TextBlock
+                                    Text="{x:Bind Node.Code, Mode=OneWay}"
+                                    FontWeight="SemiBold"
+                                    MinWidth="56"
+                                    VerticalAlignment="Center"
+                                    AutomationProperties.Name="Node code" />
+                                <TextBlock
+                                    Text="{x:Bind Title, Mode=OneWay}"
+                                    VerticalAlignment="Center"
+                                    Visibility="{x:Bind IsNotEditing, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                <TextBox
+                                    Text="{x:Bind Title, Mode=TwoWay}"
+                                    MinWidth="200"
+                                    VerticalAlignment="Center"
+                                    Visibility="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    Tag="{x:Bind}"
+                                    LostFocus="TitleTextBox_LostFocus"
+                                    AutomationProperties.Name="Node title editor" />
+                            </StackPanel>
+                        </TreeViewItem>
+                    </DataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+
+            <!-- Separator -->
+            <Rectangle
+                Grid.Column="1"
+                Fill="{ThemeResource DividerStrokeColorDefaultBrush}"
+                Width="1" />
+
+            <!-- Detail Panel -->
+            <controls:WbsDetailControl
+                x:Name="DetailControl"
+                Grid.Column="2"
+                ViewModel="{x:Bind ViewModel, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.IsDetailVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+        </Grid>
     </Grid>
 </Page>

@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="iscWBS.Views.Controls.WbsDetailControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:iscWBS.ViewModels"
+    xmlns:models="using:iscWBS.Core.Models"
+    xmlns:converters="using:iscWBS.Converters">
+
+    <UserControl.Resources>
+        <converters:StatusToStringConverter x:Key="StatusToStringConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="12" Padding="16">
+
+            <TextBlock
+                Text="Node Details"
+                Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Code" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.SelectedNode.Node.Code, Mode=OneWay}"
+                    FontWeight="SemiBold"
+                    AutomationProperties.Name="Node code" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Title" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <TextBox
+                    Text="{x:Bind ViewModel.EditTitle, Mode=TwoWay}"
+                    AutomationProperties.Name="Title" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Description" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <TextBox
+                    Text="{x:Bind ViewModel.EditDescription, Mode=TwoWay}"
+                    AcceptsReturn="True"
+                    Height="80"
+                    TextWrapping="Wrap"
+                    AutomationProperties.Name="Description" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Assigned To" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <TextBox
+                    Text="{x:Bind ViewModel.EditAssignedTo, Mode=TwoWay}"
+                    AutomationProperties.Name="Assigned to" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Status" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <ComboBox
+                    ItemsSource="{x:Bind ViewModel.StatusOptions}"
+                    SelectedIndex="{x:Bind ViewModel.EditStatusIndex, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="Status">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource StatusToStringConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Est. Hours" Style="{ThemeResource CaptionTextBlockStyle}" />
+                    <NumberBox
+                        Value="{x:Bind ViewModel.EditEstimatedHours, Mode=TwoWay}"
+                        Minimum="0"
+                        SpinButtonPlacementMode="Compact"
+                        AutomationProperties.Name="Estimated hours" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Spacing="4">
+                    <TextBlock Text="Act. Hours" Style="{ThemeResource CaptionTextBlockStyle}" />
+                    <NumberBox
+                        Value="{x:Bind ViewModel.EditActualHours, Mode=TwoWay}"
+                        Minimum="0"
+                        SpinButtonPlacementMode="Compact"
+                        AutomationProperties.Name="Actual hours" />
+                </StackPanel>
+            </Grid>
+
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Est. Cost" Style="{ThemeResource CaptionTextBlockStyle}" />
+                    <NumberBox
+                        Value="{x:Bind ViewModel.EditEstimatedCost, Mode=TwoWay}"
+                        Minimum="0"
+                        SpinButtonPlacementMode="Compact"
+                        AutomationProperties.Name="Estimated cost" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Spacing="4">
+                    <TextBlock Text="Act. Cost" Style="{ThemeResource CaptionTextBlockStyle}" />
+                    <NumberBox
+                        Value="{x:Bind ViewModel.EditActualCost, Mode=TwoWay}"
+                        Minimum="0"
+                        SpinButtonPlacementMode="Compact"
+                        AutomationProperties.Name="Actual cost" />
+                </StackPanel>
+            </Grid>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Start Date" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <CalendarDatePicker
+                    Date="{x:Bind ViewModel.EditStartDate, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="Start date" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Due Date" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <CalendarDatePicker
+                    Date="{x:Bind ViewModel.EditDueDate, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="Due date" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                <Button
+                    Content="Save"
+                    Command="{x:Bind ViewModel.SaveNodeCommand}"
+                    Style="{ThemeResource AccentButtonStyle}"
+                    AutomationProperties.Name="Save node" />
+                <Button
+                    Content="Cancel"
+                    Command="{x:Bind ViewModel.CancelEditCommand}"
+                    AutomationProperties.Name="Cancel edit" />
+            </StackPanel>
+
+            <Rectangle
+                Height="1"
+                Fill="{ThemeResource DividerStrokeColorDefaultBrush}"
+                Margin="0,8,0,4" />
+
+            <TextBlock
+                Text="Predecessors"
+                Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+            <ItemsControl ItemsSource="{x:Bind ViewModel.NodeDependencies, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnSpacing="8" Padding="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="32" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Text="{Binding PredecessorCode}"
+                                    FontWeight="SemiBold"
+                                    VerticalAlignment="Center" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Text="{Binding PredecessorTitle}"
+                                    TextTrimming="CharacterEllipsis"
+                                    VerticalAlignment="Center" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Text="{Binding TypeLabel}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    VerticalAlignment="Center" />
+                                <Button
+                                    Grid.Column="3"
+                                    Content="&#xE74D;"
+                                    FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                    FontSize="12"
+                                    Padding="4"
+                                    Click="RemoveDependency_Click"
+                                    AutomationProperties.Name="Remove dependency" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock
+                    Text="Add Predecessor"
+                    Style="{ThemeResource CaptionTextBlockStyle}"
+                    Margin="0,8,0,0" />
+
+                <ComboBox
+                    ItemsSource="{x:Bind ViewModel.AllProjectNodes, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.NewDepPredecessor, Mode=TwoWay}"
+                    PlaceholderText="Select predecessor node"
+                    HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="Predecessor node">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="{Binding Code}" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <ComboBox
+                    ItemsSource="{x:Bind ViewModel.DependencyTypeOptions}"
+                    SelectedItem="{x:Bind ViewModel.NewDepTypeOption, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="Dependency type">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <Button
+                    Content="Add Predecessor"
+                    Command="{x:Bind ViewModel.AddDependencyCommand}"
+                    AutomationProperties.Name="Add predecessor dependency" />
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

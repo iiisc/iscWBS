@@ -63,6 +63,16 @@
                         <FontIcon Glyph="&#xE9D2;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+
+                <NavigationViewItem
+                    Tag="MilestonesPage"
+                    Content="Milestones"
+                    AutomationProperties.Name="Milestones"
+                    IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE919;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>

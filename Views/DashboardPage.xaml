@@ -2,12 +2,158 @@
 <Page
     x:Class="iscWBS.Views.DashboardPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid>
-        <TextBlock
-            Text="Dashboard"
-            Style="{ThemeResource TitleLargeTextBlockStyle}"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center" />
-    </Grid>
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:lvc="using:LiveChartsCore.SkiaSharpView.WinUI"
+    xmlns:models="using:iscWBS.Core.Models"
+    xmlns:converters="using:iscWBS.Converters">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="16" Padding="16">
+
+            <TextBlock
+                Text="Dashboard"
+                Style="{ThemeResource TitleLargeTextBlockStyle}" />
+
+            <!-- KPI Cards -->
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border
+                    Grid.Column="0"
+                    CornerRadius="8" Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            Text="{x:Bind ViewModel.TotalNodes, Mode=OneWay}"
+                            Style="{ThemeResource TitleTextBlockStyle}"
+                            AutomationProperties.Name="Total nodes count" />
+                        <TextBlock Text="Total Nodes" Style="{ThemeResource CaptionTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    Grid.Column="1"
+                    CornerRadius="8" Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            Text="{x:Bind ViewModel.PercentComplete, Mode=OneWay}"
+                            Style="{ThemeResource TitleTextBlockStyle}"
+                            AutomationProperties.Name="Percent complete" />
+                        <TextBlock Text="% Complete" Style="{ThemeResource CaptionTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    Grid.Column="2"
+                    CornerRadius="8" Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            Text="{x:Bind ViewModel.BudgetVarianceDisplay, Mode=OneWay}"
+                            Style="{ThemeResource TitleTextBlockStyle}"
+                            AutomationProperties.Name="Budget variance" />
+                        <TextBlock Text="Budget Variance" Style="{ThemeResource CaptionTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    Grid.Column="3"
+                    CornerRadius="8" Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            Text="{x:Bind ViewModel.OverdueCount, Mode=OneWay}"
+                            Style="{ThemeResource TitleTextBlockStyle}"
+                            AutomationProperties.Name="Overdue nodes count" />
+                        <TextBlock Text="Overdue" Style="{ThemeResource CaptionTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Charts Row -->
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Spacing="8">
+                    <TextBlock Text="Status Distribution" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    <lvc:PieChart
+                        Series="{x:Bind ViewModel.StatusSeries, Mode=OneWay}"
+                        Height="220"
+                        AutomationProperties.Name="Status distribution pie chart" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Spacing="8">
+                    <TextBlock Text="Cost Comparison" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    <lvc:CartesianChart
+                        Series="{x:Bind ViewModel.CostSeries, Mode=OneWay}"
+                        XAxes="{x:Bind ViewModel.CostXAxes, Mode=OneWay}"
+                        Height="220"
+                        AutomationProperties.Name="Cost comparison bar chart" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Spacing="8">
+                    <TextBlock Text="Effort by Assignee" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    <lvc:CartesianChart
+                        Series="{x:Bind ViewModel.EffortSeries, Mode=OneWay}"
+                        XAxes="{x:Bind ViewModel.EffortXAxes, Mode=OneWay}"
+                        Height="220"
+                        AutomationProperties.Name="Effort by assignee bar chart" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Upcoming Milestones -->
+            <TextBlock
+                Text="Upcoming Milestones — Next 30 Days"
+                Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+            <ListView
+                ItemsSource="{x:Bind ViewModel.UpcomingMilestones, Mode=OneWay}"
+                SelectionMode="None"
+                AutomationProperties.Name="Upcoming milestones">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Milestone">
+                        <Grid ColumnSpacing="16" Padding="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Grid.Column="0"
+                                Text="{x:Bind Title}"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{x:Bind DueDate}"
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+        </StackPanel>
+    </ScrollViewer>
 </Page>
+

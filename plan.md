@@ -139,36 +139,40 @@ IExportService        — Excel and PDF export (Phase 4)
 **Goal:** Runnable shell with navigation, DI, and database initialised.
 
 - [x] Add all NuGet packages to `iscWBS.csproj`
-- [ ] Create folder structure under project root
-- [ ] `Core/Exceptions/` — `WbsException` (base), `WbsNotFoundException`, `WbsValidationException`, `ProjectNotFoundException`
-- [ ] `Core/Models/` — `WbsNode`, `Project`, `Milestone`, `NodeDependency`, `WbsStatus` enum, `DependencyType` enum
-- [ ] `Core/Repositories/` — `WbsDatabase` (takes `filePath`; created by `IProjectStateService`), `ProjectRepository`, `WbsNodeRepository`
-- [ ] `Core/Services/` — all interfaces and implementations
+- [x] Create folder structure under project root
+- [x] `Core/Exceptions/` — `WbsException` (base), `WbsNotFoundException`, `WbsValidationException`, `ProjectNotFoundException`
+- [x] `Core/Models/` — `WbsNode`, `Project`, `Milestone`, `NodeDependency`, `WbsStatus` enum, `DependencyType` enum
+- [x] `Core/Repositories/` — `WbsDatabase` (takes `filePath`; created by `IProjectStateService`), `ProjectRepository`, `WbsNodeRepository`
+- [x] `Core/Services/` — all interfaces and implementations
   - `IProjectStateService` / `ProjectStateService` — owns `WbsDatabase`, fires `ActiveProjectChanged`
   - `ISettingsService` / `SettingsService` — wraps `ApplicationData.LocalSettings`
   - `INavigationService` / `NavigationService` — `Initialize(Frame frame)` called from `ShellWindow.Loaded`
   - `IDialogService` / `DialogService` — `Initialize(XamlRoot)` called from `ShellWindow.Loaded`
   - `IWbsService` / `WbsService` — stub implementation (full logic in Phase 2)
-- [ ] Configure DI in `App.xaml.cs`
+- [x] Configure DI in `App.xaml.cs`
   - Call `QuestPDF.Settings.License = LicenseType.Community` before building the container
   - Singleton: all services (`WbsDatabase` is **not** registered — owned by `IProjectStateService`)
   - Transient: all ViewModels
   - `App.Services` exposed as `static IServiceProvider`
-- [ ] Replace `MainWindow` with `ShellWindow`
+- [x] Replace `MainWindow` with `ShellWindow`
   - `NavigationView` (left-rail, compact) with items: Dashboard, WBS Tree, WBS Outline, Gantt, Reports + Settings at footer
   - Nav items disabled while `IProjectStateService.HasActiveProject` is `false`
   - Custom title bar via `AppWindow.TitleBar` showing `iscWBS — {ProjectName}`
   - `ShellWindow.Loaded` calls `INavigationService.Initialize(contentFrame)`, `IDialogService.Initialize(XamlRoot)`, then checks recent projects
   - Navigates to `WelcomePage` if no recent project; navigates to `DashboardPage` when project opens
-- [ ] Stub all navigation-target pages — empty `Grid` with a centred `TextBlock` title:
+- [x] Stub all navigation-target pages — empty `Grid` with a centred `TextBlock` title:
   `DashboardPage`, `WbsTreePage`, `WbsOutlinePage`, `GanttPage`, `ReportsPage`, `SettingsPage`
-- [ ] `WelcomePage` — startup target when no project is open
+- [x] `WelcomePage` — startup target when no project is open
   - Not a NavigationView item
   - **New Project** → `ContentDialog` via `IDialogService` collecting: Name (required), Owner, Currency (default `"USD"`), save location via `FolderPicker`; creates `<Name>.iscwbs` via `IProjectStateService.CreateProjectAsync`
   - **Open Project** → `FileOpenPicker` filtered to `*.iscwbs`; calls `IProjectStateService.OpenProjectAsync`
   - **Recent Projects** → scrollable list from `ISettingsService.GetRecentProjects()`; click opens directly
-- [ ] `Helpers/SettingsKeys.cs` — `static class` with `const string` keys used by `ISettingsService`: `RecentProjects`, `Theme`, `Currency`, `DateFormat`, `WindowBounds`
-- [ ] `ShellViewModel` — subscribes to `ActiveProjectChanged`, toggles nav items, updates title
+- [x] `Helpers/SettingsKeys.cs` — `static class` with `const string` keys used by `ISettingsService`: `RecentProjects`, `Theme`, `Currency`, `DateFormat`, `WindowBounds`
+- [x] `ShellViewModel` — subscribes to `ActiveProjectChanged`, toggles nav items, updates title
+
+> **Build fixes applied during Phase 2:**
+> - `App.xaml.cs` — qualified `Microsoft.UI.Xaml.UnhandledExceptionEventArgs` to resolve ambiguity with `System.UnhandledExceptionEventArgs`
+> - `iscWBS.csproj` — removed incorrect `<Page Remove>` + `<None Update MSBuild:Compile>` pattern that was preventing all XAML files from reaching the `XamlPreCompile` task; SDK glob now supplies them as `<Page>` items directly
 
 ---
 
@@ -206,19 +210,18 @@ Every mutating method recalculates WBS codes for affected siblings via a private
 
 ### Checklist
 
-- [ ] `WbsNodeViewModel` with placeholder-child lazy loading pattern
-- [ ] `IWbsService` + `WbsService` — full implementation with `SortOrder` maintenance and WBS code generation
-- [ ] `WbsTreePage` + `WbsTreeViewModel`
+- [x] `WbsNodeViewModel` with placeholder-child lazy loading pattern
+- [x] `IWbsService` + `WbsService` — full implementation (added `AddRootNodeAsync`, `GetAllByProjectAsync`)
+- [x] `WbsTreePage` + `WbsTreeViewModel`
   - Page layout: two-column `Grid` — `TreeView` (left, `*` min 240px) + `GridSplitter` + `WbsDetailControl` (right, 320px fixed; collapses when no node is selected)
   - Root `TreeView` bound to `ObservableCollection<WbsNodeViewModel>` (root nodes only initially)
   - `TreeView.Expanding` code-behind handler delegates to `ExpandNodeCommand`
   - Inline title editing: `IsEditing` toggles `TextBox` / `TextBlock` via `x:Bind`
   - Context menu per node: **Add Child**, **Add Sibling**, **Edit**, **Delete**, **Move Up**, **Move Down**
-- [ ] `WbsDetailControl` (`UserControl`) — side panel bound to `WbsTreeViewModel.SelectedNode`
-  - Editable fields (`TwoWay`): Title, Description, AssignedTo, Status, EstimatedHours, ActualHours, EstimatedCost, ActualCost, StartDate, DueDate
-  - **Save** calls `IWbsService.UpdateNodeAsync`; **Cancel** reverts changes
-- [ ] Drag-and-drop reordering — `TreeView` drag events in code-behind delegate to `MoveNodeCommand`
-- [ ] `WbsOutlinePage` + `WbsOutlineViewModel`
+- [x] `WbsDetailControl` (`UserControl`) — bound via `DependencyProperty`; `Bindings.Update()` on ViewModel change
+  - `NumberBox` for numerics; `CalendarDatePicker` for dates; `StatusToStringConverter` added
+- [ ] Drag-and-drop reordering — deferred; Move Up/Down commands in context menu provide reordering
+- [x] `WbsOutlinePage` + `WbsOutlineViewModel`
   - `DataGrid` flat list of all nodes sorted by `Code`
   - Columns: Code, Title, AssignedTo, Status, Est. Hours, Act. Hours, Est. Cost, Act. Cost, Due Date
   - Row click navigates to the node in `WbsTreePage`
@@ -251,36 +254,43 @@ All series are `ISeries[]` observable properties on the ViewModel, rebuilt on `A
 
 ### Checklist
 
-- [ ] `DashboardPage` + `DashboardViewModel` — replaces Phase 1 stub
+- [x] `DashboardPage` + `DashboardViewModel`
   - All data reloaded in `INavigationAware.OnNavigatedTo` — always reflects the latest saved state
   - 4 KPI `Border` cards in a `Grid` row (total nodes, % complete, budget variance, overdue count)
   - `PieChart` status donut
   - `CartesianChart` cost comparison bar (estimated vs actual per top-level branch)
   - `CartesianChart` effort-per-assignee bar
   - Upcoming milestones `ListView` (next 30 days, sorted by `DueDate`)
-- [ ] `GanttPage` + `GanttViewModel`
-  - `Canvas` inside `ScrollViewer` (both axes scrollable)
-  - `projectStart` = `Project.StartDate` if set; otherwise derived as `WbsNodes.Min(n => n.StartDate)`
-  - Nodes without both `StartDate` and `DueDate`: render label row greyed out with "Unscheduled" text, no bar
-  - Zoom toolbar (`RadioButtons`): Day / Week / Month — recalculates `pixelsPerDay` and redraws all elements
-  - Today line, milestone diamonds, dependency path arrows
-- [ ] `ReportsPage` + `ReportsViewModel`
-  - Progress line chart and burn-down line chart via `CartesianChart`
-  - Filter controls: date range `CalendarDatePicker`, assignee `ComboBox`, status `ComboBox`
-- [ ] `WbsDetailControl` — add **Dependencies** tab (Phase 3 addition to existing control)
+- [x] `GanttPage` + `GanttViewModel`
+  - Code-behind Canvas drawing; `GanttRowViewModel` per node; zoom toolbar (Day/Week/Month)
+  - Today line; project-start derivation; "Unscheduled" for undated nodes
+- [x] `ReportsPage` + `ReportsViewModel`
+  - Progress summary bar chart and burn-down `LineSeries<DateTimePoint>` chart
+  - Filter controls: date range, assignee, status; filters drive `RebuildCharts()`
+- [x] `WbsDetailControl` — add **Dependencies** tab (Phase 3 addition to existing control)
   - Lists `NodeDependency` records for the selected node
   - Add dependency: searchable node picker + `DependencyType` selector
   - Remove dependency: delete button per row with confirm dialog
+
+> **Infrastructure added during Phase 3 (Dependencies tab):**
+> - `Core/Repositories/NodeDependencyRepository` — `GetBySuccessorAsync`, `InsertAsync`, `DeleteAsync`
+> - `IWbsService` extended: `GetByIdAsync`, `GetDependenciesAsync`, `AddDependencyAsync`, `RemoveDependencyAsync`
+> - `ViewModels/DependencyRowViewModel` + `DependencyTypeOption` record — display models for the tab
+> - `WbsDetailControl` converted from a plain `ScrollViewer` to a `Pivot` (Details + Dependencies tabs)
+> - **Build fix:** `iscWBS.csproj` — removed `<Page Remove>` + `<None Update MSBuild:Compile>` entries for new XAML files; pattern repeats automatically when VS creates a file and must be manually removed
 
 ---
 
 ## Phase 4 — Milestones, Export & Polish
 **Goal:** Complete feature set, export capability, and production-ready UX.
 
-- [ ] `MilestonesPage` + `MilestonesViewModel`
-  - List of milestones with status badges
-  - Link milestones to one or more `WbsNode` records
+- [x] `MilestonesPage` + `MilestonesViewModel`
+  - List of milestones with status badges (`✓ Complete` / `Overdue` / `Upcoming`)
+  - Two-column layout: scrollable list (left) + detail panel with inline edit (right)
+  - Link milestones to one or more `WbsNode` records (JSON-serialised `LinkedNodeIds`)
   - Mark complete with confirmation dialog
+  - Delete milestone with confirmation dialog
+  > **Supporting infrastructure:** `IMilestoneService` / `MilestoneService`; `MilestoneRowViewModel`; `MilestoneRepository.GetByIdAsync`; `Milestones` nav item added to `ShellWindow`
 - [ ] `IExportService` implementations
   - **Excel** (`ClosedXML`):
     - Sheet 1 — **Summary**: project name, owner, currency, total estimated/actual cost and hours
@@ -306,7 +316,7 @@ All series are `ISeries[]` observable properties on the ViewModel, rebuilt on `A
   - `Del` → Delete selected node (triggers confirm dialog)
   - `F2` → Begin inline edit on selected node
   - Global shortcuts handled in `ShellWindow.ProcessKeyboardAccelerators`
-- [ ] `Helpers/Logger.cs` — static `Write(Exception ex)` helper; appends to `%LOCALAPPDATA%\ISC\iscWBS\Logs\log-{date}.txt`; called from `App.xaml.cs UnhandledException` handler
+- [x] `Helpers/Logger.cs` — static `Write(Exception ex)` helper; appends to `%LOCALAPPDATA%\ISC\iscWBS\Logs\log-{date}.txt`; called from `App.xaml.cs UnhandledException` handler
 - [ ] Accessibility: ensure all interactive elements have `AutomationProperties.Name`
 
 ---

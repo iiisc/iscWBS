@@ -10,10 +10,10 @@ public sealed partial class ShellViewModel : ObservableObject
     private readonly INavigationService _navigationService;
 
     [ObservableProperty]
-    private bool _hasActiveProject;
+    public partial bool HasActiveProject { get; set; }
 
     [ObservableProperty]
-    private string _windowTitle = "iscWBS";
+    public partial string WindowTitle { get; set; } = "iscWBS";
 
     public ShellViewModel(IProjectStateService projectStateService, INavigationService navigationService)
     {
@@ -21,7 +21,7 @@ public sealed partial class ShellViewModel : ObservableObject
         _navigationService = navigationService;
 
         _projectStateService.ActiveProjectChanged += OnActiveProjectChanged;
-        _hasActiveProject = _projectStateService.HasActiveProject;
+        HasActiveProject = _projectStateService.HasActiveProject;
     }
 
     private void OnActiveProjectChanged(object? sender, Project? project)

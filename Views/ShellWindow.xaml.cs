@@ -37,7 +37,7 @@ public sealed partial class ShellWindow : Window
         };
 
         AppWindow.Title = ViewModel.WindowTitle;
-        Loaded += OnLoaded;
+        RootGrid.Loaded += OnLoaded;
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -66,8 +66,20 @@ public sealed partial class ShellWindow : Window
 
     private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
-        if (args.InvokedItemContainer?.Tag is string tag)
+        if (args.InvokedItemContainer?.Tag is not string tag)
+            return;
+
+        try
+        {
             _navigationService.NavigateTo(tag);
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.Write(ex);
+            if (System.Diagnostics.Debugger.IsAttached)
+                System.Diagnostics.Debugger.Break();
+            _ = _dialogService.ShowErrorAsync("Navigation Error", ex.Message);
+        }
     }
 }
 

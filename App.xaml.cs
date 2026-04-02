@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using QuestPDF.Infrastructure;
+using iscWBS.Core.Repositories;
 using iscWBS.Core.Services;
 using iscWBS.Helpers;
 using iscWBS.ViewModels;
@@ -35,6 +36,7 @@ public partial class App : Application
         navService.RegisterPage("WbsOutlinePage", typeof(WbsOutlinePage));
         navService.RegisterPage("GanttPage", typeof(GanttPage));
         navService.RegisterPage("ReportsPage", typeof(ReportsPage));
+        navService.RegisterPage("MilestonesPage", typeof(MilestonesPage));
         navService.RegisterPage("SettingsPage", typeof(SettingsPage));
 
         MainWindow = new ShellWindow();
@@ -47,7 +49,11 @@ public partial class App : Application
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<WbsNodeRepository>();
+        services.AddSingleton<MilestoneRepository>();
+        services.AddSingleton<NodeDependencyRepository>();
         services.AddSingleton<IWbsService, WbsService>();
+        services.AddSingleton<IMilestoneService, MilestoneService>();
 
         services.AddTransient<ShellViewModel>();
         services.AddTransient<WelcomeViewModel>();
@@ -57,12 +63,15 @@ public partial class App : Application
         services.AddTransient<GanttViewModel>();
         services.AddTransient<ReportsViewModel>();
         services.AddTransient<SettingsViewModel>();
+        services.AddTransient<MilestonesViewModel>();
     }
 
-    private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    private static void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
     {
         Logger.Write(e.Exception);
-        e.Handled = true;
+        if (System.Diagnostics.Debugger.IsAttached)
+            System.Diagnostics.Debugger.Break();
+        e.Handled = !System.Diagnostics.Debugger.IsAttached;
     }
 }
 

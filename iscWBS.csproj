@@ -14,18 +14,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-  <ItemGroup>
-    <Page Remove="Views\Controls\NewProjectControl.xaml" />
-    <Page Remove="Views\DashboardPage.xaml" />
-    <Page Remove="Views\GanttPage.xaml" />
-    <Page Remove="Views\ReportsPage.xaml" />
-    <Page Remove="Views\SettingsPage.xaml" />
-    <Page Remove="Views\ShellWindow.xaml" />
-    <Page Remove="Views\WbsOutlinePage.xaml" />
-    <Page Remove="Views\WbsTreePage.xaml" />
-    <Page Remove="Views\WelcomePage.xaml" />
-  </ItemGroup>
-
+  <!-- XAML files are included as Page items by the SDK glob and compiled by XamlPreCompile -->
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
@@ -54,41 +43,12 @@
     <PackageReference Include="LiveChartsCore.SkiaSharpView.WinUI" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260317003" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
     <PackageReference Include="QuestPDF" Version="2026.2.4" />
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
     <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
   </ItemGroup>
-  <ItemGroup>
-    <None Update="Views\Controls\NewProjectControl.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Views\DashboardPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Views\GanttPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Views\ReportsPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Views\SettingsPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Views\ShellWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Views\WbsOutlinePage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Views\WbsTreePage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Views\WelcomePage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-  </ItemGroup>
-
+  <!-- XAML generator settings no longer needed; SDK handles compilation via Page items -->
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
     Explorer "Package and Publish" context menu entry to be enabled for this project even if

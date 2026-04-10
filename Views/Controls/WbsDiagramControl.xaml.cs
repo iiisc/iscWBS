@@ -126,18 +126,65 @@ public sealed partial class WbsDiagramControl : UserControl
     {
         public required WbsNode Data { get; init; }
         public List<DiagramNode> Children { get; } = new();
-        public double X            { get; set; }
-        public double Y            { get; set; }
-        public double SubtreeWidth { get; set; }
+        public double   X            { get; set; }
+        public double   Y            { get; set; }
+        public double   SubtreeWidth { get; set; }
+        /// <summary>Left edge of each child's subtree allocation, relative to this node's allocation left.</summary>
+        public double[] ChildLeft    { get; set; } = [];
+        /// <summary>Leftmost X at each depth level, relative to this node's allocation left.</summary>
+        public double[] LeftContour  { get; set; } = [];
+        /// <summary>Rightmost X at each depth level, relative to this node's allocation left.</summary>
+        public double[] RightContour { get; set; } = [];
     }
 
-    private readonly List<DiagramNode>        _roots         = new();
-    private readonly Dictionary<Guid, Border> _cards         = new();
-    private readonly List<UIElement>          _arrowElements = new();
+    private readonly List<DiagramNode>        _roots          = new();
+    private readonly Dictionary<Guid, Border> _cards          = new();
+    private readonly List<UIElement>          _arrowElements  = new();
+    private readonly HashSet<Guid>            _collapsedNodes = new();
 
     public WbsDiagramControl()
     {
         InitializeComponent();
+    }
+
+    // ── Collapse / expand ────────────────────────────────────────────────────
+
+    /// <summary>Collapses all non-leaf nodes so only root nodes remain visible.</summary>
+    public void CollapseAll()
+    {
+        _collapsedNodes.Clear();
+        if (AllNodes is not null)
+        {
+            HashSet<Guid> parents = AllNodes
+                .Where(n => n.ParentId.HasValue)
+                .Select(n => n.ParentId!.Value)
+                .ToHashSet();
+            foreach (Guid id in parents)
+                _collapsedNodes.Add(id);
+        }
+        RebuildDiagram();
+    }
+
+    /// <summary>Expands all nodes so the full tree is visible.</summary>
+    public void ExpandAll()
+    {
+        _collapsedNodes.Clear();
+        RebuildDiagram();
+    }
+
+    private void ToggleCollapse(Guid nodeId)
+    {
+        if (!_collapsedNodes.Remove(nodeId))
+            _collapsedNodes.Add(nodeId);
+        RebuildDiagram();
+    }
+
+    private static int CountDescendants(DiagramNode node)
+    {
+        int count = 0;
+        foreach (DiagramNode child in node.Children)
+            count += 1 + CountDescendants(child);
+        return count;
     }
 
     // ── Rebuild ──────────────────────────────────────────────────────────────
@@ -213,36 +260,99 @@ public sealed partial class WbsDiagramControl : UserControl
         }
     }
 
-    private static void MeasureSubtree(DiagramNode node)
+    private void MeasureSubtree(DiagramNode node)
     {
-        if (node.Children.Count == 0)
+        if (node.Children.Count == 0 || _collapsedNodes.Contains(node.Data.Id))
         {
             node.SubtreeWidth = _cardWidth;
+            node.ChildLeft    = [];
+            node.LeftContour  = [0.0];
+            node.RightContour = [_cardWidth];
             return;
         }
 
         foreach (DiagramNode child in node.Children)
             MeasureSubtree(child);
 
-        double span = node.Children.Sum(c => c.SubtreeWidth) + (node.Children.Count - 1) * _hGap;
-        node.SubtreeWidth = Math.Max(_cardWidth, span);
+        // Contour-based packing: for each sibling find the minimum X offset that
+        // keeps it clear of ALL previously placed siblings at every depth level.
+        double[] childLeft = new double[node.Children.Count];
+        childLeft[0] = 0.0;
+
+        for (int i = 1; i < node.Children.Count; i++)
+        {
+            double[] lc      = node.Children[i].LeftContour;
+            double   minLeft = 0.0;
+
+            for (int j = 0; j < i; j++)
+            {
+                double[] rc    = node.Children[j].RightContour;
+                int      depth = Math.Min(rc.Length, lc.Length);
+                for (int d = 0; d < depth; d++)
+                {
+                    double required = childLeft[j] + rc[d] - lc[d] + _hGap;
+                    if (required > minLeft) minLeft = required;
+                }
+            }
+
+            childLeft[i] = minLeft;
+        }
+
+        double totalSpan = childLeft[^1] + node.Children[^1].SubtreeWidth;
+        node.SubtreeWidth = Math.Max(_cardWidth, totalSpan);
+
+        // If the parent card is wider than the packed children span, centre the children.
+        if (node.SubtreeWidth > totalSpan)
+        {
+            double offset = (node.SubtreeWidth - totalSpan) / 2.0;
+            for (int i = 0; i < childLeft.Length; i++)
+                childLeft[i] += offset;
+            totalSpan = node.SubtreeWidth;
+        }
+
+        node.ChildLeft = childLeft;
+
+        // Build the contour for this subtree so the parent can pack it correctly.
+        double parentCardLeft  = totalSpan / 2.0 - _cardWidth / 2.0;
+        int    maxChildDepth   = node.Children.Max(c => c.LeftContour.Length);
+        double[] left  = new double[1 + maxChildDepth];
+        double[] right = new double[1 + maxChildDepth];
+        left[0]  = parentCardLeft;
+        right[0] = parentCardLeft + _cardWidth;
+
+        for (int d = 0; d < maxChildDepth; d++)
+        {
+            left[d + 1]  = double.MaxValue;
+            right[d + 1] = double.MinValue;
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                if (d < node.Children[i].LeftContour.Length)
+                    left[d + 1] = Math.Min(left[d + 1], childLeft[i] + node.Children[i].LeftContour[d]);
+                if (d < node.Children[i].RightContour.Length)
+                    right[d + 1] = Math.Max(right[d + 1], childLeft[i] + node.Children[i].RightContour[d]);
+            }
+            // Levels with no children default to the parent card extents.
+            if (left[d + 1]  == double.MaxValue)  left[d + 1]  = left[d];
+            if (right[d + 1] == double.MinValue) right[d + 1] = right[d];
+        }
+
+        node.LeftContour  = left;
+        node.RightContour = right;
     }
 
-    private static void PlaceSubtree(DiagramNode node, double left, double top)
+    private void PlaceSubtree(DiagramNode node, double left, double top)
     {
         node.X = left + (node.SubtreeWidth - _cardWidth) / 2.0;
         node.Y = top;
 
-        double childLeft = left;
-        double childTop  = top + _cardHeight + _vGap;
-        foreach (DiagramNode child in node.Children)
-        {
-            PlaceSubtree(child, childLeft, childTop);
-            childLeft += child.SubtreeWidth + _hGap;
-        }
+        if (_collapsedNodes.Contains(node.Data.Id)) return;
+
+        double childTop = top + _cardHeight + _vGap;
+        for (int i = 0; i < node.Children.Count; i++)
+            PlaceSubtree(node.Children[i], left + node.ChildLeft[i], childTop);
     }
 
-    private static void AccumulateBounds(IEnumerable<DiagramNode> nodes, ref double maxX, ref double maxY)
+    private void AccumulateBounds(IEnumerable<DiagramNode> nodes, ref double maxX, ref double maxY)
     {
         foreach (DiagramNode n in nodes)
         {
@@ -250,7 +360,8 @@ public sealed partial class WbsDiagramControl : UserControl
             double b = n.Y + _cardHeight;
             if (r > maxX) maxX = r;
             if (b > maxY) maxY = b;
-            AccumulateBounds(n.Children, ref maxX, ref maxY);
+            if (!_collapsedNodes.Contains(n.Data.Id))
+                AccumulateBounds(n.Children, ref maxX, ref maxY);
         }
     }
 
@@ -258,6 +369,8 @@ public sealed partial class WbsDiagramControl : UserControl
 
     private void DrawConnectors(DiagramNode node, Brush stroke)
     {
+        if (_collapsedNodes.Contains(node.Data.Id)) return;
+
         double parentCx     = node.X + _cardWidth / 2.0;
         double parentBottom = node.Y + _cardHeight;
 
@@ -330,8 +443,65 @@ public sealed partial class WbsDiagramControl : UserControl
                 Windows.UI.Color.FromArgb(0xFF, 0xC5, 0x0F, 0x1F),
                 "Start constraint violated — this node is In Progress but a predecessor no longer satisfies its start dependency");
 
-        foreach (DiagramNode child in node.Children)
-            DrawCard(child);
+        bool isCollapsed = _collapsedNodes.Contains(node.Data.Id);
+        bool hasChildren = node.Children.Count > 0;
+
+        if (hasChildren)
+        {
+            const double btnSize = 16.0;
+            var chevron = new Button
+            {
+                Width           = btnSize,
+                Height          = btnSize,
+                Padding         = new Thickness(0),
+                Background      = new SolidColorBrush(Windows.UI.Color.FromArgb(0x55, 0xFF, 0xFF, 0xFF)),
+                BorderThickness = new Thickness(0),
+                Content         = new TextBlock
+                {
+                    Text                = isCollapsed ? "\uE76C" : "\uE70D",
+                    FontFamily          = new FontFamily("Segoe MDL2 Assets"),
+                    FontSize            = 9,
+                    Foreground          = new SolidColorBrush(Colors.White),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment   = VerticalAlignment.Center,
+                },
+            };
+            AutomationProperties.SetName(chevron, isCollapsed ? "Expand children" : "Collapse children");
+            Guid capturedId = node.Data.Id;
+            chevron.Click += (_, _) => ToggleCollapse(capturedId);
+            Canvas.SetLeft(chevron, node.X + _cardWidth - btnSize - 4);
+            Canvas.SetTop(chevron,  node.Y + (_headerHeight - btnSize) / 2.0);
+            Canvas.SetZIndex(chevron, 10);
+            DiagramCanvas.Children.Add(chevron);
+        }
+
+        if (isCollapsed)
+        {
+            int hidden = CountDescendants(node);
+            var badge = new Border
+            {
+                Width        = _cardWidth,
+                CornerRadius = new CornerRadius(10),
+                Background   = new SolidColorBrush(Windows.UI.Color.FromArgb(0x35, 0x80, 0x80, 0x80)),
+                Padding      = new Thickness(4, 2, 4, 2),
+                Child        = new TextBlock
+                {
+                    Text                = $"+{hidden}",
+                    FontSize            = 10,
+                    Foreground          = secondaryBrush,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                },
+            };
+            ToolTipService.SetToolTip(badge, $"{hidden} node{(hidden == 1 ? string.Empty : "s")} hidden");
+            Canvas.SetLeft(badge, node.X);
+            Canvas.SetTop(badge,  node.Y + _cardHeight + 8);
+            DiagramCanvas.Children.Add(badge);
+        }
+        else
+        {
+            foreach (DiagramNode child in node.Children)
+                DrawCard(child);
+        }
     }
 
     private void AddBlockingBadge(double cardX, double cardY, string icon, Windows.UI.Color color, string tooltip)

@@ -39,6 +39,15 @@
                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
                 IsEnabled="{x:Bind ViewModel.IsDetailVisible, Mode=OneWay}"
                 AutomationProperties.Name="Delete selected node" />
+            <Rectangle Width="1" Height="20" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" VerticalAlignment="Center" />
+            <Button
+                Content="Collapse All"
+                Click="CollapseAll_Click"
+                AutomationProperties.Name="Collapse all nodes" />
+            <Button
+                Content="Expand All"
+                Click="ExpandAll_Click"
+                AutomationProperties.Name="Expand all nodes" />
         </StackPanel>
 
         <!-- Content: Diagram + Detail Panel -->

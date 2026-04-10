@@ -81,7 +81,7 @@
                 <TextBlock Text="Status" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <ComboBox
                     ItemsSource="{x:Bind ViewModel.StatusOptions}"
-                    SelectedIndex="{x:Bind ViewModel.EditStatusIndex, Mode=TwoWay}"
+                    SelectedItem="{x:Bind ViewModel.EditStatusItem, Mode=TwoWay}"
                     HorizontalAlignment="Stretch"
                     AutomationProperties.Name="Status">
                     <ComboBox.ItemTemplate>

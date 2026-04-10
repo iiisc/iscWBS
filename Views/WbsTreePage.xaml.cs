@@ -38,6 +38,9 @@ public sealed partial class WbsTreePage : Microsoft.UI.Xaml.Controls.Page
     private void WbsDiagram_NodeSelected(object? sender, WbsNode e)
         => ViewModel.SelectDiagramNode(e);
 
+    private void CollapseAll_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) => WbsDiagram.CollapseAll();
+    private void ExpandAll_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)   => WbsDiagram.ExpandAll();
+
     private void WbsDiagram_NodeRightTapped(object? sender, (WbsNode Node, Point Position) e)
     {
         ViewModel.SelectDiagramNode(e.Node);

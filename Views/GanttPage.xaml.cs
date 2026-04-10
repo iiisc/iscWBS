@@ -253,6 +253,7 @@ public sealed partial class GanttPage : Page
     {
         var startConstraintBrush  = new SolidColorBrush(Windows.UI.Color.FromArgb(0x80, 0x80, 0x80, 0x80));
         var finishConstraintBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(0xA0, 0xCA, 0x50, 0x10));
+        const double exitGap = 8.0;
 
         foreach (GanttDependencyArrow arrow in ViewModel.DependencyArrows ?? [])
         {
@@ -267,7 +268,12 @@ public sealed partial class GanttPage : Page
                 _                             => string.Empty,
             };
 
-            double midX = (arrow.FromX + arrow.ToX) / 2.0;
+            // Anchor the vertical segment just outside the predecessor bar's exit edge so
+            // the connector never routes through intermediate task bars.
+            // FS/FF exit from the right edge (+gap); SS/SF exit from the left edge (-gap).
+            bool isFromFinish = arrow.Type is DependencyType.FinishToStart or DependencyType.FinishToFinish;
+            double exitX = isFromFinish ? arrow.FromX + exitGap : arrow.FromX - exitGap;
+
             var connector = new Polyline
             {
                 Stroke          = isFinishConstraint ? finishConstraintBrush : startConstraintBrush,
@@ -276,8 +282,8 @@ public sealed partial class GanttPage : Page
                 Points          = new PointCollection
                 {
                     new(_labelWidth + arrow.FromX, arrow.FromY),
-                    new(_labelWidth + midX,        arrow.FromY),
-                    new(_labelWidth + midX,        arrow.ToY),
+                    new(_labelWidth + exitX,       arrow.FromY),
+                    new(_labelWidth + exitX,       arrow.ToY),
                     new(_labelWidth + arrow.ToX,   arrow.ToY),
                 }
             };

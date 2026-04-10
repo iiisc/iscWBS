@@ -55,6 +55,7 @@ public partial class App : Application
         services.AddSingleton<IWbsService, WbsService>();
         services.AddSingleton<IMilestoneService, MilestoneService>();
         services.AddSingleton<IGanttLayoutService, GanttLayoutService>();
+        services.AddSingleton<IUpdateService, UpdateService>();
 
         services.AddTransient<ShellViewModel>();
         services.AddTransient<WelcomeViewModel>();

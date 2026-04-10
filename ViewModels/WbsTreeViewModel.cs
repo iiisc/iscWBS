@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI.Dispatching;
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
 
@@ -55,9 +56,21 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
         set => EditStatus = value >= 0 ? (WbsStatus)value : (WbsStatus?)null;
     }
 
+    /// <summary>
+    /// Non-nullable binding surface for <see cref="ComboBox.SelectedItem"/>.
+    /// Avoids boxing <see cref="WbsStatus?"/> as a nullable so the ComboBox
+    /// equality scan against <see cref="StatusOptions"/> always succeeds.
+    /// </summary>
+    public WbsStatus EditStatusItem
+    {
+        get => EditStatus ?? WbsStatus.NotStarted;
+        set => EditStatus = value;
+    }
+
     partial void OnEditStatusChanged(WbsStatus? value)
     {
         OnPropertyChanged(nameof(EditStatusIndex));
+        OnPropertyChanged(nameof(EditStatusItem));
         if (!_isLoadingEditFields) RefreshBlockedIds();
 
         if (!_isLoadingEditFields && value is WbsStatus.InProgress or WbsStatus.Complete
@@ -76,12 +89,18 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
 
             if (blockers.Count > 0)
             {
-                // Revert synchronously — both property-changed events fire before the next
-                // render pass so the UI never displays the blocked status even briefly.
+                // Revert the ViewModel state synchronously so it is never wrong.
                 _isLoadingEditFields = true;
                 try   { EditStatus = selectedNode.Node.Status; }
                 finally { _isLoadingEditFields = false; }
-                RefreshBlockedIds(); // correct stale blocked IDs after the revert
+                RefreshBlockedIds();
+
+                // x:Bind TwoWay suppresses PropertyChanged for EditStatusIndex while
+                // the ComboBox SelectionChanged dispatch is still on the stack.
+                // Post a deferred notification so the ComboBox re-reads the already-
+                // reverted value once that dispatch — and its feedback-loop guard — clears.
+                DispatcherQueue.GetForCurrentThread()?.TryEnqueue(
+                    () => OnPropertyChanged(nameof(EditStatusItem)));
 
                 string title = value == WbsStatus.InProgress
                     ? "Cannot Mark as In Progress"

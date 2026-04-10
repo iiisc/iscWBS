@@ -24,7 +24,6 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <Border
@@ -65,21 +64,6 @@
                     BorderThickness="1">
                     <StackPanel Spacing="4">
                         <TextBlock
-                            Text="{x:Bind ViewModel.BudgetVarianceDisplay, Mode=OneWay}"
-                            Style="{ThemeResource TitleTextBlockStyle}"
-                            AutomationProperties.Name="Budget variance" />
-                        <TextBlock Text="Budget Variance" Style="{ThemeResource CaptionTextBlockStyle}" />
-                    </StackPanel>
-                </Border>
-
-                <Border
-                    Grid.Column="3"
-                    CornerRadius="8" Padding="16"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1">
-                    <StackPanel Spacing="4">
-                        <TextBlock
                             Text="{x:Bind ViewModel.OverdueCount, Mode=OneWay}"
                             Style="{ThemeResource TitleTextBlockStyle}"
                             AutomationProperties.Name="Overdue nodes count" />
@@ -93,7 +77,6 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Spacing="8">
@@ -105,15 +88,6 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Spacing="8">
-                    <TextBlock Text="Cost Comparison" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                    <lvc:CartesianChart
-                        Series="{x:Bind ViewModel.CostSeries, Mode=OneWay}"
-                        XAxes="{x:Bind ViewModel.CostXAxes, Mode=OneWay}"
-                        Height="220"
-                        AutomationProperties.Name="Cost comparison bar chart" />
-                </StackPanel>
-
-                <StackPanel Grid.Column="2" Spacing="8">
                     <TextBlock Text="Effort by Assignee" Style="{ThemeResource SubtitleTextBlockStyle}" />
                     <lvc:CartesianChart
                         Series="{x:Bind ViewModel.EffortSeries, Mode=OneWay}"

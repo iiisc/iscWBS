@@ -11,8 +11,14 @@ public sealed partial class GanttViewModel : ObservableObject, INavigationAware
     private readonly IProjectStateService _projectStateService;
     private readonly IWbsService _wbsService;
     private readonly IDialogService _dialogService;
+    private readonly IMilestoneService _milestoneService;
+    private readonly IGanttLayoutService _ganttLayoutService;
 
-    private static readonly double[] _pixelsPerDayByZoom = { 40.0, 8.0, 2.0 };
+    /// <summary>Height of the timeline ruler strip at the top of the canvas.</summary>
+    public const double HeaderHeight = 40.0;
+
+    /// <summary>Width of the fixed task-label column.</summary>
+    public const double LabelWidth = 220.0;
 
     [ObservableProperty]
     public partial int SelectedZoomIndex { get; set; }
@@ -26,23 +32,48 @@ public sealed partial class GanttViewModel : ObservableObject, INavigationAware
     [ObservableProperty]
     public partial double TodayX { get; set; }
 
-    public ObservableCollection<GanttRowViewModel> Rows { get; } = new();
+    private IReadOnlyList<GanttHeaderTick>? _headerTicks;
+    public IReadOnlyList<GanttHeaderTick>? HeaderTicks
+    {
+        get => _headerTicks;
+        private set => SetProperty(ref _headerTicks, value);
+    }
 
-    public double PixelsPerDay => _pixelsPerDayByZoom[SelectedZoomIndex];
+    private IReadOnlyList<GanttMilestoneMarker>? _milestoneMarkers;
+    public IReadOnlyList<GanttMilestoneMarker>? MilestoneMarkers
+    {
+        get => _milestoneMarkers;
+        private set => SetProperty(ref _milestoneMarkers, value);
+    }
+
+    private IReadOnlyList<GanttDependencyArrow>? _dependencyArrows;
+    public IReadOnlyList<GanttDependencyArrow>? DependencyArrows
+    {
+        get => _dependencyArrows;
+        private set => SetProperty(ref _dependencyArrows, value);
+    }
+
+    public ObservableCollection<GanttRow> Rows { get; } = new();
 
     private IReadOnlyList<WbsNode> _nodes = Array.Empty<WbsNode>();
-    private DateTime _projectStart;
+    private IReadOnlyList<Milestone> _milestones = Array.Empty<Milestone>();
+    private IReadOnlyList<NodeDependency> _dependencies = Array.Empty<NodeDependency>();
+    private DateTime? _projectStartDate;
 
     public string[] ZoomOptions { get; } = { "Day", "Week", "Month" };
 
     public GanttViewModel(
         IProjectStateService projectStateService,
         IWbsService wbsService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        IMilestoneService milestoneService,
+        IGanttLayoutService ganttLayoutService)
     {
         _projectStateService = projectStateService;
         _wbsService = wbsService;
         _dialogService = dialogService;
+        _milestoneService = milestoneService;
+        _ganttLayoutService = ganttLayoutService;
         TotalWidth = 1200;
         TotalHeight = 200;
     }
@@ -50,7 +81,7 @@ public sealed partial class GanttViewModel : ObservableObject, INavigationAware
     public void OnNavigatedTo(object? parameter) => _ = LoadAsync();
     public void OnNavigatedFrom() { }
 
-    partial void OnSelectedZoomIndexChanged(int value) => RebuildRows();
+    partial void OnSelectedZoomIndexChanged(int value) => RebuildLayout();
 
     [RelayCommand]
     private async Task LoadAsync()
@@ -58,16 +89,13 @@ public sealed partial class GanttViewModel : ObservableObject, INavigationAware
         if (_projectStateService.ActiveProject is not { Id: var projectId } project) return;
         try
         {
-            _nodes = await _wbsService.GetAllByProjectAsync(projectId);
+            _nodes        = await _wbsService.GetAllByProjectAsync(projectId);
+            _milestones   = await _milestoneService.GetByProjectAsync(projectId);
+            _dependencies = await _wbsService.GetAllDependenciesByProjectAsync(projectId);
 
-            _projectStart = project.StartDate.HasValue
-                ? project.StartDate.Value
-                : _nodes.Where(n => n.StartDate.HasValue)
-                        .Select(n => n.StartDate!.Value)
-                        .DefaultIfEmpty(DateTime.UtcNow.Date)
-                        .Min();
+            _projectStartDate = project.StartDate;
 
-            RebuildRows();
+            RebuildLayout();
         }
         catch (Exception ex)
         {
@@ -75,43 +103,32 @@ public sealed partial class GanttViewModel : ObservableObject, INavigationAware
         }
     }
 
-    private void RebuildRows()
+    private void RebuildLayout()
     {
         Rows.Clear();
-        if (_nodes.Count == 0) return;
-
-        double ppd = _pixelsPerDayByZoom[SelectedZoomIndex];
-        const double rowHeight = 48;
-        double maxRight = 0;
-
-        for (int i = 0; i < _nodes.Count; i++)
+        if (_nodes.Count == 0)
         {
-            WbsNode node = _nodes[i];
-            double rowTop = i * rowHeight;
-            bool hasBar = node.StartDate.HasValue && node.DueDate.HasValue;
-            double barLeft = 0, barWidth = 0;
-
-            if (hasBar)
-            {
-                barLeft = (node.StartDate!.Value - _projectStart).TotalDays * ppd;
-                barWidth = Math.Max(4, (node.DueDate!.Value - node.StartDate.Value).TotalDays * ppd);
-                maxRight = Math.Max(maxRight, barLeft + barWidth);
-            }
-
-            Rows.Add(new GanttRowViewModel
-            {
-                Label = $"{node.Code}  {node.Title}",
-                RowTop = rowTop,
-                HasBar = hasBar,
-                BarLeft = barLeft,
-                BarWidth = barWidth,
-                Status = node.Status
-            });
+            TotalWidth       = 1200;
+            TotalHeight      = 200;
+            TodayX           = 0;
+            HeaderTicks      = null;
+            MilestoneMarkers = null;
+            DependencyArrows = null;
+            return;
         }
 
-        TotalHeight = _nodes.Count * rowHeight + 40;
-        TotalWidth = Math.Max(800, maxRight + 120);
-        TodayX = (DateTime.UtcNow.Date - _projectStart).TotalDays * ppd;
+        IReadOnlySet<Guid> blockedIds = _wbsService.ResolveBlockedNodeIds(_nodes, _dependencies);
+        GanttLayout layout = _ganttLayoutService.Build(
+            _nodes, _milestones, _dependencies, blockedIds, _projectStartDate, SelectedZoomIndex);
+
+        foreach (GanttRow row in layout.Rows)
+            Rows.Add(row);
+
+        HeaderTicks      = layout.HeaderTicks;
+        MilestoneMarkers = layout.MilestoneMarkers;
+        DependencyArrows = layout.DependencyArrows;
+        TotalWidth       = layout.TotalWidth;
+        TotalHeight      = layout.TotalHeight;
+        TodayX           = layout.TodayX;
     }
 }
-

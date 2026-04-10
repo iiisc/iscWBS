@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:iscWBS.Core.Models"
+    xmlns:viewmodels="using:iscWBS.ViewModels"
     xmlns:converters="using:iscWBS.Converters">
 
     <Page.Resources>
@@ -37,8 +38,6 @@
                 <ColumnDefinition Width="100" />
                 <ColumnDefinition Width="90" />
                 <ColumnDefinition Width="90" />
-                <ColumnDefinition Width="90" />
-                <ColumnDefinition Width="90" />
                 <ColumnDefinition Width="110" />
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Code" FontWeight="SemiBold" />
@@ -47,9 +46,7 @@
             <TextBlock Grid.Column="3" Text="Status" FontWeight="SemiBold" />
             <TextBlock Grid.Column="4" Text="Est. Hours" FontWeight="SemiBold" />
             <TextBlock Grid.Column="5" Text="Act. Hours" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="6" Text="Est. Cost" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="7" Text="Act. Cost" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="8" Text="Due Date" FontWeight="SemiBold" />
+            <TextBlock Grid.Column="6" Text="Due Date" FontWeight="SemiBold" />
         </Grid>
 
         <ListView
@@ -66,7 +63,7 @@
                 </Style>
             </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
-                <DataTemplate x:DataType="models:WbsNode">
+                <DataTemplate x:DataType="viewmodels:WbsOutlineRowViewModel">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="80" />
@@ -75,19 +72,15 @@
                             <ColumnDefinition Width="100" />
                             <ColumnDefinition Width="90" />
                             <ColumnDefinition Width="90" />
-                            <ColumnDefinition Width="90" />
-                            <ColumnDefinition Width="90" />
                             <ColumnDefinition Width="110" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{x:Bind Code}" FontWeight="SemiBold" />
                         <TextBlock Grid.Column="1" Text="{x:Bind Title}" />
                         <TextBlock Grid.Column="2" Text="{x:Bind AssignedTo}" />
-                        <TextBlock Grid.Column="3" Text="{x:Bind Status, Converter={StaticResource StatusToStringConverter}}" />
+                        <TextBlock Grid.Column="3" Text="{x:Bind EffectiveStatus, Converter={StaticResource StatusToStringConverter}}" />
                         <TextBlock Grid.Column="4" Text="{x:Bind EstimatedHours}" />
                         <TextBlock Grid.Column="5" Text="{x:Bind ActualHours}" />
-                        <TextBlock Grid.Column="6" Text="{x:Bind EstimatedCost}" />
-                        <TextBlock Grid.Column="7" Text="{x:Bind ActualCost}" />
-                        <TextBlock Grid.Column="8" Text="{x:Bind DueDate}" />
+                        <TextBlock Grid.Column="6" Text="{x:Bind DueDate}" />
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>

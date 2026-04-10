@@ -9,6 +9,7 @@ using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
+using iscWBS.Helpers;
 
 namespace iscWBS.ViewModels;
 
@@ -137,19 +138,19 @@ public sealed partial class ReportsViewModel : ObservableObject, INavigationAwar
             {
                 Name = "Complete",
                 Values = new[] { (double)complete },
-                Fill = new SolidColorPaint(new SKColor(0x10, 0x7C, 0x10, 0xCC))
+                Fill = new SolidColorPaint(ChartPalette.CompleteAlpha)
             },
             new ColumnSeries<double>
             {
                 Name = "In Progress",
                 Values = new[] { (double)inProgress },
-                Fill = new SolidColorPaint(new SKColor(0x00, 0x78, 0xD4, 0xCC))
+                Fill = new SolidColorPaint(ChartPalette.InProgressAlpha)
             },
             new ColumnSeries<double>
             {
                 Name = "Remaining",
                 Values = new[] { remaining },
-                Fill = new SolidColorPaint(new SKColor(0x80, 0x80, 0x80, 0xCC))
+                Fill = new SolidColorPaint(ChartPalette.NotStartedAlpha)
             }
         };
         ProgressXAxes = new[] { new Axis { Labels = new[] { "Nodes" } } };
@@ -199,7 +200,7 @@ public sealed partial class ReportsViewModel : ObservableObject, INavigationAwar
                 Values = idealPoints,
                 GeometryFill = null,
                 GeometryStroke = null,
-                Stroke = new SolidColorPaint(new SKColor(0x80, 0x80, 0x80), 2)
+                Stroke = new SolidColorPaint(ChartPalette.NotStarted, 2)
             },
             new LineSeries<DateTimePoint>
             {
@@ -207,7 +208,7 @@ public sealed partial class ReportsViewModel : ObservableObject, INavigationAwar
                 Values = remainingPoints,
                 GeometryFill = null,
                 GeometryStroke = null,
-                Stroke = new SolidColorPaint(new SKColor(0xC5, 0x0F, 0x1F), 2)
+                Stroke = new SolidColorPaint(ChartPalette.Blocked, 2)
             }
         };
 

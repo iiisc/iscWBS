@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using iscWBS.Core.Models;
 using iscWBS.ViewModels;
 
 namespace iscWBS.Views;
@@ -30,8 +29,8 @@ public sealed partial class WbsOutlinePage : Page
 
     private void OutlineListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (e.AddedItems.Count > 0 && e.AddedItems[0] is WbsNode node)
-            ViewModel.SelectNodeCommand.Execute(node);
+        if (e.AddedItems.Count > 0 && e.AddedItems[0] is WbsOutlineRowViewModel row)
+            ViewModel.SelectRowCommand.Execute(row);
     }
 }
 

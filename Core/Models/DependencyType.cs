@@ -4,5 +4,6 @@ public enum DependencyType
 {
     FinishToStart,
     StartToStart,
-    FinishToFinish
+    FinishToFinish,
+    StartToFinish
 }

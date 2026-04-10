@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="iscWBS.Views.Controls.WbsDiagramControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <!--
+            Proxy brushes that pull from the WinUI 3 system ThemeDictionaries so that
+            code-created Canvas children inherit the correct light/dark values.
+        -->
+        <SolidColorBrush x:Key="DiagramCardBackground" Color="{ThemeResource SystemChromeLowColor}" />
+        <SolidColorBrush x:Key="DiagramConnector"      Color="{ThemeResource SystemBaseMediumLowColor}" />
+        <SolidColorBrush x:Key="DiagramSelection"      Color="{ThemeResource SystemAccentColor}" />
+    </UserControl.Resources>
+
+    <ScrollViewer
+        HorizontalScrollBarVisibility="Auto"
+        VerticalScrollBarVisibility="Auto"
+        ZoomMode="Enabled"
+        MinZoomFactor="0.25"
+        MaxZoomFactor="3.0"
+        IsTabStop="True"
+        UseSystemFocusVisuals="False">
+        <Canvas x:Name="DiagramCanvas" />
+    </ScrollViewer>
+</UserControl>

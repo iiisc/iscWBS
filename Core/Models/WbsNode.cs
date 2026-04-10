@@ -21,8 +21,6 @@ public class WbsNode
     public WbsStatus Status { get; set; } = WbsStatus.NotStarted;
     public double EstimatedHours { get; set; }
     public double ActualHours { get; set; }
-    public double EstimatedCost { get; set; }
-    public double ActualCost { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? DueDate { get; set; }
     public int SortOrder { get; set; }

@@ -19,4 +19,7 @@ public interface IMilestoneService
 
     /// <summary>Marks a milestone as complete.</summary>
     Task MarkCompleteAsync(Guid id);
+
+    /// <summary>Returns incomplete milestones due within <paramref name="days"/> days from now, ordered by due date.</summary>
+    Task<IReadOnlyList<Milestone>> GetUpcomingAsync(Guid projectId, int days = 30);
 }

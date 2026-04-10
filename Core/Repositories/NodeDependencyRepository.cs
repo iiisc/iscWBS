@@ -25,6 +25,15 @@ public sealed class NodeDependencyRepository
             .Where(d => d.SuccessorId == successorId)
             .ToListAsync();
 
+    /// <summary>Returns all dependencies for nodes that belong to the given project.</summary>
+    public async Task<IReadOnlyList<NodeDependency>> GetAllByProjectAsync(Guid projectId)
+        => await Connection.QueryAsync<NodeDependency>(
+            "SELECT d.Id, d.PredecessorId, d.SuccessorId, d.Type " +
+            "FROM NodeDependencies d " +
+            "INNER JOIN WbsNodes n ON d.SuccessorId = n.Id " +
+            "WHERE n.ProjectId = ?",
+            projectId.ToString());
+
     /// <summary>Inserts a new dependency record.</summary>
     public async Task InsertAsync(NodeDependency dependency)
         => await Connection.InsertAsync(dependency);

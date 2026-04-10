@@ -54,6 +54,7 @@ public partial class App : Application
         services.AddSingleton<NodeDependencyRepository>();
         services.AddSingleton<IWbsService, WbsService>();
         services.AddSingleton<IMilestoneService, MilestoneService>();
+        services.AddSingleton<IGanttLayoutService, GanttLayoutService>();
 
         services.AddTransient<ShellViewModel>();
         services.AddTransient<WelcomeViewModel>();

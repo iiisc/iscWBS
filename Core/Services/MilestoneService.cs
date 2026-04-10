@@ -44,4 +44,7 @@ public sealed class MilestoneService : IMilestoneService
         milestone.IsComplete = true;
         await _repository.UpdateAsync(milestone);
     }
+
+    public Task<IReadOnlyList<Milestone>> GetUpcomingAsync(Guid projectId, int days = 30)
+        => _repository.GetUpcomingAsync(projectId, days);
 }

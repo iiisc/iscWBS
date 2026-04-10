@@ -13,7 +13,7 @@ public sealed partial class WbsOutlineViewModel : ObservableObject, INavigationA
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
 
-    public ObservableCollection<WbsNode> Nodes { get; } = new();
+    public ObservableCollection<WbsOutlineRowViewModel> Nodes { get; } = new();
 
     [ObservableProperty]
     public partial bool IsLoading { get; set; }
@@ -43,8 +43,15 @@ public sealed partial class WbsOutlineViewModel : ObservableObject, INavigationA
         {
             Nodes.Clear();
             IReadOnlyList<WbsNode> all = await _wbsService.GetAllByProjectAsync(projectId);
+            IReadOnlyList<NodeDependency> deps = await _wbsService.GetAllDependenciesByProjectAsync(projectId);
+            IReadOnlySet<Guid> blockedIds = _wbsService.ResolveBlockedNodeIds(all, deps);
+
             foreach (WbsNode node in all)
-                Nodes.Add(node);
+                Nodes.Add(new WbsOutlineRowViewModel
+                {
+                    Node            = node,
+                    EffectiveStatus = blockedIds.Contains(node.Id) ? WbsStatus.Blocked : node.Status,
+                });
         }
         catch (Exception ex)
         {
@@ -62,5 +69,9 @@ public sealed partial class WbsOutlineViewModel : ObservableObject, INavigationA
         if (node is null) return;
         _navigationService.NavigateTo("WbsTreePage");
     }
+
+    /// <summary>Navigates to the WBS tree, selecting the node from the given outline row.</summary>
+    [RelayCommand]
+    private void SelectRow(WbsOutlineRowViewModel? row) => SelectNode(row?.Node);
 }
 

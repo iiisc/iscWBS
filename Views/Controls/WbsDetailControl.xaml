@@ -15,9 +15,34 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="12" Padding="16">
 
-            <TextBlock
-                Text="Node Details"
-                Style="{ThemeResource SubtitleTextBlockStyle}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Grid.Column="0"
+                    Text="Node Details"
+                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                    VerticalAlignment="Center" />
+                <TextBlock
+                    Grid.Column="1"
+                    Text="Saving…"
+                    Style="{ThemeResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    VerticalAlignment="Center"
+                    Margin="0,0,8,0"
+                    Visibility="{x:Bind ViewModel.IsSaving, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                <Button
+                    Grid.Column="2"
+                    Content="&#xE711;"
+                    FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                    FontSize="12"
+                    Padding="4"
+                    Command="{x:Bind ViewModel.ClearSelectionCommand}"
+                    AutomationProperties.Name="Close detail panel" />
+            </Grid>
 
             <StackPanel Spacing="4">
                 <TextBlock Text="Code" Style="{ThemeResource CaptionTextBlockStyle}" />
@@ -30,14 +55,15 @@
             <StackPanel Spacing="4">
                 <TextBlock Text="Title" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <TextBox
-                    Text="{x:Bind ViewModel.EditTitle, Mode=TwoWay}"
+                    Text="{x:Bind ViewModel.EditTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    PlaceholderText="Node title…"
                     AutomationProperties.Name="Title" />
             </StackPanel>
 
             <StackPanel Spacing="4">
                 <TextBlock Text="Description" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <TextBox
-                    Text="{x:Bind ViewModel.EditDescription, Mode=TwoWay}"
+                    Text="{x:Bind ViewModel.EditDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     AcceptsReturn="True"
                     Height="80"
                     TextWrapping="Wrap"
@@ -47,7 +73,7 @@
             <StackPanel Spacing="4">
                 <TextBlock Text="Assigned To" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <TextBox
-                    Text="{x:Bind ViewModel.EditAssignedTo, Mode=TwoWay}"
+                    Text="{x:Bind ViewModel.EditAssignedTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     AutomationProperties.Name="Assigned to" />
             </StackPanel>
 
@@ -91,31 +117,6 @@
                 </StackPanel>
             </Grid>
 
-            <Grid ColumnSpacing="12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="Est. Cost" Style="{ThemeResource CaptionTextBlockStyle}" />
-                    <NumberBox
-                        Value="{x:Bind ViewModel.EditEstimatedCost, Mode=TwoWay}"
-                        Minimum="0"
-                        SpinButtonPlacementMode="Compact"
-                        AutomationProperties.Name="Estimated cost" />
-                </StackPanel>
-
-                <StackPanel Grid.Column="1" Spacing="4">
-                    <TextBlock Text="Act. Cost" Style="{ThemeResource CaptionTextBlockStyle}" />
-                    <NumberBox
-                        Value="{x:Bind ViewModel.EditActualCost, Mode=TwoWay}"
-                        Minimum="0"
-                        SpinButtonPlacementMode="Compact"
-                        AutomationProperties.Name="Actual cost" />
-                </StackPanel>
-            </Grid>
-
             <StackPanel Spacing="4">
                 <TextBlock Text="Start Date" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <CalendarDatePicker
@@ -130,18 +131,6 @@
                     Date="{x:Bind ViewModel.EditDueDate, Mode=TwoWay}"
                     HorizontalAlignment="Stretch"
                     AutomationProperties.Name="Due date" />
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-                <Button
-                    Content="Save"
-                    Command="{x:Bind ViewModel.SaveNodeCommand}"
-                    Style="{ThemeResource AccentButtonStyle}"
-                    AutomationProperties.Name="Save node" />
-                <Button
-                    Content="Cancel"
-                    Command="{x:Bind ViewModel.CancelEditCommand}"
-                    AutomationProperties.Name="Cancel edit" />
             </StackPanel>
 
             <Rectangle
@@ -161,6 +150,7 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="32" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock
@@ -177,9 +167,25 @@
                                     Grid.Column="2"
                                     Text="{Binding TypeLabel}"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    VerticalAlignment="Center" />
-                                <Button
+                                    VerticalAlignment="Center">
+                                    <ToolTipService.ToolTip>
+                                        <ToolTip Content="{Binding TypeDescription}" />
+                                    </ToolTipService.ToolTip>
+                                </TextBlock>
+                                <TextBlock
                                     Grid.Column="3"
+                                    Text="&#xE7BA;"
+                                    FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                    FontSize="12"
+                                    Foreground="{ThemeResource WbsStatusBlockedBrush}"
+                                    VerticalAlignment="Center"
+                                    Visibility="{Binding IsBlocking, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <ToolTipService.ToolTip>
+                                        <ToolTip Content="{Binding BlockingReason}" />
+                                    </ToolTipService.ToolTip>
+                                </TextBlock>
+                                <Button
+                                    Grid.Column="4"
                                     Content="&#xE74D;"
                                     FontFamily="{ThemeResource SymbolThemeFontFamily}"
                                     FontSize="12"
@@ -219,7 +225,14 @@
                     AutomationProperties.Name="Dependency type">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Label}" />
+                            <StackPanel Spacing="1">
+                                <TextBlock Text="{Binding Label}" />
+                                <TextBlock
+                                    Text="{Binding Description}"
+                                    Style="{ThemeResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
@@ -228,6 +241,39 @@
                     Content="Add Predecessor"
                     Command="{x:Bind ViewModel.AddDependencyCommand}"
                     AutomationProperties.Name="Add predecessor dependency" />
+
+            <Rectangle
+                Height="1"
+                Fill="{ThemeResource DividerStrokeColorDefaultBrush}"
+                Margin="0,8,0,4" />
+
+            <TextBlock
+                Text="Linked Milestones"
+                Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+            <ItemsControl ItemsSource="{x:Bind ViewModel.LinkedMilestones, Mode=OneWay}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:MilestoneRowViewModel">
+                        <Grid ColumnSpacing="8" Padding="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Grid.Column="0"
+                                Text="{x:Bind Milestone.Title}"
+                                TextTrimming="CharacterEllipsis"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{x:Bind DueDateLabel}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                FontSize="11"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
         </StackPanel>
     </ScrollViewer>

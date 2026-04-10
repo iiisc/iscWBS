@@ -216,9 +216,230 @@ public sealed class WbsService : IWbsService
     public Task<IReadOnlyList<NodeDependency>> GetDependenciesAsync(Guid nodeId)
         => _dependencyRepository.GetBySuccessorAsync(nodeId);
 
-    public Task AddDependencyAsync(NodeDependency dependency)
-        => _dependencyRepository.InsertAsync(dependency);
+    public async Task AddDependencyAsync(NodeDependency dependency)
+    {
+        if (dependency.PredecessorId == dependency.SuccessorId)
+            throw new WbsValidationException("A node cannot depend on itself.");
+
+        WbsNode successor = await _repository.GetByIdAsync(dependency.SuccessorId)
+            ?? throw new WbsNotFoundException(dependency.SuccessorId);
+
+        IReadOnlyList<NodeDependency> existing =
+            await _dependencyRepository.GetAllByProjectAsync(successor.ProjectId);
+
+        if (existing.Any(d => d.PredecessorId == dependency.PredecessorId
+                           && d.SuccessorId   == dependency.SuccessorId))
+            throw new WbsValidationException("This dependency already exists.");
+
+        if (WouldCreateCycle(dependency.PredecessorId, dependency.SuccessorId, existing))
+            throw new WbsValidationException(
+                "Adding this dependency would create a circular dependency.");
+
+        await _dependencyRepository.InsertAsync(dependency);
+    }
 
     public Task RemoveDependencyAsync(int id)
         => _dependencyRepository.DeleteAsync(id);
+
+    public Task<IReadOnlyList<NodeDependency>> GetAllDependenciesByProjectAsync(Guid projectId)
+        => _dependencyRepository.GetAllByProjectAsync(projectId);
+
+    /// <summary>
+    /// Returns <see langword="true"/> if adding the edge predecessorId→successorId to the
+    /// existing dependency graph would introduce a cycle. Uses an iterative DFS from
+    /// <paramref name="successorId"/>, following outgoing edges, to determine whether
+    /// <paramref name="predecessorId"/> is already reachable from the proposed successor.
+    /// </summary>
+    private static bool WouldCreateCycle(
+        Guid predecessorId,
+        Guid successorId,
+        IReadOnlyList<NodeDependency> existing)
+    {
+        // Build adjacency list: each node → its direct successors
+        var adj = new Dictionary<Guid, List<Guid>>();
+        foreach (NodeDependency dep in existing)
+        {
+            if (!adj.TryGetValue(dep.PredecessorId, out List<Guid>? list))
+                adj[dep.PredecessorId] = list = [];
+            list.Add(dep.SuccessorId);
+        }
+
+        // Iterative DFS from successorId; if we reach predecessorId the new edge closes a cycle
+        var visited = new HashSet<Guid>();
+        var stack   = new Stack<Guid>();
+        stack.Push(successorId);
+
+        while (stack.Count > 0)
+        {
+            Guid current = stack.Pop();
+            if (current == predecessorId) return true;
+            if (!visited.Add(current)) continue;
+            if (adj.TryGetValue(current, out List<Guid>? neighbors))
+                foreach (Guid neighbor in neighbors)
+                    stack.Push(neighbor);
+        }
+
+        return false;
+    }
+
+    public IReadOnlySet<Guid> ResolveBlockedNodeIds(
+        IReadOnlyList<WbsNode> nodes,
+        IReadOnlyList<NodeDependency> dependencies)
+    {
+        var statusMap = nodes.ToDictionary(n => n.Id, n => n.Status);
+        var blocked = new HashSet<Guid>();
+
+        foreach (NodeDependency dep in dependencies)
+        {
+            if (!statusMap.TryGetValue(dep.SuccessorId, out WbsStatus successorStatus))
+                continue;
+
+            // Already active or finished — dependency no longer constrains it
+            if (successorStatus is WbsStatus.Complete or WbsStatus.InProgress)
+                continue;
+
+            if (!statusMap.TryGetValue(dep.PredecessorId, out WbsStatus predecessorStatus))
+                continue;
+
+            bool isBlocked = DependencyConstraints.IsStartViolated(dep.Type, predecessorStatus);
+
+            if (isBlocked)
+                blocked.Add(dep.SuccessorId);
+        }
+
+        return blocked;
+    }
+
+    public IReadOnlySet<Guid> ResolveCompletionBlockedNodeIds(
+        IReadOnlyList<WbsNode> nodes,
+        IReadOnlyList<NodeDependency> dependencies)
+    {
+        var statusMap   = nodes.ToDictionary(n => n.Id, n => n.Status);
+        IReadOnlySet<Guid> startBlocked = ResolveBlockedNodeIds(nodes, dependencies);
+        var completionBlocked = new HashSet<Guid>();
+
+        foreach (NodeDependency dep in dependencies)
+        {
+            if (!DependencyConstraints.IsFinishConstraint(dep.Type))
+                continue;
+
+            if (!statusMap.TryGetValue(dep.SuccessorId, out WbsStatus successorStatus))
+                continue;
+
+            if (successorStatus == WbsStatus.Complete)
+                continue;
+
+            // Start-blocked nodes carry the more severe indicator; don't double-flag them.
+            if (startBlocked.Contains(dep.SuccessorId))
+                continue;
+
+            if (!statusMap.TryGetValue(dep.PredecessorId, out WbsStatus predecessorStatus))
+                continue;
+
+            bool isCompletionBlocked = DependencyConstraints.IsFinishViolated(dep.Type, predecessorStatus);
+
+            if (isCompletionBlocked)
+                completionBlocked.Add(dep.SuccessorId);
+        }
+
+        return completionBlocked;
+    }
+
+    public IReadOnlySet<Guid> ResolveViolatedCompleteNodeIds(
+        IReadOnlyList<WbsNode> nodes,
+        IReadOnlyList<NodeDependency> dependencies)
+    {
+        var statusMap = nodes.ToDictionary(n => n.Id, n => n.Status);
+        var violated  = new HashSet<Guid>();
+
+        foreach (NodeDependency dep in dependencies)
+        {
+            if (!statusMap.TryGetValue(dep.SuccessorId, out WbsStatus successorStatus))
+                continue;
+
+            // Only Complete nodes can be retroactively violated.
+            if (successorStatus != WbsStatus.Complete)
+                continue;
+
+            if (!statusMap.TryGetValue(dep.PredecessorId, out WbsStatus predecessorStatus))
+                continue;
+
+            bool isViolated = DependencyConstraints.IsViolated(dep.Type, predecessorStatus);
+
+            if (isViolated)
+                violated.Add(dep.SuccessorId);
+        }
+
+        return violated;
+    }
+
+    public IReadOnlySet<Guid> ResolveViolatedInProgressNodeIds(
+        IReadOnlyList<WbsNode> nodes,
+        IReadOnlyList<NodeDependency> dependencies)
+    {
+        var statusMap = nodes.ToDictionary(n => n.Id, n => n.Status);
+        var violated  = new HashSet<Guid>();
+
+        foreach (NodeDependency dep in dependencies)
+        {
+            if (!statusMap.TryGetValue(dep.SuccessorId, out WbsStatus successorStatus))
+                continue;
+
+            if (successorStatus != WbsStatus.InProgress)
+                continue;
+
+            if (!statusMap.TryGetValue(dep.PredecessorId, out WbsStatus predecessorStatus))
+                continue;
+
+            if (DependencyConstraints.IsStartViolated(dep.Type, predecessorStatus))
+                violated.Add(dep.SuccessorId);
+        }
+
+        return violated;
+    }
+
+    public ProjectSummary ComputeProjectSummary(
+        IReadOnlyList<WbsNode> nodes,
+        IReadOnlySet<Guid> blockedNodeIds)
+    {
+        int total      = nodes.Count;
+        int complete   = nodes.Count(n => n.Status == WbsStatus.Complete);
+        int inProgress = nodes.Count(n => n.Status == WbsStatus.InProgress);
+        int blocked    = blockedNodeIds.Count;
+        int notStarted = nodes.Count(n =>
+            n.Status != WbsStatus.Complete &&
+            n.Status != WbsStatus.InProgress &&
+            !blockedNodeIds.Contains(n.Id));
+        int overdue = nodes.Count(n =>
+            n.DueDate.HasValue &&
+            n.DueDate.Value < DateTime.UtcNow &&
+            n.Status != WbsStatus.Complete);
+        double pct = total == 0 ? 0 : Math.Round(complete * 100.0 / total, 1);
+
+        return new ProjectSummary(total, complete, inProgress, notStarted, blocked, overdue, pct);
+    }
+
+    public IReadOnlyList<NodeDependency> GetStatusTransitionBlockers(
+        WbsStatus targetStatus,
+        IReadOnlyList<NodeDependency> predecessorDependencies,
+        IReadOnlyDictionary<Guid, WbsStatus> predecessorStatusMap)
+    {
+        var blockers = new List<NodeDependency>();
+        foreach (NodeDependency dep in predecessorDependencies)
+        {
+            if (!predecessorStatusMap.TryGetValue(dep.PredecessorId, out WbsStatus predStatus))
+                continue;
+
+            bool isBlocked = targetStatus switch
+            {
+                WbsStatus.InProgress => DependencyConstraints.IsStartViolated(dep.Type, predStatus),
+                WbsStatus.Complete   => DependencyConstraints.IsViolated(dep.Type, predStatus),
+                _                    => false,
+            };
+
+            if (isBlocked)
+                blockers.Add(dep);
+        }
+        return blockers;
+    }
 }

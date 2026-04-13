@@ -13,6 +13,12 @@
     <WinUISDKReferences>false</WinUISDKReferences>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Re-enable reflection-based JSON for trimmed (Release) builds.
+         SettingsService and WbsDatabase use generic JsonSerializer APIs (Get<T>/Set<T>)
+         whose T is not known at compile time, so source generation cannot cover them.
+         This flag keeps the JSON reflection infrastructure in the trimmed binary and
+         prevents the NotSupportedException thrown when reflection is disabled. -->
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
   <!-- XAML files are included as Page items by the SDK glob and compiled by XamlPreCompile -->
   <ItemGroup>

@@ -8,21 +8,18 @@
             <SolidColorBrush x:Key="WbsStatusInProgressBrush" Color="#0078D4" />
             <SolidColorBrush x:Key="WbsStatusCompleteBrush"   Color="#107C10" />
             <SolidColorBrush x:Key="WbsStatusBlockedBrush"    Color="#C50F1F" />
-            <SolidColorBrush x:Key="WbsNavLabelBrush"         Color="#005A9E" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
             <SolidColorBrush x:Key="WbsStatusNotStartedBrush" Color="#9E9E9E" />
             <SolidColorBrush x:Key="WbsStatusInProgressBrush" Color="#60CDFF" />
             <SolidColorBrush x:Key="WbsStatusCompleteBrush"   Color="#6CCB5F" />
             <SolidColorBrush x:Key="WbsStatusBlockedBrush"    Color="#FF99A4" />
-            <SolidColorBrush x:Key="WbsNavLabelBrush"         Color="#4CC2FF" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="HighContrast">
             <SolidColorBrush x:Key="WbsStatusNotStartedBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
             <SolidColorBrush x:Key="WbsStatusInProgressBrush" Color="{ThemeResource SystemColorHighlightColor}" />
             <SolidColorBrush x:Key="WbsStatusCompleteBrush"   Color="{ThemeResource SystemColorWindowTextColor}" />
             <SolidColorBrush x:Key="WbsStatusBlockedBrush"    Color="{ThemeResource SystemColorHighlightTextColor}" />
-            <SolidColorBrush x:Key="WbsNavLabelBrush"         Color="{ThemeResource SystemColorHighlightColor}" />
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>

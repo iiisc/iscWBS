@@ -37,44 +37,24 @@
 
                 <NavigationViewItem
                     Tag="WbsTreePage"
+                    x:Uid="Shell_NavWbsTree"
+                    Content="WBS Tree"
                     AutomationProperties.Name="WBS Tree"
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE8BE;" />
                     </NavigationViewItem.Icon>
-                    <NavigationViewItem.Content>
-                        <StackPanel Orientation="Horizontal" Spacing="0">
-                            <TextBlock
-                                Text="WBS"
-                                Foreground="{ThemeResource WbsNavLabelBrush}"
-                                VerticalAlignment="Center" />
-                            <TextBlock
-                                x:Uid="Shell_NavWbsTree_Suffix"
-                                Text=" Tree"
-                                VerticalAlignment="Center" />
-                        </StackPanel>
-                    </NavigationViewItem.Content>
                 </NavigationViewItem>
 
                 <NavigationViewItem
                     Tag="WbsOutlinePage"
+                    x:Uid="Shell_NavWbsOutline"
+                    Content="WBS Outline"
                     AutomationProperties.Name="WBS Outline"
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE8A5;" />
                     </NavigationViewItem.Icon>
-                    <NavigationViewItem.Content>
-                        <StackPanel Orientation="Horizontal" Spacing="0">
-                            <TextBlock
-                                Text="WBS"
-                                Foreground="{ThemeResource WbsNavLabelBrush}"
-                                VerticalAlignment="Center" />
-                            <TextBlock
-                                x:Uid="Shell_NavWbsOutline_Suffix"
-                                Text=" Outline"
-                                VerticalAlignment="Center" />
-                        </StackPanel>
-                    </NavigationViewItem.Content>
                 </NavigationViewItem>
 
                 <NavigationViewItem

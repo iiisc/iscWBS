@@ -62,18 +62,44 @@ public sealed class WbsDatabase
             "CREATE TABLE IF NOT EXISTS \"SchemaVersion\" " +
             "(\"Version\" INTEGER NOT NULL PRIMARY KEY, \"AppliedAt\" TEXT NOT NULL DEFAULT '')");
 
-        await _connection.CreateTableAsync<Project>();
+        // All tables use raw SQL (CREATE TABLE IF NOT EXISTS) instead of CreateTableAsync<T>
+        // for two reasons:
+        //   1. sqlite-net-pcl v1.9.x regression: INTEGER PRIMARY KEY columns are
+        //      mis-identified as missing and re-added via ALTER TABLE, producing a
+        //      "duplicate column name" SQLite error on existing databases.
+        //   2. PublishTrimmed=True (Release) can strip the attribute metadata
+        //      CreateTableAsync relies on for its column-migration logic, causing
+        //      it to treat every column as missing and trigger the same error.
+        // Raw SQL is immune to both issues.
+        await _connection.ExecuteAsync(
+            "CREATE TABLE IF NOT EXISTS \"Projects\" " +
+            "(\"Id\" TEXT NOT NULL PRIMARY KEY, \"Name\" TEXT, \"Description\" TEXT, " +
+            "\"Owner\" TEXT, \"CreatedAt\" TEXT, \"UpdatedAt\" TEXT, \"StartDate\" TEXT)");
 
-        // Pre-migrate WbsNodes.IsDeliverable before CreateTableAsync runs.
-        // sqlite-net-pcl generates ALTER TABLE … ADD COLUMN without a DEFAULT clause,
-        // which SQLite rejects for NOT NULL columns on non-empty tables.
-        // Running the explicit migration first (with DEFAULT 0) prevents that failure.
+        // Pre-migrate WbsNodes.IsDeliverable for databases that pre-date migration v2.
+        // Must run before the WbsNodes table is created so that on old databases the
+        // column exists by the time the CREATE TABLE IF NOT EXISTS no-op runs.
         if (await TableExistsAsync("WbsNodes") && !await HasColumnAsync("WbsNodes", "IsDeliverable"))
             await _connection.ExecuteAsync(
                 "ALTER TABLE \"WbsNodes\" ADD COLUMN \"IsDeliverable\" INTEGER NOT NULL DEFAULT 0");
 
-        await _connection.CreateTableAsync<WbsNode>();
-        await _connection.CreateTableAsync<Milestone>();
+        await _connection.ExecuteAsync(
+            "CREATE TABLE IF NOT EXISTS \"WbsNodes\" " +
+            "(\"Id\" TEXT NOT NULL PRIMARY KEY, \"ProjectId\" TEXT, \"ParentId\" TEXT, " +
+            "\"Code\" TEXT, \"Title\" TEXT, \"Description\" TEXT, \"AssignedTo\" TEXT, " +
+            "\"Status\" INTEGER, \"EstimatedHours\" REAL, \"ActualHours\" REAL, " +
+            "\"StartDate\" TEXT, \"DueDate\" TEXT, \"SortOrder\" INTEGER, \"IsDeliverable\" INTEGER)");
+        await _connection.ExecuteAsync(
+            "CREATE INDEX IF NOT EXISTS \"WbsNodes_ProjectId\" ON \"WbsNodes\" (\"ProjectId\")");
+        await _connection.ExecuteAsync(
+            "CREATE INDEX IF NOT EXISTS \"WbsNodes_ParentId\" ON \"WbsNodes\" (\"ParentId\")");
+
+        await _connection.ExecuteAsync(
+            "CREATE TABLE IF NOT EXISTS \"Milestones\" " +
+            "(\"Id\" TEXT NOT NULL PRIMARY KEY, \"ProjectId\" TEXT, \"Title\" TEXT, " +
+            "\"DueDate\" TEXT, \"IsComplete\" INTEGER)");
+        await _connection.ExecuteAsync(
+            "CREATE INDEX IF NOT EXISTS \"Milestones_ProjectId\" ON \"Milestones\" (\"ProjectId\")");
 
         // Use raw SQL for tables with INTEGER PRIMARY KEY AUTOINCREMENT to work around the
         // same sqlite-net-pcl v1.9.x regression as SchemaVersion: the INTEGER PRIMARY KEY

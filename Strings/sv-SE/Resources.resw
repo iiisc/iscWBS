@@ -20,14 +20,8 @@
   <data name="Shell_NavWbsTree.Content" xml:space="preserve">
     <value>WBS-träd</value>
   </data>
-  <data name="Shell_NavWbsTree_Suffix.Text" xml:space="preserve">
-    <value>-träd</value>
-  </data>
   <data name="Shell_NavWbsOutline.Content" xml:space="preserve">
     <value>WBS-översikt</value>
-  </data>
-  <data name="Shell_NavWbsOutline_Suffix.Text" xml:space="preserve">
-    <value>-översikt</value>
   </data>
   <data name="Shell_NavGantt.Text" xml:space="preserve">
     <value>Gantt</value>

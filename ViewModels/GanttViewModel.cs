@@ -14,11 +14,14 @@ public sealed partial class GanttViewModel : ObservableObject, INavigationAware
     private readonly IMilestoneService _milestoneService;
     private readonly IGanttLayoutService _ganttLayoutService;
 
-    /// <summary>Height of the timeline ruler strip at the top of the canvas.</summary>
-    public const double HeaderHeight = 40.0;
+    /// <summary>Height of the two-tier timeline ruler strip at the top of the canvas.</summary>
+    public const double HeaderHeight = 56.0;
 
     /// <summary>Width of the fixed task-label column.</summary>
     public const double LabelWidth = 220.0;
+
+    /// <summary>Height of a single task row.</summary>
+    public const double RowHeight = 40.0;
 
     [ObservableProperty]
     public partial int SelectedZoomIndex { get; set; }

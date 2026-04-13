@@ -6,12 +6,11 @@ public sealed class GanttLayoutService : IGanttLayoutService
 {
     private static readonly double[] _pixelsPerDayByZoom = { 40.0, 8.0, 2.0 };
 
-    private const double _rowHeight    = 48.0;
-    private const double _barOffsetY   = 12.0;
-    private const double _barHeight    = 24.0;
-    private const double _headerHeight = 40.0;
-    private const double _labelWidth   = 220.0;
-    private const double _minTotalWidth = 800.0;
+    private const double _rowHeight     = 40.0;
+    private const double _barOffsetY    = 8.0;
+    private const double _barHeight     = 24.0;
+    private const double _headerHeight  = 56.0;
+    private const double _minTotalWidth = 600.0;
 
     public GanttLayout Build(
         IReadOnlyList<WbsNode> nodes,
@@ -109,25 +108,58 @@ public sealed class GanttLayoutService : IGanttLayoutService
     private static IReadOnlyList<GanttHeaderTick> BuildHeaderTicks(
         DateTime projectStart, double ppd, double totalWidth, int zoomIndex)
     {
-        double endDays = (totalWidth - _labelWidth) / ppd + 1;
-        DateTime end   = projectStart.AddDays(endDays);
-        var ticks      = new List<GanttHeaderTick>();
+        double   endDays = totalWidth / ppd + 1;
+        DateTime end     = projectStart.AddDays(endDays);
+        var      ticks   = new List<GanttHeaderTick>();
 
         switch (zoomIndex)
         {
-            case 0:
+            case 0: // Day — minor = day number only; major boundary = month change
+            {
+                string? lastMajor = null;
                 for (DateTime d = projectStart; d <= end; d = d.AddDays(1))
-                    ticks.Add(new GanttHeaderTick((d - projectStart).TotalDays * ppd, d.ToString("d MMM")));
+                {
+                    double x      = (d - projectStart).TotalDays * ppd;
+                    string major  = d.ToString("MMMM yyyy");
+                    bool boundary = major != lastMajor;
+                    ticks.Add(new GanttHeaderTick(x, d.Day.ToString(), boundary ? major : null, boundary));
+                    lastMajor = major;
+                }
                 break;
-            case 1:
+            }
+            case 1: // Week — minor = short date; major boundary = month change
+            {
+                string? lastMajor = null;
                 for (DateTime d = projectStart; d <= end; d = d.AddDays(7))
-                    ticks.Add(new GanttHeaderTick((d - projectStart).TotalDays * ppd, d.ToString("d MMM")));
+                {
+                    double x      = (d - projectStart).TotalDays * ppd;
+                    string major  = d.ToString("MMMM yyyy");
+                    bool boundary = major != lastMajor;
+                    ticks.Add(new GanttHeaderTick(x, d.ToString("d MMM"), boundary ? major : null, boundary));
+                    lastMajor = major;
+                }
                 break;
-            case 2:
-                var monthStart = new DateTime(projectStart.Year, projectStart.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-                for (DateTime d = monthStart; d <= end; d = d.AddMonths(1))
-                    ticks.Add(new GanttHeaderTick((d - projectStart).TotalDays * ppd, d.ToString("MMM yyyy")));
+            }
+            case 2: // Month — minor = month abbreviation; major boundary = year change
+            {
+                string? lastMajor    = null;
+                bool    firstVisible = false;
+                var     d            = new DateTime(projectStart.Year, projectStart.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                while (d <= end)
+                {
+                    double x      = (d - projectStart).TotalDays * ppd;
+                    string major  = d.ToString("yyyy");
+                    bool boundary = major != lastMajor || !firstVisible;
+                    lastMajor = major;
+                    if (x >= 0)
+                    {
+                        ticks.Add(new GanttHeaderTick(x, d.ToString("MMM"), boundary ? major : null, boundary));
+                        firstVisible = true;
+                    }
+                    d = d.AddMonths(1);
+                }
                 break;
+            }
         }
 
         return ticks;

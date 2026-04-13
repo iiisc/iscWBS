@@ -22,6 +22,8 @@ public sealed partial class WelcomePage : Page
     private async void BtnNewProject_Click(object sender, RoutedEventArgs e)
     {
         var control = new NewProjectControl();
+        control.DefaultFolderPath = ViewModel.DefaultProjectFolder;
+
         var dialog = new ContentDialog
         {
             Title = "New Project",
@@ -38,7 +40,7 @@ public sealed partial class WelcomePage : Page
             && !string.IsNullOrWhiteSpace(control.FolderPath))
         {
             await ViewModel.CreateProjectAsync(
-                control.ProjectName, control.Owner, control.Currency, control.FolderPath);
+                control.ProjectName, control.Owner, control.FolderPath);
         }
     }
 

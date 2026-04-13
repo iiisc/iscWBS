@@ -24,4 +24,5 @@ public class WbsNode
     public DateTime? StartDate { get; set; }
     public DateTime? DueDate { get; set; }
     public int SortOrder { get; set; }
+    public bool IsDeliverable { get; set; }
 }

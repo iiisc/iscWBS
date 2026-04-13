@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- ─── Shell / Navigation ─────────────────────────────────────────────── -->
+  <data name="Shell_NavDashboard.Text" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Shell_NavWbsTree.Content" xml:space="preserve">
+    <value>WBS-träd</value>
+  </data>
+  <data name="Shell_NavWbsTree_Suffix.Text" xml:space="preserve">
+    <value>-träd</value>
+  </data>
+  <data name="Shell_NavWbsOutline.Content" xml:space="preserve">
+    <value>WBS-översikt</value>
+  </data>
+  <data name="Shell_NavWbsOutline_Suffix.Text" xml:space="preserve">
+    <value>-översikt</value>
+  </data>
+  <data name="Shell_NavGantt.Text" xml:space="preserve">
+    <value>Gantt</value>
+  </data>
+  <data name="Shell_NavReports.Text" xml:space="preserve">
+    <value>Rapporter</value>
+  </data>
+  <data name="Shell_NavMilestones.Content" xml:space="preserve">
+    <value>Milstolpar</value>
+  </data>
+  <data name="Shell_NavSettings.Content" xml:space="preserve">
+    <value>Inställningar</value>
+  </data>
+
+  <!-- ─── Welcome page ────────────────────────────────────────────────────── -->
+  <data name="WelcomePage_Subtitle.Text" xml:space="preserve">
+    <value>Projektledning och arbetsstruktur</value>
+  </data>
+  <data name="WelcomePage_NewProjectBtn.Content" xml:space="preserve">
+    <value>Nytt projekt</value>
+  </data>
+  <data name="WelcomePage_OpenProjectBtn.Content" xml:space="preserve">
+    <value>Öppna projekt</value>
+  </data>
+  <data name="WelcomePage_RecentProjectsLabel.Text" xml:space="preserve">
+    <value>Senaste projekt</value>
+  </data>
+
+  <!-- ─── Dashboard page ──────────────────────────────────────────────────── -->
+  <data name="DashboardPage_Title.Text" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="DashboardPage_ExportPdfBtn.Text" xml:space="preserve">
+    <value>Exportera till PDF</value>
+  </data>
+  <data name="DashboardPage_FilterStartDate.PlaceholderText" xml:space="preserve">
+    <value>Startdatum</value>
+  </data>
+  <data name="DashboardPage_FilterEndDate.PlaceholderText" xml:space="preserve">
+    <value>Slutdatum</value>
+  </data>
+  <data name="DashboardPage_FilterAssignee.PlaceholderText" xml:space="preserve">
+    <value>Ansvarig</value>
+  </data>
+  <data name="DashboardPage_FilterStatus.PlaceholderText" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="DashboardPage_KpiCompletePercent.Text" xml:space="preserve">
+    <value>% Klart</value>
+  </data>
+  <data name="DashboardPage_KpiComplete.Text" xml:space="preserve">
+    <value>Klart</value>
+  </data>
+  <data name="DashboardPage_KpiInProgress.Text" xml:space="preserve">
+    <value>Pågående</value>
+  </data>
+  <data name="DashboardPage_KpiAtRisk.Text" xml:space="preserve">
+    <value>I riskzonen</value>
+  </data>
+  <data name="DashboardPage_KpiOverdue.Text" xml:space="preserve">
+    <value>Försenat</value>
+  </data>
+  <data name="DashboardPage_KpiBlocked.Text" xml:space="preserve">
+    <value>Blockerat</value>
+  </data>
+  <data name="DashboardPage_DeliverablesTitle.Text" xml:space="preserve">
+    <value>Leverabler</value>
+  </data>
+  <data name="DashboardPage_StatusBreakdownTitle.Text" xml:space="preserve">
+    <value>Statusuppdelning</value>
+  </data>
+  <data name="DashboardPage_UpcomingMilestonesTitle.Text" xml:space="preserve">
+    <value>Kommande milstolpar — Nästa 60 dagar</value>
+  </data>
+
+  <!-- ─── WBS Tree page ───────────────────────────────────────────────────── -->
+  <data name="WbsTreePage_AddRootNodeBtn.Content" xml:space="preserve">
+    <value>Lägg till rotnod</value>
+  </data>
+  <data name="WbsTreePage_AddChildBtn.Content" xml:space="preserve">
+    <value>Lägg till undernod</value>
+  </data>
+  <data name="WbsTreePage_DeleteNodeBtn.Content" xml:space="preserve">
+    <value>Ta bort nod</value>
+  </data>
+  <data name="WbsTreePage_CollapseAllBtn.Content" xml:space="preserve">
+    <value>Fäll ihop alla</value>
+  </data>
+  <data name="WbsTreePage_ExpandAllBtn.Content" xml:space="preserve">
+    <value>Expandera alla</value>
+  </data>
+  <data name="WbsTreePage_ContextAddChild.Text" xml:space="preserve">
+    <value>Lägg till undernod</value>
+  </data>
+  <data name="WbsTreePage_ContextAddSibling.Text" xml:space="preserve">
+    <value>Lägg till systernod</value>
+  </data>
+  <data name="WbsTreePage_ContextDelete.Text" xml:space="preserve">
+    <value>Ta bort</value>
+  </data>
+  <data name="WbsTreePage_EmptyTitle.Text" xml:space="preserve">
+    <value>Inga noder ännu</value>
+  </data>
+  <data name="WbsTreePage_EmptyHint.Text" xml:space="preserve">
+    <value>Klicka på 'Lägg till rotnod' för att börja</value>
+  </data>
+
+  <!-- ─── WBS Outline page ────────────────────────────────────────────────── -->
+  <data name="WbsOutlinePage_Title.Text" xml:space="preserve">
+    <value>WBS-översikt</value>
+  </data>
+  <data name="WbsOutlinePage_ColCode.Text" xml:space="preserve">
+    <value>Kod</value>
+  </data>
+  <data name="WbsOutlinePage_ColTitle.Text" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="WbsOutlinePage_ColAssignedTo.Text" xml:space="preserve">
+    <value>Tilldelad</value>
+  </data>
+  <data name="WbsOutlinePage_ColStatus.Text" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="WbsOutlinePage_ColEstHours.Text" xml:space="preserve">
+    <value>Beräknade tim.</value>
+  </data>
+  <data name="WbsOutlinePage_ColActHours.Text" xml:space="preserve">
+    <value>Faktiska tim.</value>
+  </data>
+  <data name="WbsOutlinePage_ColDueDate.Text" xml:space="preserve">
+    <value>Förfallodat.</value>
+  </data>
+
+  <!-- ─── Gantt page ──────────────────────────────────────────────────────── -->
+  <data name="GanttPage_Title.Text" xml:space="preserve">
+    <value>Gantt-diagram</value>
+  </data>
+  <data name="GanttPage_ZoomLabel.Text" xml:space="preserve">
+    <value>Zoom</value>
+  </data>
+  <data name="GanttPage_ZoomDay.Content" xml:space="preserve">
+    <value>Dag</value>
+  </data>
+  <data name="GanttPage_ZoomWeek.Content" xml:space="preserve">
+    <value>Vecka</value>
+  </data>
+  <data name="GanttPage_ZoomMonth.Content" xml:space="preserve">
+    <value>Månad</value>
+  </data>
+
+  <!-- ─── Reports page ────────────────────────────────────────────────────── -->
+  <data name="ReportsPage_Title.Text" xml:space="preserve">
+    <value>Rapporter</value>
+  </data>
+  <data name="ReportsPage_Subtitle.Text" xml:space="preserve">
+    <value>Anpassa och generera en PDF-ögonblicksbild av aktuell projektstatus.</value>
+  </data>
+  <data name="ReportsPage_SectionsTitle.Text" xml:space="preserve">
+    <value>Avsnitt att inkludera</value>
+  </data>
+  <data name="ReportsPage_ToggleSummary.Header" xml:space="preserve">
+    <value>Sammanfattning (KPI-totaler)</value>
+  </data>
+  <data name="ReportsPage_ToggleSummary.OnContent" xml:space="preserve">
+    <value>Inkluderad</value>
+  </data>
+  <data name="ReportsPage_ToggleSummary.OffContent" xml:space="preserve">
+    <value>Exkluderad</value>
+  </data>
+  <data name="ReportsPage_ToggleAttention.Header" xml:space="preserve">
+    <value>Kräver uppmärksamhet</value>
+  </data>
+  <data name="ReportsPage_ToggleAttention.OnContent" xml:space="preserve">
+    <value>Inkluderad</value>
+  </data>
+  <data name="ReportsPage_ToggleAttention.OffContent" xml:space="preserve">
+    <value>Exkluderad</value>
+  </data>
+  <data name="ReportsPage_ToggleDeliverables.Header" xml:space="preserve">
+    <value>Leverabler</value>
+  </data>
+  <data name="ReportsPage_ToggleDeliverables.OnContent" xml:space="preserve">
+    <value>Inkluderad</value>
+  </data>
+  <data name="ReportsPage_ToggleDeliverables.OffContent" xml:space="preserve">
+    <value>Exkluderad</value>
+  </data>
+  <data name="ReportsPage_ToggleEffort.Header" xml:space="preserve">
+    <value>Insatssammanfattning</value>
+  </data>
+  <data name="ReportsPage_ToggleEffort.OnContent" xml:space="preserve">
+    <value>Inkluderad</value>
+  </data>
+  <data name="ReportsPage_ToggleEffort.OffContent" xml:space="preserve">
+    <value>Exkluderad</value>
+  </data>
+  <data name="ReportsPage_ToggleMilestones.Header" xml:space="preserve">
+    <value>Kommande milstolpar</value>
+  </data>
+  <data name="ReportsPage_ToggleMilestones.OnContent" xml:space="preserve">
+    <value>Inkluderad</value>
+  </data>
+  <data name="ReportsPage_ToggleMilestones.OffContent" xml:space="preserve">
+    <value>Exkluderad</value>
+  </data>
+  <data name="ReportsPage_ToggleWbsTree.Header" xml:space="preserve">
+    <value>WBS-träd översikt</value>
+  </data>
+  <data name="ReportsPage_ToggleWbsTree.OnContent" xml:space="preserve">
+    <value>Inkluderad</value>
+  </data>
+  <data name="ReportsPage_ToggleWbsTree.OffContent" xml:space="preserve">
+    <value>Exkluderad</value>
+  </data>
+  <data name="ReportsPage_GeneratePdfBtn.Text" xml:space="preserve">
+    <value>Generera PDF-rapport</value>
+  </data>
+
+  <!-- ─── Milestones page ──────────────────────────────────────────────────── -->
+  <data name="MilestonesPage_NewTitleInput.PlaceholderText" xml:space="preserve">
+    <value>Milstolpens titel</value>
+  </data>
+  <data name="MilestonesPage_AddMilestoneBtn.Content" xml:space="preserve">
+    <value>Lägg till milstolpe</value>
+  </data>
+  <data name="MilestonesPage_StatusComplete.Text" xml:space="preserve">
+    <value>✓ Klar</value>
+  </data>
+  <data name="MilestonesPage_StatusOverdue.Text" xml:space="preserve">
+    <value>Försenad</value>
+  </data>
+  <data name="MilestonesPage_StatusUpcoming.Text" xml:space="preserve">
+    <value>Kommande</value>
+  </data>
+  <data name="MilestonesPage_DetailTitle.Text" xml:space="preserve">
+    <value>Milstolpsinformation</value>
+  </data>
+  <data name="MilestonesPage_TitleLabel.Text" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="MilestonesPage_DueDateLabel.Text" xml:space="preserve">
+    <value>Förfallodatum</value>
+  </data>
+  <data name="MilestonesPage_SaveBtn.Content" xml:space="preserve">
+    <value>Spara</value>
+  </data>
+  <data name="MilestonesPage_MarkCompleteBtn.Content" xml:space="preserve">
+    <value>Markera som klar</value>
+  </data>
+  <data name="MilestonesPage_LinkedNodesTitle.Text" xml:space="preserve">
+    <value>Länkade WBS-noder</value>
+  </data>
+  <data name="MilestonesPage_LinkNodeLabel.Text" xml:space="preserve">
+    <value>Länka en WBS-nod</value>
+  </data>
+  <data name="MilestonesPage_LinkNodeInput.PlaceholderText" xml:space="preserve">
+    <value>Välj nod att länka</value>
+  </data>
+  <data name="MilestonesPage_LinkNodeBtn.Content" xml:space="preserve">
+    <value>Länka nod</value>
+  </data>
+
+  <!-- ─── WBS Detail control ───────────────────────────────────────────────── -->
+  <data name="WbsDetail_Title.Text" xml:space="preserve">
+    <value>Nodinformation</value>
+  </data>
+  <data name="WbsDetail_SavingText.Text" xml:space="preserve">
+    <value>Sparar…</value>
+  </data>
+  <data name="WbsDetail_CodeLabel.Text" xml:space="preserve">
+    <value>Kod</value>
+  </data>
+  <data name="WbsDetail_TitleLabel.Text" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="WbsDetail_DescriptionLabel.Text" xml:space="preserve">
+    <value>Beskrivning</value>
+  </data>
+  <data name="WbsDetail_AssignedToLabel.Text" xml:space="preserve">
+    <value>Tilldelad</value>
+  </data>
+  <data name="WbsDetail_StatusLabel.Text" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="WbsDetail_EstHoursLabel.Text" xml:space="preserve">
+    <value>Beräknade tim.</value>
+  </data>
+  <data name="WbsDetail_ActHoursLabel.Text" xml:space="preserve">
+    <value>Faktiska tim.</value>
+  </data>
+  <data name="WbsDetail_StartDateLabel.Text" xml:space="preserve">
+    <value>Startdatum</value>
+  </data>
+  <data name="WbsDetail_DueDateLabel.Text" xml:space="preserve">
+    <value>Förfallodatum</value>
+  </data>
+  <data name="WbsDetail_TitleInput.PlaceholderText" xml:space="preserve">
+    <value>Nodtitel…</value>
+  </data>
+  <data name="WbsDetail_DeliverableToggle.Header" xml:space="preserve">
+    <value>Inkludera i rapport</value>
+  </data>
+  <data name="WbsDetail_DeliverableToggle.OnContent" xml:space="preserve">
+    <value>Leverabel</value>
+  </data>
+  <data name="WbsDetail_DeliverableToggle.OffContent" xml:space="preserve">
+    <value>Inte en leverabel</value>
+  </data>
+  <data name="WbsDetail_PredecessorsTitle.Text" xml:space="preserve">
+    <value>Föregångare</value>
+  </data>
+  <data name="WbsDetail_AddPredecessorLabel.Text" xml:space="preserve">
+    <value>Lägg till föregångare</value>
+  </data>
+  <data name="WbsDetail_PredecessorInput.PlaceholderText" xml:space="preserve">
+    <value>Välj föregångarnod</value>
+  </data>
+  <data name="WbsDetail_AddPredecessorBtn.Content" xml:space="preserve">
+    <value>Lägg till föregångare</value>
+  </data>
+  <data name="WbsDetail_LinkedMilestonesTitle.Text" xml:space="preserve">
+    <value>Länkade milstolpar</value>
+  </data>
+
+  <!-- ─── Settings page ───────────────────────────────────────────────────── -->
+  <data name="SettingsPage_Title.Text" xml:space="preserve">
+    <value>Inställningar</value>
+  </data>
+  <data name="SettingsPage_ProjectSection.Text" xml:space="preserve">
+    <value>Projekt</value>
+  </data>
+  <data name="SettingsPage_ActiveProjectLabel.Text" xml:space="preserve">
+    <value>Aktivt projekt</value>
+  </data>
+  <data name="SettingsPage_NoActiveProject.Text" xml:space="preserve">
+    <value>Inget projekt är öppet.</value>
+  </data>
+  <data name="SettingsPage_NewProjectBtn.Content" xml:space="preserve">
+    <value>Nytt projekt</value>
+  </data>
+  <data name="SettingsPage_OpenProjectBtn.Content" xml:space="preserve">
+    <value>Öppna projekt</value>
+  </data>
+  <data name="SettingsPage_CloseProjectBtn.Content" xml:space="preserve">
+    <value>Stäng projekt</value>
+  </data>
+  <data name="SettingsPage_RecentProjectsLabel.Text" xml:space="preserve">
+    <value>Senaste projekt</value>
+  </data>
+  <data name="SettingsPage_RemoveBtn.Content" xml:space="preserve">
+    <value>Ta bort</value>
+  </data>
+  <data name="SettingsPage_UpdatesSection.Text" xml:space="preserve">
+    <value>Programvaruuppdateringar</value>
+  </data>
+  <data name="SettingsPage_CurrentVersionLabel.Text" xml:space="preserve">
+    <value>Aktuell version</value>
+  </data>
+  <data name="SettingsPage_CheckUpdatesBtn.Content" xml:space="preserve">
+    <value>Sök efter uppdateringar</value>
+  </data>
+  <data name="SettingsPage_CheckingText.Text" xml:space="preserve">
+    <value>Söker efter uppdateringar…</value>
+  </data>
+  <data name="SettingsPage_DownloadInstallBtn.Content" xml:space="preserve">
+    <value>Ladda ner och installera</value>
+  </data>
+  <data name="SettingsPage_ReleaseNotesBtn.Content" xml:space="preserve">
+    <value>Visa versionsnoteringar</value>
+  </data>
+  <data name="SettingsPage_CancelBtn.Content" xml:space="preserve">
+    <value>Avbryt</value>
+  </data>
+  <data name="SettingsPage_LanguageSection.Text" xml:space="preserve">
+    <value>Språk</value>
+  </data>
+  <data name="SettingsPage_LanguageLabel.Text" xml:space="preserve">
+    <value>Programspråk</value>
+  </data>
+  <data name="SettingsPage_ApplyLanguageBtn.Content" xml:space="preserve">
+    <value>Tillämpa</value>
+  </data>
+  <data name="SettingsPage_RestartNote.Message" xml:space="preserve">
+    <value>Språkändringar träder i kraft efter omstart av programmet.</value>
+  </data>
+
+</root>

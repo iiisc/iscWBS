@@ -7,44 +7,95 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Toolbar -->
+        <!-- Toolbar: left-aligned so the zoom control stays away from the caption buttons -->
         <StackPanel
             Grid.Row="0"
             Orientation="Horizontal"
             Spacing="16"
-            Padding="12,8">
+            Padding="16,8">
             <TextBlock
-                Text="Gantt"
+                x:Uid="GanttPage_Title"
+                Text="Gantt Chart"
                 Style="{ThemeResource SubtitleTextBlockStyle}"
                 VerticalAlignment="Center" />
-            <TextBlock Text="Zoom:" VerticalAlignment="Center" />
-            <RadioButton
-                x:Name="ZoomDay"
-                Content="Day"
-                IsChecked="True"
-                Checked="ZoomDay_Checked"
-                AutomationProperties.Name="Day zoom" />
-            <RadioButton
-                x:Name="ZoomWeek"
-                Content="Week"
-                Checked="ZoomWeek_Checked"
-                AutomationProperties.Name="Week zoom" />
-            <RadioButton
-                x:Name="ZoomMonth"
-                Content="Month"
-                Checked="ZoomMonth_Checked"
-                AutomationProperties.Name="Month zoom" />
+            <Border
+                Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                <TextBlock
+                    Text="BETA" FontSize="11" FontWeight="SemiBold"
+                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                    AutomationProperties.Name="Beta feature" />
+            </Border>
+            <TextBlock
+                x:Uid="GanttPage_ZoomLabel"
+                Text="Zoom"
+                VerticalAlignment="Center"
+                Style="{ThemeResource BodyTextBlockStyle}" />
+            <ComboBox
+                x:Name="ZoomCombo"
+                Width="110"
+                SelectedIndex="0"
+                SelectionChanged="ZoomCombo_SelectionChanged"
+                AutomationProperties.Name="Zoom level">
+                <ComboBoxItem x:Uid="GanttPage_ZoomDay" Content="Day" />
+                <ComboBoxItem x:Uid="GanttPage_ZoomWeek" Content="Week" />
+                <ComboBoxItem x:Uid="GanttPage_ZoomMonth" Content="Month" />
+            </ComboBox>
         </StackPanel>
 
-        <!-- Canvas inside double-axis ScrollViewer; Canvas is created in code-behind -->
-        <ScrollViewer
-            x:Name="GanttScrollViewer"
-            Grid.Row="1"
-            HorizontalScrollBarVisibility="Auto"
-            VerticalScrollBarVisibility="Auto" />
+        <!-- Sticky header row — never scrolls vertically -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border
+                Grid.Column="0"
+                BorderThickness="0,0,1,0"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
+                <Canvas x:Name="LabelHeaderCanvas" />
+            </Border>
+            <ScrollViewer
+                x:Name="HeaderScrollViewer"
+                Grid.Column="1"
+                HorizontalScrollBarVisibility="Hidden"
+                VerticalScrollBarVisibility="Disabled"
+                IsTabStop="False">
+                <Canvas x:Name="HeaderCanvas" />
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Scrollable task rows -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border
+                Grid.Column="0"
+                BorderThickness="0,0,1,0"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
+                <ScrollViewer
+                    x:Name="LabelScrollViewer"
+                    VerticalScrollBarVisibility="Hidden"
+                    HorizontalScrollBarVisibility="Disabled"
+                    IsTabStop="False">
+                    <Canvas x:Name="LabelCanvas" />
+                </ScrollViewer>
+            </Border>
+            <ScrollViewer
+                x:Name="GanttScrollViewer"
+                Grid.Column="1"
+                HorizontalScrollBarVisibility="Auto"
+                VerticalScrollBarVisibility="Auto"
+                ViewChanged="GanttScrollViewer_ViewChanged">
+                <Canvas x:Name="ChartCanvas" />
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </Page>
 

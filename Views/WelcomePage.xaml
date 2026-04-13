@@ -19,6 +19,7 @@
                     HorizontalAlignment="Center" />
 
                 <TextBlock
+                    x:Uid="WelcomePage_Subtitle"
                     Text="Project Management &amp; Work Breakdown Structure"
                     Style="{ThemeResource BodyTextBlockStyle}"
                     HorizontalAlignment="Center"
@@ -27,6 +28,7 @@
 
                 <Button
                     x:Name="BtnNewProject"
+                    x:Uid="WelcomePage_NewProjectBtn"
                     Content="New Project"
                     HorizontalAlignment="Stretch"
                     AutomationProperties.Name="Create a new project"
@@ -34,6 +36,7 @@
 
                 <Button
                     x:Name="BtnOpenProject"
+                    x:Uid="WelcomePage_OpenProjectBtn"
                     Content="Open Project"
                     HorizontalAlignment="Stretch"
                     AutomationProperties.Name="Open an existing project file"
@@ -45,6 +48,7 @@
                     Visibility="{x:Bind ViewModel.HasRecentProjects, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
 
                     <TextBlock
+                        x:Uid="WelcomePage_RecentProjectsLabel"
                         Text="Recent Projects"
                         Style="{ThemeResource SubtitleTextBlockStyle}" />
 

@@ -24,16 +24,19 @@
             Spacing="8"
             Padding="12,8">
             <Button
+                x:Uid="WbsTreePage_AddRootNodeBtn"
                 Content="Add Root Node"
                 Command="{x:Bind ViewModel.AddRootNodeCommand}"
                 AutomationProperties.Name="Add root node" />
             <Button
+                x:Uid="WbsTreePage_AddChildBtn"
                 Content="Add Child"
                 Command="{x:Bind ViewModel.AddChildNodeCommand}"
                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
                 IsEnabled="{x:Bind ViewModel.IsDetailVisible, Mode=OneWay}"
                 AutomationProperties.Name="Add child node" />
             <Button
+                x:Uid="WbsTreePage_DeleteNodeBtn"
                 Content="Delete Node"
                 Command="{x:Bind ViewModel.DeleteNodeCommand}"
                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
@@ -41,10 +44,12 @@
                 AutomationProperties.Name="Delete selected node" />
             <Rectangle Width="1" Height="20" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" VerticalAlignment="Center" />
             <Button
+                x:Uid="WbsTreePage_CollapseAllBtn"
                 Content="Collapse All"
                 Click="CollapseAll_Click"
                 AutomationProperties.Name="Collapse all nodes" />
             <Button
+                x:Uid="WbsTreePage_ExpandAllBtn"
                 Content="Expand All"
                 Click="ExpandAll_Click"
                 AutomationProperties.Name="Expand all nodes" />
@@ -67,17 +72,20 @@
                     <FlyoutBase.AttachedFlyout>
                         <MenuFlyout>
                             <MenuFlyoutItem
+                                x:Uid="WbsTreePage_ContextAddChild"
                                 Text="Add Child"
                                 Command="{x:Bind ViewModel.AddChildNodeCommand}"
                                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
                                 AutomationProperties.Name="Add child node" />
                             <MenuFlyoutItem
+                                x:Uid="WbsTreePage_ContextAddSibling"
                                 Text="Add Sibling"
                                 Command="{x:Bind ViewModel.AddSiblingNodeCommand}"
                                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
                                 AutomationProperties.Name="Add sibling node" />
                             <MenuFlyoutSeparator />
                             <MenuFlyoutItem
+                                x:Uid="WbsTreePage_ContextDelete"
                                 Text="Delete"
                                 Command="{x:Bind ViewModel.DeleteNodeCommand}"
                                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
@@ -93,11 +101,13 @@
                     IsHitTestVisible="False"
                     Visibility="{x:Bind ViewModel.HasNoNodes, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock
+                        x:Uid="WbsTreePage_EmptyTitle"
                         Text="No nodes yet"
                         Style="{ThemeResource SubtitleTextBlockStyle}"
                         HorizontalAlignment="Center"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <TextBlock
+                        x:Uid="WbsTreePage_EmptyHint"
                         Text="Click &#x2018;Add Root Node&#x2019; to get started"
                         Style="{ThemeResource CaptionTextBlockStyle}"
                         HorizontalAlignment="Center"

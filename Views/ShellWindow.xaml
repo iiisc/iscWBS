@@ -16,56 +16,112 @@
             <NavigationView.MenuItems>
                 <NavigationViewItem
                     Tag="DashboardPage"
-                    Content="Dashboard"
-                    AutomationProperties.Name="Dashboard"
+                    AutomationProperties.Name="Dashboard (Beta)"
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE80F;" />
                     </NavigationViewItem.Icon>
+                    <NavigationViewItem.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock x:Uid="Shell_NavDashboard" Text="Dashboard" VerticalAlignment="Center" />
+                            <Border
+                                Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                                CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="BETA" FontSize="9" FontWeight="SemiBold"
+                                    Foreground="{ThemeResource SystemFillColorCautionBrush}" />
+                            </Border>
+                        </StackPanel>
+                    </NavigationViewItem.Content>
                 </NavigationViewItem>
 
                 <NavigationViewItem
                     Tag="WbsTreePage"
-                    Content="WBS Tree"
                     AutomationProperties.Name="WBS Tree"
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE8BE;" />
                     </NavigationViewItem.Icon>
+                    <NavigationViewItem.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="0">
+                            <TextBlock
+                                Text="WBS"
+                                Foreground="{ThemeResource WbsNavLabelBrush}"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                x:Uid="Shell_NavWbsTree_Suffix"
+                                Text=" Tree"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </NavigationViewItem.Content>
                 </NavigationViewItem>
 
                 <NavigationViewItem
                     Tag="WbsOutlinePage"
-                    Content="WBS Outline"
                     AutomationProperties.Name="WBS Outline"
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE8A5;" />
                     </NavigationViewItem.Icon>
+                    <NavigationViewItem.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="0">
+                            <TextBlock
+                                Text="WBS"
+                                Foreground="{ThemeResource WbsNavLabelBrush}"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                x:Uid="Shell_NavWbsOutline_Suffix"
+                                Text=" Outline"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </NavigationViewItem.Content>
                 </NavigationViewItem>
 
                 <NavigationViewItem
                     Tag="GanttPage"
-                    Content="Gantt"
-                    AutomationProperties.Name="Gantt"
+                    AutomationProperties.Name="Gantt (Beta)"
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE877;" />
                     </NavigationViewItem.Icon>
+                    <NavigationViewItem.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock x:Uid="Shell_NavGantt" Text="Gantt" VerticalAlignment="Center" />
+                            <Border
+                                Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                                CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="BETA" FontSize="9" FontWeight="SemiBold"
+                                    Foreground="{ThemeResource SystemFillColorCautionBrush}" />
+                            </Border>
+                        </StackPanel>
+                    </NavigationViewItem.Content>
                 </NavigationViewItem>
 
                 <NavigationViewItem
                     Tag="ReportsPage"
-                    Content="Reports"
-                    AutomationProperties.Name="Reports"
+                    AutomationProperties.Name="Reports (Beta)"
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE9D2;" />
                     </NavigationViewItem.Icon>
+                    <NavigationViewItem.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock x:Uid="Shell_NavReports" Text="Reports" VerticalAlignment="Center" />
+                            <Border
+                                Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                                CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="BETA" FontSize="9" FontWeight="SemiBold"
+                                    Foreground="{ThemeResource SystemFillColorCautionBrush}" />
+                            </Border>
+                        </StackPanel>
+                    </NavigationViewItem.Content>
                 </NavigationViewItem>
 
                 <NavigationViewItem
                     Tag="MilestonesPage"
+                    x:Uid="Shell_NavMilestones"
                     Content="Milestones"
                     AutomationProperties.Name="Milestones"
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
@@ -78,6 +134,7 @@
             <NavigationView.FooterMenuItems>
                 <NavigationViewItem
                     Tag="SettingsPage"
+                    x:Uid="Shell_NavSettings"
                     Content="Settings"
                     AutomationProperties.Name="Settings">
                     <NavigationViewItem.Icon>

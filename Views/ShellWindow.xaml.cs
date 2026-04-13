@@ -37,6 +37,7 @@ public sealed partial class ShellWindow : Window
         };
 
         AppWindow.Title = ViewModel.WindowTitle;
+
         RootGrid.Loaded += OnLoaded;
     }
 
@@ -46,22 +47,28 @@ public sealed partial class ShellWindow : Window
         _navigationService.Initialize(ContentFrame);
 
         IReadOnlyList<string> recent = _settingsService.GetRecentProjects();
+        string? mostRecent = recent.Count > 0 ? recent[0] : null;
 
-        if (recent.Count > 0 && File.Exists(recent[0]))
+        if (mostRecent is not null && File.Exists(mostRecent))
         {
             try
             {
-                await _projectStateService.OpenProjectAsync(recent[0]);
+                await _projectStateService.OpenProjectAsync(mostRecent);
+                return;
             }
-            catch
+            catch (Exception ex)
             {
-                _navigationService.NavigateTo("WelcomePage");
+                _settingsService.RemoveRecentProject(mostRecent);
+                Helpers.Logger.Write(ex);
+                await _dialogService.ShowErrorAsync("Cannot Open Project", ex.Message);
             }
         }
-        else
+        else if (mostRecent is not null)
         {
-            _navigationService.NavigateTo("WelcomePage");
+            _settingsService.RemoveRecentProject(mostRecent);
         }
+
+        _navigationService.NavigateTo("WelcomePage");
     }
 
     private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)

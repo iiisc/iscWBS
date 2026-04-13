@@ -1,10 +1,7 @@
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
-using Windows.ApplicationModel;
-using Windows.Storage;
-using Windows.System;
 using iscWBS.Core.Models;
 
 namespace iscWBS.Core.Services;
@@ -31,8 +28,10 @@ public sealed class UpdateService : IUpdateService
     {
         get
         {
-            PackageVersion v = Package.Current.Id.Version;
-            return $"{v.Major}.{v.Minor}.{v.Build}";
+            string? path = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(path)) return "0.0.0";
+            FileVersionInfo info = FileVersionInfo.GetVersionInfo(path);
+            return $"{info.FileMajorPart}.{info.FileMinorPart}.{info.FileBuildPart}";
         }
     }
 
@@ -48,29 +47,30 @@ public sealed class UpdateService : IUpdateService
         if (!Version.TryParse(tag, out Version? latestVersion))
             return null;
 
-        PackageVersion pv = Package.Current.Id.Version;
-        Version currentVersion = new(pv.Major, pv.Minor, pv.Build);
+        if (!Version.TryParse(CurrentVersion, out Version? currentVersion))
+            return null;
+
         if (latestVersion <= currentVersion)
             return null;
 
-        string? msixUrl = FindMsixAsset(release.Assets);
+        string? exeUrl = FindExeAsset(release.Assets);
 
-        return new UpdateInfo(release.TagName, release.Name, release.HtmlUrl, msixUrl);
+        return new UpdateInfo(release.TagName, release.Name, release.HtmlUrl, exeUrl);
     }
 
     /// <inheritdoc/>
     public async Task DownloadAndInstallAsync(UpdateInfo info, IProgress<int> progress, CancellationToken cancellationToken = default)
     {
-        if (info.MsixDownloadUrl is null)
+        if (info.DownloadUrl is null)
         {
             await OpenReleasePageAsync(info);
             return;
         }
 
-        string tempPath = Path.Combine(Path.GetTempPath(), $"iscWBS-update-{info.TagName}.msix");
+        string tempPath = Path.Combine(Path.GetTempPath(), $"iscWBS-update-{info.TagName}.exe");
 
         using HttpResponseMessage response = await _httpClient.GetAsync(
-            info.MsixDownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            info.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         long? totalBytes = response.Content.Headers.ContentLength;
@@ -89,40 +89,27 @@ public sealed class UpdateService : IUpdateService
         }
 
         fileStream.Close();
-        StorageFile file = await StorageFile.GetFileFromPathAsync(tempPath);
-        await Launcher.LaunchFileAsync(file);
+        Process.Start(new ProcessStartInfo(tempPath) { UseShellExecute = true });
     }
 
     /// <inheritdoc/>
-    public async Task OpenReleasePageAsync(UpdateInfo info)
-        => await Launcher.LaunchUriAsync(new Uri(info.ReleasePageUrl));
-
-    private static string? FindMsixAsset(List<GitHubAsset> assets)
+    public Task OpenReleasePageAsync(UpdateInfo info)
     {
-        // Prefer the asset whose name contains the current process architecture
-        // so x64 machines download the x64 MSIX and ARM64 machines download the ARM64 one.
-        string archTag = RuntimeInformation.ProcessArchitecture switch
-        {
-            Architecture.X64   => "_x64",
-            Architecture.Arm64 => "_ARM64",
-            Architecture.X86   => "_x86",
-            _                  => string.Empty
-        };
+        Process.Start(new ProcessStartInfo(info.ReleasePageUrl) { UseShellExecute = true });
+        return Task.CompletedTask;
+    }
 
-        string? url = null;
-        if (archTag.Length > 0)
-        {
-            url = assets
-                .FirstOrDefault(a =>
-                    a.Name.EndsWith(".msix", StringComparison.OrdinalIgnoreCase) &&
-                    a.Name.Contains(archTag, StringComparison.OrdinalIgnoreCase))
+    private static string? FindExeAsset(List<GitHubAsset> assets)
+    {
+        // Prefer the x64 EXE; fall back to any EXE if no arch-specific one is found.
+        return assets
+            .FirstOrDefault(a =>
+                a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) &&
+                a.Name.Contains("x64", StringComparison.OrdinalIgnoreCase))
+            ?.BrowserDownloadUrl
+            ?? assets
+                .FirstOrDefault(a => a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                 ?.BrowserDownloadUrl;
-        }
-
-        // Fall back to any .msix asset when no architecture-specific one is found.
-        return url ?? assets
-            .FirstOrDefault(a => a.Name.EndsWith(".msix", StringComparison.OrdinalIgnoreCase))
-            ?.BrowserDownloadUrl;
     }
 
     private sealed class GitHubRelease

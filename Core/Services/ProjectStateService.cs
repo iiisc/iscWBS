@@ -16,16 +16,26 @@ public sealed class ProjectStateService : IProjectStateService
     public SQLiteAsyncConnection? Database => _database?.Connection;
 
     public event EventHandler<Project?>? ActiveProjectChanged;
+    public event EventHandler<Project>? ActiveProjectUpdated;
 
     public async Task OpenProjectAsync(string filePath)
     {
         if (!File.Exists(filePath))
             throw new ProjectNotFoundException(filePath);
 
-        await CloseProjectAsync();
+        await CloseInternalAsync();
 
         _database = new WbsDatabase(filePath);
-        await _database.InitializeAsync();
+        try
+        {
+            await _database.InitializeAsync();
+        }
+        catch
+        {
+            await _database.CloseAsync();
+            _database = null;
+            throw;
+        }
 
         var repo = new ProjectRepository(this);
         _activeProject = await repo.GetFirstAsync()
@@ -34,23 +44,31 @@ public sealed class ProjectStateService : IProjectStateService
         ActiveProjectChanged?.Invoke(this, _activeProject);
     }
 
-    public async Task CreateProjectAsync(string name, string filePath, string owner = "", string currency = "USD")
+    public async Task CreateProjectAsync(string name, string filePath, string owner = "")
     {
-        await CloseProjectAsync();
+        await CloseInternalAsync();
 
         string? directory = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             Directory.CreateDirectory(directory);
 
         _database = new WbsDatabase(filePath);
-        await _database.InitializeAsync();
+        try
+        {
+            await _database.InitializeAsync();
+        }
+        catch
+        {
+            await _database.CloseAsync();
+            _database = null;
+            throw;
+        }
 
         var project = new Project
         {
             Id = Guid.NewGuid(),
             Name = name,
             Owner = owner,
-            Currency = string.IsNullOrWhiteSpace(currency) ? "USD" : currency,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -63,13 +81,36 @@ public sealed class ProjectStateService : IProjectStateService
 
     public async Task CloseProjectAsync()
     {
+        await CloseInternalAsync();
+        ActiveProjectChanged?.Invoke(this, null);
+    }
+
+    private async Task CloseInternalAsync()
+    {
         if (_database is not null)
         {
-            await _database.CloseAsync();
-            _database = null;
+            try
+            {
+                await _database.CloseAsync();
+            }
+            finally
+            {
+                _database = null;
+            }
         }
 
         _activeProject = null;
-        ActiveProjectChanged?.Invoke(this, null);
+    }
+
+    public async Task UpdateProjectAsync(Project project)
+    {
+        if (_activeProject is null)
+            throw new WbsException("No project is currently open.");
+
+        project.UpdatedAt = DateTime.UtcNow;
+        var repo = new ProjectRepository(this);
+        await repo.UpdateAsync(project);
+        _activeProject = project;
+        ActiveProjectUpdated?.Invoke(this, project);
     }
 }

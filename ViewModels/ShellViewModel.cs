@@ -21,6 +21,7 @@ public sealed partial class ShellViewModel : ObservableObject
         _navigationService = navigationService;
 
         _projectStateService.ActiveProjectChanged += OnActiveProjectChanged;
+        _projectStateService.ActiveProjectUpdated += OnActiveProjectUpdated;
         HasActiveProject = _projectStateService.HasActiveProject;
     }
 
@@ -31,5 +32,10 @@ public sealed partial class ShellViewModel : ObservableObject
 
         if (project is not null)
             _navigationService.NavigateTo("DashboardPage");
+    }
+
+    private void OnActiveProjectUpdated(object? sender, Project project)
+    {
+        WindowTitle = $"iscWBS \u2014 {project.Name}";
     }
 }

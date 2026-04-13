@@ -3,92 +3,142 @@
     x:Class="iscWBS.Views.ReportsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:lvc="using:LiveChartsCore.SkiaSharpView.WinUI"
     xmlns:converters="using:iscWBS.Converters">
 
     <Page.Resources>
-        <converters:StatusToStringConverter x:Key="StatusToStringConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <TextBlock
+        <StackPanel
             Grid.Row="0"
-            Text="Reports"
-            Style="{ThemeResource SubtitleTextBlockStyle}"
-            Margin="12,12,12,0" />
+            Orientation="Horizontal" Spacing="8"
+            Margin="12,12,12,0" VerticalAlignment="Center">
+            <TextBlock
+                x:Uid="ReportsPage_Title"
+                Text="Reports"
+                Style="{ThemeResource SubtitleTextBlockStyle}" />
+            <Border
+                Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                <TextBlock
+                    Text="BETA" FontSize="11" FontWeight="SemiBold"
+                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                    AutomationProperties.Name="Beta feature" />
+            </Border>
+        </StackPanel>
 
-        <!-- Filters -->
-        <Grid Grid.Row="1" Margin="12,8" ColumnSpacing="12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel
+                Spacing="20"
+                Padding="24,20,24,24"
+                MaxWidth="480"
+                HorizontalAlignment="Center">
 
-            <CalendarDatePicker
-                Grid.Column="0"
-                Date="{x:Bind ViewModel.FilterStartDate, Mode=TwoWay}"
-                PlaceholderText="Start date"
-                AutomationProperties.Name="Filter start date" />
-            <CalendarDatePicker
-                Grid.Column="1"
-                Date="{x:Bind ViewModel.FilterEndDate, Mode=TwoWay}"
-                PlaceholderText="End date"
-                AutomationProperties.Name="Filter end date" />
-            <ComboBox
-                Grid.Column="2"
-                ItemsSource="{x:Bind ViewModel.AssigneeOptions, Mode=OneWay}"
-                SelectedItem="{x:Bind ViewModel.SelectedAssignee, Mode=TwoWay}"
-                PlaceholderText="Assignee"
-                MinWidth="140"
-                AutomationProperties.Name="Filter by assignee" />
-            <ComboBox
-                Grid.Column="3"
-                ItemsSource="{x:Bind ViewModel.StatusOptions}"
-                SelectedItem="{x:Bind ViewModel.SelectedStatus, Mode=TwoWay}"
-                PlaceholderText="Status"
-                MinWidth="140"
-                AutomationProperties.Name="Filter by status">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Converter={StaticResource StatusToStringConverter}}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-        </Grid>
+                <FontIcon
+                    Glyph="&#xE8A5;"
+                    FontSize="44"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    HorizontalAlignment="Center" />
 
-        <!-- Charts -->
-        <Grid Grid.Row="2" Margin="12,0,12,12" ColumnSpacing="12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+                <TextBlock
+                    x:Uid="ReportsPage_Subtitle"
+                    Text="Customise and generate a PDF snapshot of the current project status."
+                    Style="{ThemeResource BodyTextBlockStyle}"
+                    TextAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
-            <StackPanel Grid.Column="0" Spacing="8">
-                <TextBlock Text="Progress Summary" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                <lvc:CartesianChart
-                    Series="{x:Bind ViewModel.ProgressSeries, Mode=OneWay}"
-                    XAxes="{x:Bind ViewModel.ProgressXAxes, Mode=OneWay}"
-                    AutomationProperties.Name="Progress summary chart" />
+                <!-- Section selector card -->
+                <Border
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                    CornerRadius="8" Padding="16,14">
+                    <StackPanel Spacing="4">
+
+                        <TextBlock
+                            x:Uid="ReportsPage_SectionsTitle"
+                            Text="Sections to include"
+                            Style="{ThemeResource SubtitleTextBlockStyle}"
+                            Margin="0,0,0,8" />
+
+                        <ToggleSwitch
+                            x:Uid="ReportsPage_ToggleSummary"
+                            IsOn="{x:Bind ViewModel.IncludeSummary, Mode=TwoWay}"
+                            Header="Summary (KPI totals)"
+                            OnContent="Included" OffContent="Excluded"
+                            AutomationProperties.Name="Include summary section" />
+
+                        <NavigationViewItemSeparator Margin="-4,4" />
+
+                        <ToggleSwitch
+                            x:Uid="ReportsPage_ToggleAttention"
+                            IsOn="{x:Bind ViewModel.IncludeAttentionRequired, Mode=TwoWay}"
+                            Header="Attention Required"
+                            OnContent="Included" OffContent="Excluded"
+                            AutomationProperties.Name="Include attention required section" />
+
+                        <ToggleSwitch
+                            x:Uid="ReportsPage_ToggleDeliverables"
+                            IsOn="{x:Bind ViewModel.IncludeDeliverables, Mode=TwoWay}"
+                            Header="Deliverables"
+                            OnContent="Included" OffContent="Excluded"
+                            AutomationProperties.Name="Include deliverables section" />
+
+                        <ToggleSwitch
+                            x:Uid="ReportsPage_ToggleEffort"
+                            IsOn="{x:Bind ViewModel.IncludeEffortSummary, Mode=TwoWay}"
+                            Header="Effort Summary"
+                            OnContent="Included" OffContent="Excluded"
+                            AutomationProperties.Name="Include effort summary section" />
+
+                        <ToggleSwitch
+                            x:Uid="ReportsPage_ToggleMilestones"
+                            IsOn="{x:Bind ViewModel.IncludeMilestones, Mode=TwoWay}"
+                            Header="Upcoming Milestones"
+                            OnContent="Included" OffContent="Excluded"
+                            AutomationProperties.Name="Include upcoming milestones section" />
+
+                        <ToggleSwitch
+                            x:Uid="ReportsPage_ToggleWbsTree"
+                            IsOn="{x:Bind ViewModel.IncludeWbsTree, Mode=TwoWay}"
+                            Header="WBS Tree Outline"
+                            OnContent="Included" OffContent="Excluded"
+                            AutomationProperties.Name="Include WBS tree outline section" />
+
+                    </StackPanel>
+                </Border>
+
+                <!-- Generate button -->
+                <Button
+                    x:Name="ExportPdfButton"
+                    Style="{ThemeResource AccentButtonStyle}"
+                    HorizontalAlignment="Center"
+                    AutomationProperties.Name="Generate PDF report"
+                    Click="ExportPdfButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE792;" FontSize="14" />
+                        <TextBlock x:Uid="ReportsPage_GeneratePdfBtn" Text="Generate PDF Report" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Last export path -->
+                <TextBlock
+                    Text="{x:Bind ViewModel.LastExportPath, Mode=OneWay}"
+                    Style="{ThemeResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextAlignment="Center"
+                    TextTrimming="CharacterEllipsis"
+                    Visibility="{x:Bind ViewModel.HasLastExportPath, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
             </StackPanel>
-
-            <StackPanel Grid.Column="1" Spacing="8">
-                <TextBlock Text="Burn-down" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                <lvc:CartesianChart
-                    Series="{x:Bind ViewModel.BurnDownSeries, Mode=OneWay}"
-                    XAxes="{x:Bind ViewModel.BurnDownXAxes, Mode=OneWay}"
-                    AutomationProperties.Name="Burn-down chart" />
-            </StackPanel>
-        </Grid>
+        </ScrollViewer>
     </Grid>
 </Page>
 

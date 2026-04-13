@@ -7,10 +7,12 @@ namespace iscWBS.Core.Services;
 public sealed class MilestoneService : IMilestoneService
 {
     private readonly MilestoneRepository _repository;
+    private readonly MilestoneNodeLinkRepository _linkRepository;
 
-    public MilestoneService(MilestoneRepository repository)
+    public MilestoneService(MilestoneRepository repository, MilestoneNodeLinkRepository linkRepository)
     {
         _repository = repository;
+        _linkRepository = linkRepository;
     }
 
     public Task<IReadOnlyList<Milestone>> GetByProjectAsync(Guid projectId)
@@ -34,8 +36,11 @@ public sealed class MilestoneService : IMilestoneService
     public Task UpdateAsync(Milestone milestone)
         => _repository.UpdateAsync(milestone);
 
-    public Task DeleteAsync(Guid id)
-        => _repository.DeleteAsync(id);
+    public async Task DeleteAsync(Guid id)
+    {
+        await _linkRepository.DeleteByMilestoneAsync(id);
+        await _repository.DeleteAsync(id);
+    }
 
     public async Task MarkCompleteAsync(Guid id)
     {
@@ -47,4 +52,38 @@ public sealed class MilestoneService : IMilestoneService
 
     public Task<IReadOnlyList<Milestone>> GetUpcomingAsync(Guid projectId, int days = 30)
         => _repository.GetUpcomingAsync(projectId, days);
+
+    public async Task<IReadOnlyList<Guid>> GetLinkedNodeIdsAsync(Guid milestoneId)
+    {
+        IReadOnlyList<MilestoneNodeLink> links = await _linkRepository.GetByMilestoneAsync(milestoneId);
+        return links.Select(l => l.NodeId).ToList();
+    }
+
+    public Task<IReadOnlyDictionary<Guid, int>> GetLinkedCountsByProjectAsync(Guid projectId)
+        => _linkRepository.GetCountsByProjectAsync(projectId);
+
+    public async Task LinkNodeAsync(Guid milestoneId, Guid nodeId)
+    {
+        IReadOnlyList<MilestoneNodeLink> existing = await _linkRepository.GetByMilestoneAsync(milestoneId);
+        if (existing.Any(l => l.NodeId == nodeId))
+            return;
+
+        await _linkRepository.InsertAsync(new MilestoneNodeLink
+        {
+            MilestoneId = milestoneId,
+            NodeId = nodeId
+        });
+    }
+
+    public async Task UnlinkNodeAsync(Guid milestoneId, Guid nodeId)
+    {
+        IReadOnlyList<MilestoneNodeLink> links = await _linkRepository.GetByMilestoneAsync(milestoneId);
+        MilestoneNodeLink? link = links.FirstOrDefault(l => l.NodeId == nodeId);
+        if (link is not null)
+            await _linkRepository.DeleteAsync(link.Id);
+    }
+
+    public Task<IReadOnlyList<Guid>> GetMilestoneIdsForNodeAsync(Guid nodeId)
+        => _linkRepository.GetMilestoneIdsByNodeAsync(nodeId);
 }
+

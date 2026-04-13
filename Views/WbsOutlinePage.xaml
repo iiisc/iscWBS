@@ -24,6 +24,7 @@
             Spacing="8"
             Padding="12,8">
             <TextBlock
+                x:Uid="WbsOutlinePage_Title"
                 Text="WBS Outline"
                 Style="{ThemeResource SubtitleTextBlockStyle}"
                 VerticalAlignment="Center" />
@@ -40,13 +41,13 @@
                 <ColumnDefinition Width="90" />
                 <ColumnDefinition Width="110" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="Code" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="1" Text="Title" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="2" Text="Assigned To" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="3" Text="Status" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="4" Text="Est. Hours" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="5" Text="Act. Hours" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="6" Text="Due Date" FontWeight="SemiBold" />
+            <TextBlock x:Uid="WbsOutlinePage_ColCode" Grid.Column="0" Text="Code" FontWeight="SemiBold" />
+            <TextBlock x:Uid="WbsOutlinePage_ColTitle" Grid.Column="1" Text="Title" FontWeight="SemiBold" />
+            <TextBlock x:Uid="WbsOutlinePage_ColAssignedTo" Grid.Column="2" Text="Assigned To" FontWeight="SemiBold" />
+            <TextBlock x:Uid="WbsOutlinePage_ColStatus" Grid.Column="3" Text="Status" FontWeight="SemiBold" />
+            <TextBlock x:Uid="WbsOutlinePage_ColEstHours" Grid.Column="4" Text="Est. Hours" FontWeight="SemiBold" />
+            <TextBlock x:Uid="WbsOutlinePage_ColActHours" Grid.Column="5" Text="Act. Hours" FontWeight="SemiBold" />
+            <TextBlock x:Uid="WbsOutlinePage_ColDueDate" Grid.Column="6" Text="Due Date" FontWeight="SemiBold" />
         </Grid>
 
         <ListView

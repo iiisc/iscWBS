@@ -18,12 +18,6 @@
             PlaceholderText="Enter owner name"
             AutomationProperties.Name="Project owner" />
 
-        <ComboBox
-            x:Name="CbxCurrency"
-            Header="Currency"
-            AutomationProperties.Name="Project currency"
-            Width="160" />
-
         <StackPanel Spacing="4">
             <TextBlock
                 Text="Save Location *"

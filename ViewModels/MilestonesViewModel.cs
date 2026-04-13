@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using iscWBS.Core.Models;
@@ -78,14 +77,16 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         {
             Milestones.Clear();
             IReadOnlyList<Milestone> milestones = await _milestoneService.GetByProjectAsync(projectId);
+            IReadOnlyDictionary<Guid, int> counts =
+                await _milestoneService.GetLinkedCountsByProjectAsync(projectId);
+
             foreach (Milestone m in milestones)
             {
-                List<Guid> ids = JsonSerializer.Deserialize<List<Guid>>(m.LinkedNodeIds) ?? [];
                 Milestones.Add(new MilestoneRowViewModel
                 {
                     Milestone = m,
                     DueDateLabel = m.DueDate.ToString("dd MMM yyyy"),
-                    LinkedNodeCount = ids.Count
+                    LinkedNodeCount = counts.TryGetValue(m.Id, out int c) ? c : 0
                 });
             }
         }
@@ -184,15 +185,9 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
     private async Task AddLinkedNodeAsync()
     {
         if (SelectedMilestone is null || NewLinkedNode is null) return;
-
-        List<Guid> ids = JsonSerializer.Deserialize<List<Guid>>(SelectedMilestone.Milestone.LinkedNodeIds) ?? [];
-        if (ids.Contains(NewLinkedNode.Id)) return;
-
-        ids.Add(NewLinkedNode.Id);
-        SelectedMilestone.Milestone.LinkedNodeIds = JsonSerializer.Serialize(ids);
         try
         {
-            await _milestoneService.UpdateAsync(SelectedMilestone.Milestone);
+            await _milestoneService.LinkNodeAsync(SelectedMilestone.Milestone.Id, NewLinkedNode.Id);
             NewLinkedNode = null;
             await LoadLinkedNodesAsync(SelectedMilestone.Milestone);
         }
@@ -206,13 +201,9 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
     private async Task RemoveLinkedNodeAsync(WbsNode? node)
     {
         if (node is null || SelectedMilestone is null) return;
-
-        List<Guid> ids = JsonSerializer.Deserialize<List<Guid>>(SelectedMilestone.Milestone.LinkedNodeIds) ?? [];
-        ids.Remove(node.Id);
-        SelectedMilestone.Milestone.LinkedNodeIds = JsonSerializer.Serialize(ids);
         try
         {
-            await _milestoneService.UpdateAsync(SelectedMilestone.Milestone);
+            await _milestoneService.UnlinkNodeAsync(SelectedMilestone.Milestone.Id, node.Id);
             await LoadLinkedNodesAsync(SelectedMilestone.Milestone);
         }
         catch (Exception ex)
@@ -227,7 +218,7 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         NewLinkedNode = null;
         try
         {
-            List<Guid> ids = JsonSerializer.Deserialize<List<Guid>>(milestone.LinkedNodeIds) ?? [];
+            IReadOnlyList<Guid> ids = await _milestoneService.GetLinkedNodeIdsAsync(milestone.Id);
             foreach (Guid id in ids)
             {
                 WbsNode? node = await _wbsService.GetByIdAsync(id);

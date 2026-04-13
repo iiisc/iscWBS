@@ -1,3 +1,4 @@
+using SQLite;
 using iscWBS.Core.Exceptions;
 using iscWBS.Core.Models;
 using iscWBS.Core.Repositories;
@@ -8,15 +9,18 @@ public sealed class WbsService : IWbsService
 {
     private readonly WbsNodeRepository _repository;
     private readonly NodeDependencyRepository _dependencyRepository;
+    private readonly MilestoneNodeLinkRepository _linkRepository;
     private readonly IProjectStateService _projectStateService;
 
     public WbsService(
         WbsNodeRepository repository,
         NodeDependencyRepository dependencyRepository,
+        MilestoneNodeLinkRepository linkRepository,
         IProjectStateService projectStateService)
     {
         _repository = repository;
         _dependencyRepository = dependencyRepository;
+        _linkRepository = linkRepository;
         _projectStateService = projectStateService;
     }
 
@@ -44,8 +48,11 @@ public sealed class WbsService : IWbsService
             Title = title,
             SortOrder = roots.Count
         };
-        await _repository.InsertAsync(node);
-        await RecodeAsync(null, projectId, string.Empty);
+        await RunInTransactionAsync(async () =>
+        {
+            await _repository.InsertAsync(node);
+            await RecodeAsync(null, projectId, string.Empty);
+        });
         return await _repository.GetByIdAsync(node.Id) ?? throw new WbsNotFoundException(node.Id);
     }
 
@@ -61,8 +68,11 @@ public sealed class WbsService : IWbsService
             Title = title,
             SortOrder = children.Count
         };
-        await _repository.InsertAsync(node);
-        await RecodeAsync(parentId, parent.ProjectId, parent.Code);
+        await RunInTransactionAsync(async () =>
+        {
+            await _repository.InsertAsync(node);
+            await RecodeAsync(parentId, parent.ProjectId, parent.Code);
+        });
         return await _repository.GetByIdAsync(node.Id) ?? throw new WbsNotFoundException(node.Id);
     }
 
@@ -79,11 +89,9 @@ public sealed class WbsService : IWbsService
             ? await _repository.GetChildrenAsync(parentId.Value)
             : await _repository.GetRootNodesAsync(projectId);
 
-        foreach (WbsNode n in siblings.Where(n => n.SortOrder >= insertAt))
-        {
-            n.SortOrder++;
-            await _repository.UpdateAsync(n);
-        }
+        List<WbsNode> toShift = siblings
+            .Where(n => n.SortOrder >= insertAt)
+            .ToList();
 
         var node = new WbsNode
         {
@@ -92,12 +100,21 @@ public sealed class WbsService : IWbsService
             Title = title,
             SortOrder = insertAt
         };
-        await _repository.InsertAsync(node);
 
         string parentCode = parentId.HasValue
             ? (await _repository.GetByIdAsync(parentId.Value))?.Code ?? string.Empty
             : string.Empty;
-        await RecodeAsync(parentId, projectId, parentCode);
+
+        await RunInTransactionAsync(async () =>
+        {
+            foreach (WbsNode n in toShift)
+            {
+                n.SortOrder++;
+                await _repository.UpdateAsync(n);
+            }
+            await _repository.InsertAsync(node);
+            await RecodeAsync(parentId, projectId, parentCode);
+        });
         return await _repository.GetByIdAsync(node.Id) ?? throw new WbsNotFoundException(node.Id);
     }
 
@@ -115,8 +132,11 @@ public sealed class WbsService : IWbsService
             ? (await _repository.GetByIdAsync(parentId.Value))?.Code ?? string.Empty
             : string.Empty;
 
-        await DeleteRecursiveAsync(id);
-        await RecodeAsync(parentId, projectId, parentCode);
+        await RunInTransactionAsync(async () =>
+        {
+            await DeleteRecursiveAsync(id);
+            await RecodeAsync(parentId, projectId, parentCode);
+        });
     }
 
     public async Task MoveNodeAsync(Guid nodeId, Guid? newParentId, int newSortOrder)
@@ -130,7 +150,7 @@ public sealed class WbsService : IWbsService
             ? (await _repository.GetByIdAsync(oldParentId.Value))?.Code ?? string.Empty
             : string.Empty;
 
-        // Compact old sibling group (excluding the node being moved)
+        // Read phase — safe outside the transaction in a single-user app.
         IReadOnlyList<WbsNode> oldSiblings = oldParentId.HasValue
             ? await _repository.GetChildrenAsync(oldParentId.Value)
             : await _repository.GetRootNodesAsync(projectId);
@@ -139,13 +159,7 @@ public sealed class WbsService : IWbsService
             .Where(n => n.Id != nodeId)
             .OrderBy(n => n.SortOrder)
             .ToList();
-        for (int i = 0; i < oldGroup.Count; i++)
-        {
-            oldGroup[i].SortOrder = i;
-            await _repository.UpdateAsync(oldGroup[i]);
-        }
 
-        // Get new sibling group
         List<WbsNode> newGroup;
         string newParentCode;
         if (oldParentId == newParentId)
@@ -164,20 +178,52 @@ public sealed class WbsService : IWbsService
                 : string.Empty;
         }
 
-        newSortOrder = Math.Clamp(newSortOrder, 0, newGroup.Count);
-        foreach (WbsNode n in newGroup.Where(n => n.SortOrder >= newSortOrder))
+        int clampedSortOrder = Math.Clamp(newSortOrder, 0, newGroup.Count);
+
+        // Write phase — all mutations are atomic.
+        await RunInTransactionAsync(async () =>
         {
-            n.SortOrder++;
-            await _repository.UpdateAsync(n);
+            for (int i = 0; i < oldGroup.Count; i++)
+            {
+                oldGroup[i].SortOrder = i;
+                await _repository.UpdateAsync(oldGroup[i]);
+            }
+
+            foreach (WbsNode n in newGroup.Where(n => n.SortOrder >= clampedSortOrder))
+            {
+                n.SortOrder++;
+                await _repository.UpdateAsync(n);
+            }
+
+            node.ParentId = newParentId;
+            node.SortOrder = clampedSortOrder;
+            await _repository.UpdateAsync(node);
+
+            await RecodeAsync(oldParentId, projectId, oldParentCode);
+            if (oldParentId != newParentId)
+                await RecodeAsync(newParentId, projectId, newParentCode);
+        });
+    }
+
+    /// <summary>
+    /// Executes <paramref name="operation"/> inside an explicit SQLite transaction.
+    /// Rolls back and re-throws if the operation throws.
+    /// </summary>
+    private async Task RunInTransactionAsync(Func<Task> operation)
+    {
+        SQLiteAsyncConnection conn = _projectStateService.Database
+            ?? throw new WbsException("No project is currently open.");
+        await conn.ExecuteAsync("BEGIN TRANSACTION");
+        try
+        {
+            await operation();
+            await conn.ExecuteAsync("COMMIT");
         }
-
-        node.ParentId = newParentId;
-        node.SortOrder = newSortOrder;
-        await _repository.UpdateAsync(node);
-
-        await RecodeAsync(oldParentId, projectId, oldParentCode);
-        if (oldParentId != newParentId)
-            await RecodeAsync(newParentId, projectId, newParentCode);
+        catch
+        {
+            try { await conn.ExecuteAsync("ROLLBACK"); } catch { }
+            throw;
+        }
     }
 
     private async Task DeleteRecursiveAsync(Guid nodeId)
@@ -186,6 +232,7 @@ public sealed class WbsService : IWbsService
         foreach (WbsNode child in children)
             await DeleteRecursiveAsync(child.Id);
         await _dependencyRepository.DeleteByNodeAsync(nodeId);
+        await _linkRepository.DeleteByNodeAsync(nodeId);
         await _repository.DeleteAsync(nodeId);
     }
 

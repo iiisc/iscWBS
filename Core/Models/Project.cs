@@ -12,6 +12,6 @@ public class Project
     public string Description { get; set; } = string.Empty;
     public string Owner { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public string Currency { get; set; } = "USD";
+    public DateTime? UpdatedAt { get; set; }
     public DateTime? StartDate { get; set; }
 }

@@ -24,6 +24,7 @@
             Spacing="8"
             Padding="12,8">
             <TextBox
+                x:Uid="MilestonesPage_NewTitleInput"
                 Text="{x:Bind ViewModel.NewTitle, Mode=TwoWay}"
                 PlaceholderText="Milestone title"
                 Width="220"
@@ -32,6 +33,7 @@
                 Date="{x:Bind ViewModel.NewDueDate, Mode=TwoWay}"
                 AutomationProperties.Name="New milestone due date" />
             <Button
+                x:Uid="MilestonesPage_AddMilestoneBtn"
                 Content="Add Milestone"
                 Command="{x:Bind ViewModel.AddMilestoneCommand}"
                 Style="{ThemeResource AccentButtonStyle}"
@@ -71,6 +73,7 @@
                             <!-- Status badge -->
                             <StackPanel Grid.Column="0" Orientation="Horizontal">
                                 <TextBlock
+                                    x:Uid="MilestonesPage_StatusComplete"
                                     Text="✓ Complete"
                                     Foreground="{ThemeResource SystemFillColorSuccessBrush}"
                                     FontWeight="SemiBold"
@@ -78,6 +81,7 @@
                                     VerticalAlignment="Center"
                                     Visibility="{x:Bind Milestone.IsComplete, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <TextBlock
+                                    x:Uid="MilestonesPage_StatusOverdue"
                                     Text="Overdue"
                                     Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                                     FontWeight="SemiBold"
@@ -85,6 +89,7 @@
                                     VerticalAlignment="Center"
                                     Visibility="{x:Bind IsOverdue, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <TextBlock
+                                    x:Uid="MilestonesPage_StatusUpcoming"
                                     Text="Upcoming"
                                     FontSize="12"
                                     VerticalAlignment="Center"
@@ -135,18 +140,19 @@
                 <StackPanel Spacing="12" Padding="16">
 
                     <TextBlock
+                        x:Uid="MilestonesPage_DetailTitle"
                         Text="Milestone Details"
                         Style="{ThemeResource SubtitleTextBlockStyle}" />
 
                     <StackPanel Spacing="4">
-                        <TextBlock Text="Title" Style="{ThemeResource CaptionTextBlockStyle}" />
+                        <TextBlock x:Uid="MilestonesPage_TitleLabel" Text="Title" Style="{ThemeResource CaptionTextBlockStyle}" />
                         <TextBox
                             Text="{x:Bind ViewModel.EditTitle, Mode=TwoWay}"
                             AutomationProperties.Name="Milestone title" />
                     </StackPanel>
 
                     <StackPanel Spacing="4">
-                        <TextBlock Text="Due Date" Style="{ThemeResource CaptionTextBlockStyle}" />
+                        <TextBlock x:Uid="MilestonesPage_DueDateLabel" Text="Due Date" Style="{ThemeResource CaptionTextBlockStyle}" />
                         <CalendarDatePicker
                             Date="{x:Bind ViewModel.EditDueDate, Mode=TwoWay}"
                             HorizontalAlignment="Stretch"
@@ -155,11 +161,13 @@
 
                     <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
                         <Button
+                            x:Uid="MilestonesPage_SaveBtn"
                             Content="Save"
                             Command="{x:Bind ViewModel.SaveEditCommand}"
                             Style="{ThemeResource AccentButtonStyle}"
                             AutomationProperties.Name="Save milestone" />
                         <Button
+                            x:Uid="MilestonesPage_MarkCompleteBtn"
                             Content="Mark Complete"
                             Command="{x:Bind ViewModel.MarkCompleteCommand}"
                             CommandParameter="{x:Bind ViewModel.SelectedMilestone, Mode=OneWay}"
@@ -168,6 +176,7 @@
                     </StackPanel>
 
                     <TextBlock
+                        x:Uid="MilestonesPage_LinkedNodesTitle"
                         Text="Linked WBS Nodes"
                         Style="{ThemeResource SubtitleTextBlockStyle}"
                         Margin="0,8,0,0" />
@@ -205,11 +214,13 @@
                     </ItemsControl>
 
                     <TextBlock
+                        x:Uid="MilestonesPage_LinkNodeLabel"
                         Text="Link a WBS Node"
                         Style="{ThemeResource CaptionTextBlockStyle}"
                         Margin="0,8,0,0" />
 
                     <ComboBox
+                        x:Uid="MilestonesPage_LinkNodeInput"
                         ItemsSource="{x:Bind ViewModel.AllProjectNodes, Mode=OneWay}"
                         SelectedItem="{x:Bind ViewModel.NewLinkedNode, Mode=TwoWay}"
                         PlaceholderText="Select node to link"
@@ -226,6 +237,7 @@
                     </ComboBox>
 
                     <Button
+                        x:Uid="MilestonesPage_LinkNodeBtn"
                         Content="Link Node"
                         Command="{x:Bind ViewModel.AddLinkedNodeCommand}"
                         AutomationProperties.Name="Link selected node" />

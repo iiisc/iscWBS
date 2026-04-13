@@ -67,7 +67,7 @@ public sealed partial class WbsOutlineViewModel : ObservableObject, INavigationA
     private void SelectNode(WbsNode? node)
     {
         if (node is null) return;
-        _navigationService.NavigateTo("WbsTreePage");
+        _navigationService.NavigateTo("WbsTreePage", node.Id);
     }
 
     /// <summary>Navigates to the WBS tree, selecting the node from the given outline row.</summary>

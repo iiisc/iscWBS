@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Dispatching;
@@ -18,6 +17,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
     private bool _isLoadingEditFields;
     private bool _hasPendingEdit;
     private int _saveVersion;
+    private Guid _pendingSelectNodeId;
     private CancellationTokenSource? _pageCts;
     private CancellationTokenSource? _selectionCts;
     private IReadOnlyList<NodeDependency> _cachedDependencies = Array.Empty<NodeDependency>();
@@ -129,6 +129,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
     partial void OnEditActualHoursChanged(double value) => ScheduleSave();
     partial void OnEditStartDateChanged(DateTimeOffset? value) => ScheduleSave();
     partial void OnEditDueDateChanged(DateTimeOffset? value) => ScheduleSave();
+    partial void OnEditIsDeliverableChanged(bool value) => ScheduleSave();
 
     [ObservableProperty]
     public partial double EditEstimatedHours { get; set; }
@@ -141,6 +142,9 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
 
     [ObservableProperty]
     public partial DateTimeOffset? EditDueDate { get; set; }
+
+    [ObservableProperty]
+    public partial bool EditIsDeliverable { get; set; }
 
     [ObservableProperty]
     public partial IReadOnlyList<WbsNode>? DiagramNodes { get; set; }
@@ -220,6 +224,8 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
         _pageCts?.Cancel();
         _pageCts?.Dispose();
         _pageCts = new CancellationTokenSource();
+        if (parameter is Guid nodeId)
+            _pendingSelectNodeId = nodeId;
         _ = LoadRootNodesAsync();
     }
 
@@ -366,6 +372,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
         nodeVm.Node.ActualHours    = EditActualHours;
         nodeVm.Node.StartDate = EditStartDate?.UtcDateTime;
         nodeVm.Node.DueDate   = EditDueDate?.UtcDateTime;
+        nodeVm.Node.IsDeliverable = EditIsDeliverable;
         nodeVm.Title = EditTitle;
     }
 
@@ -546,8 +553,16 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
             CompletionBlockedNodeIds = _wbsService.ResolveCompletionBlockedNodeIds(nodes, deps);
             ViolatedCompleteNodeIds  = _wbsService.ResolveViolatedCompleteNodeIds(nodes, deps);
             ViolatedInProgressNodeIds = _wbsService.ResolveViolatedInProgressNodeIds(nodes, deps);
-            DiagramDependencies      = deps;
-            DiagramNodes             = nodes;
+            DiagramDependencies       = deps;
+            DiagramNodes              = nodes;
+
+            if (_pendingSelectNodeId != Guid.Empty)
+            {
+                WbsNode? target = nodes.FirstOrDefault(n => n.Id == _pendingSelectNodeId);
+                _pendingSelectNodeId = Guid.Empty;
+                if (target is not null)
+                    SelectDiagramNode(target);
+            }
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -652,6 +667,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
             EditDueDate = node.DueDate.HasValue
                 ? (DateTimeOffset?)new DateTimeOffset(DateTime.SpecifyKind(node.DueDate.Value, DateTimeKind.Utc))
                 : null;
+            EditIsDeliverable = node.IsDeliverable;
         }
         finally
         {
@@ -683,17 +699,25 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
         try
         {
             ct.ThrowIfCancellationRequested();
-            IReadOnlyList<Milestone> milestones = await _milestoneService.GetByProjectAsync(projectId);
-            foreach (Milestone m in milestones)
+            IReadOnlyList<Guid> linkedIds =
+                await _milestoneService.GetMilestoneIdsForNodeAsync(nodeId);
+
+            if (linkedIds.Count == 0) return;
+
+            ct.ThrowIfCancellationRequested();
+            IReadOnlyList<Milestone> allMilestones =
+                await _milestoneService.GetByProjectAsync(projectId);
+            IReadOnlyDictionary<Guid, int> counts =
+                await _milestoneService.GetLinkedCountsByProjectAsync(projectId);
+
+            foreach (Milestone m in allMilestones.Where(m => linkedIds.Contains(m.Id)))
             {
                 ct.ThrowIfCancellationRequested();
-                List<Guid> ids = JsonSerializer.Deserialize<List<Guid>>(m.LinkedNodeIds) ?? [];
-                if (!ids.Contains(nodeId)) continue;
                 LinkedMilestones.Add(new MilestoneRowViewModel
                 {
-                    Milestone      = m,
-                    DueDateLabel   = DateTime.SpecifyKind(m.DueDate, DateTimeKind.Utc).ToString("d MMM yyyy"),
-                    LinkedNodeCount = ids.Count,
+                    Milestone = m,
+                    DueDateLabel = DateTime.SpecifyKind(m.DueDate, DateTimeKind.Utc).ToString("d MMM yyyy"),
+                    LinkedNodeCount = counts.TryGetValue(m.Id, out int c) ? c : 0,
                 });
             }
         }

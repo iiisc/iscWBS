@@ -5,4 +5,4 @@ public record UpdateInfo(
     string TagName,
     string ReleaseName,
     string ReleasePageUrl,
-    string? MsixDownloadUrl);
+    string? DownloadUrl);

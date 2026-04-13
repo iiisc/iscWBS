@@ -109,6 +109,17 @@ public interface ISettingsService
 public async Task<WbsNode?> GetByIdAsync(Guid id) { ... }
 ```
 
+### Breaking schema changes
+
+Any change that would make an existing `.iscwbs` project file unreadable — including incrementing `_currentSchemaVersion` in `WbsDatabase`, dropping or renaming a column or table, changing a primary key type, or removing a `CreateTableAsync` call — **requires explicit manual confirmation before proceeding**.
+
+Copilot must never silently apply such changes. Always surface them prominently and wait for the developer to confirm before writing the migration code. When confirmation is given:
+
+1. Increment `_currentSchemaVersion` in `WbsDatabase`.
+2. Add a complete migration case in `ApplyMigrationsAsync` covering every version gap.
+3. Manually test the migration against at least one pre-migration `.iscwbs` file before merging.
+4. Document the change in the PR description.
+
 ---
 
 ## Application Startup

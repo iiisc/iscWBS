@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Storage;
@@ -10,19 +11,30 @@ public sealed partial class NewProjectControl : UserControl
 {
     public string ProjectName => TxtName.Text.Trim();
     public string Owner => TxtOwner.Text.Trim();
-    public string Currency => CbxCurrency.SelectedValue as string ?? "USD";
     public string FolderPath { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Sets both the displayed path label and the <see cref="FolderPath"/> backing value.
+    /// Call this before the dialog is shown to pre-populate a sensible default.
+    /// </summary>
+    public string DefaultFolderPath
+    {
+        set
+        {
+            FolderPath = value;
+            TxtSavePath.Text = value;
+        }
+    }
 
     public NewProjectControl()
     {
         InitializeComponent();
 
-        CbxCurrency.Items.Add("USD");
-        CbxCurrency.Items.Add("EUR");
-        CbxCurrency.Items.Add("GBP");
-        CbxCurrency.Items.Add("AUD");
-        CbxCurrency.Items.Add("CAD");
-        CbxCurrency.SelectedIndex = 0;
+        string defaultFolder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "iscWBS Projects");
+        FolderPath = defaultFolder;
+        TxtSavePath.Text = defaultFolder;
     }
 
     private async void BtnPickFolder_Click(object sender, RoutedEventArgs e)

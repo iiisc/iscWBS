@@ -23,11 +23,13 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock
                     Grid.Column="0"
+                    x:Uid="WbsDetail_Title"
                     Text="Node Details"
                     Style="{ThemeResource SubtitleTextBlockStyle}"
                     VerticalAlignment="Center" />
                 <TextBlock
                     Grid.Column="1"
+                    x:Uid="WbsDetail_SavingText"
                     Text="Saving…"
                     Style="{ThemeResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -45,7 +47,7 @@
             </Grid>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Code" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <TextBlock x:Uid="WbsDetail_CodeLabel" Text="Code" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <TextBlock
                     Text="{x:Bind ViewModel.SelectedNode.Node.Code, Mode=OneWay}"
                     FontWeight="SemiBold"
@@ -53,15 +55,16 @@
             </StackPanel>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Title" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <TextBlock x:Uid="WbsDetail_TitleLabel" Text="Title" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <TextBox
+                    x:Uid="WbsDetail_TitleInput"
                     Text="{x:Bind ViewModel.EditTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     PlaceholderText="Node title…"
                     AutomationProperties.Name="Title" />
             </StackPanel>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Description" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <TextBlock x:Uid="WbsDetail_DescriptionLabel" Text="Description" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <TextBox
                     Text="{x:Bind ViewModel.EditDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     AcceptsReturn="True"
@@ -71,14 +74,14 @@
             </StackPanel>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Assigned To" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <TextBlock x:Uid="WbsDetail_AssignedToLabel" Text="Assigned To" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <TextBox
                     Text="{x:Bind ViewModel.EditAssignedTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     AutomationProperties.Name="Assigned to" />
             </StackPanel>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Status" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <TextBlock x:Uid="WbsDetail_StatusLabel" Text="Status" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <ComboBox
                     ItemsSource="{x:Bind ViewModel.StatusOptions}"
                     SelectedItem="{x:Bind ViewModel.EditStatusItem, Mode=TwoWay}"
@@ -99,7 +102,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="Est. Hours" Style="{ThemeResource CaptionTextBlockStyle}" />
+                    <TextBlock x:Uid="WbsDetail_EstHoursLabel" Text="Est. Hours" Style="{ThemeResource CaptionTextBlockStyle}" />
                     <NumberBox
                         Value="{x:Bind ViewModel.EditEstimatedHours, Mode=TwoWay}"
                         Minimum="0"
@@ -108,7 +111,7 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Spacing="4">
-                    <TextBlock Text="Act. Hours" Style="{ThemeResource CaptionTextBlockStyle}" />
+                    <TextBlock x:Uid="WbsDetail_ActHoursLabel" Text="Act. Hours" Style="{ThemeResource CaptionTextBlockStyle}" />
                     <NumberBox
                         Value="{x:Bind ViewModel.EditActualHours, Mode=TwoWay}"
                         Minimum="0"
@@ -118,7 +121,7 @@
             </Grid>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Start Date" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <TextBlock x:Uid="WbsDetail_StartDateLabel" Text="Start Date" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <CalendarDatePicker
                     Date="{x:Bind ViewModel.EditStartDate, Mode=TwoWay}"
                     HorizontalAlignment="Stretch"
@@ -126,12 +129,20 @@
             </StackPanel>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Due Date" Style="{ThemeResource CaptionTextBlockStyle}" />
+                <TextBlock x:Uid="WbsDetail_DueDateLabel" Text="Due Date" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <CalendarDatePicker
                     Date="{x:Bind ViewModel.EditDueDate, Mode=TwoWay}"
                     HorizontalAlignment="Stretch"
                     AutomationProperties.Name="Due date" />
             </StackPanel>
+
+            <ToggleSwitch
+                x:Uid="WbsDetail_DeliverableToggle"
+                IsOn="{x:Bind ViewModel.EditIsDeliverable, Mode=TwoWay}"
+                Header="Include in report"
+                OnContent="Deliverable"
+                OffContent="Not a deliverable"
+                AutomationProperties.Name="Mark node as a deliverable" />
 
             <Rectangle
                 Height="1"
@@ -139,6 +150,7 @@
                 Margin="0,8,0,4" />
 
             <TextBlock
+                x:Uid="WbsDetail_PredecessorsTitle"
                 Text="Predecessors"
                 Style="{ThemeResource SubtitleTextBlockStyle}" />
 
@@ -198,11 +210,13 @@
                 </ItemsControl>
 
                 <TextBlock
+                    x:Uid="WbsDetail_AddPredecessorLabel"
                     Text="Add Predecessor"
                     Style="{ThemeResource CaptionTextBlockStyle}"
                     Margin="0,8,0,0" />
 
                 <ComboBox
+                    x:Uid="WbsDetail_PredecessorInput"
                     ItemsSource="{x:Bind ViewModel.AllProjectNodes, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.NewDepPredecessor, Mode=TwoWay}"
                     PlaceholderText="Select predecessor node"
@@ -238,6 +252,7 @@
                 </ComboBox>
 
                 <Button
+                    x:Uid="WbsDetail_AddPredecessorBtn"
                     Content="Add Predecessor"
                     Command="{x:Bind ViewModel.AddDependencyCommand}"
                     AutomationProperties.Name="Add predecessor dependency" />
@@ -248,6 +263,7 @@
                 Margin="0,8,0,4" />
 
             <TextBlock
+                x:Uid="WbsDetail_LinkedMilestonesTitle"
                 Text="Linked Milestones"
                 Style="{ThemeResource SubtitleTextBlockStyle}" />
 

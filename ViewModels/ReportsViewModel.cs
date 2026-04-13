@@ -1,12 +1,4 @@
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using LiveChartsCore;
-using LiveChartsCore.Defaults;
-using LiveChartsCore.Kernel.Sketches;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using SkiaSharp;
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
 using iscWBS.Helpers;
@@ -15,204 +7,101 @@ namespace iscWBS.ViewModels;
 
 public sealed partial class ReportsViewModel : ObservableObject, INavigationAware
 {
-    private readonly IProjectStateService _projectStateService;
-    private readonly IWbsService _wbsService;
+    private readonly IReportExportService _reportExportService;
     private readonly IDialogService _dialogService;
+    private readonly ISettingsService _settingsService;
 
-    private IReadOnlyList<WbsNode> _allNodes = Array.Empty<WbsNode>();
-
-    [ObservableProperty]
-    public partial ISeries[] ProgressSeries { get; set; } = Array.Empty<ISeries>();
+    // â”€â”€â”€ Export state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [ObservableProperty]
-    public partial IEnumerable<ICartesianAxis> ProgressXAxes { get; set; } = Array.Empty<ICartesianAxis>();
+    public partial bool IsExporting { get; set; }
 
     [ObservableProperty]
-    public partial ISeries[] BurnDownSeries { get; set; } = Array.Empty<ISeries>();
+    public partial string? LastExportPath { get; set; }
+
+    public bool HasLastExportPath => !string.IsNullOrEmpty(LastExportPath);
+
+    partial void OnLastExportPathChanged(string? value) => OnPropertyChanged(nameof(HasLastExportPath));
+
+    // â”€â”€â”€ Section options â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [ObservableProperty]
-    public partial IEnumerable<ICartesianAxis> BurnDownXAxes { get; set; } = Array.Empty<ICartesianAxis>();
+    public partial bool IncludeSummary { get; set; }
 
     [ObservableProperty]
-    public partial DateTimeOffset? FilterStartDate { get; set; }
+    public partial bool IncludeAttentionRequired { get; set; }
 
     [ObservableProperty]
-    public partial DateTimeOffset? FilterEndDate { get; set; }
+    public partial bool IncludeDeliverables { get; set; }
 
     [ObservableProperty]
-    public partial string? SelectedAssignee { get; set; }
+    public partial bool IncludeEffortSummary { get; set; }
 
     [ObservableProperty]
-    public partial WbsStatus? SelectedStatus { get; set; }
+    public partial bool IncludeMilestones { get; set; }
 
-    public ObservableCollection<string> AssigneeOptions { get; } = new();
+    [ObservableProperty]
+    public partial bool IncludeWbsTree { get; set; }
 
-    public IReadOnlyList<WbsStatus?> StatusOptions { get; } =
-        new WbsStatus?[] { null }
-            .Concat(Enum.GetValues<WbsStatus>().Cast<WbsStatus?>())
-            .ToList();
+    partial void OnIncludeSummaryChanged(bool v)           => _settingsService.Set(SettingsKeys.ReportIncludeSummary,           v);
+    partial void OnIncludeAttentionRequiredChanged(bool v) => _settingsService.Set(SettingsKeys.ReportIncludeAttentionRequired, v);
+    partial void OnIncludeDeliverablesChanged(bool v)      => _settingsService.Set(SettingsKeys.ReportIncludeDeliverables,      v);
+    partial void OnIncludeEffortSummaryChanged(bool v)     => _settingsService.Set(SettingsKeys.ReportIncludeEffortSummary,     v);
+    partial void OnIncludeMilestonesChanged(bool v)        => _settingsService.Set(SettingsKeys.ReportIncludeMilestones,        v);
+    partial void OnIncludeWbsTreeChanged(bool v)           => _settingsService.Set(SettingsKeys.ReportIncludeWbsTree,           v);
 
     public ReportsViewModel(
-        IProjectStateService projectStateService,
-        IWbsService wbsService,
-        IDialogService dialogService)
+        IReportExportService reportExportService,
+        IDialogService dialogService,
+        ISettingsService settingsService)
     {
-        _projectStateService = projectStateService;
-        _wbsService = wbsService;
-        _dialogService = dialogService;
+        _reportExportService = reportExportService;
+        _dialogService       = dialogService;
+        _settingsService     = settingsService;
+
+        IncludeSummary           = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeSummary)           ?? true;
+        IncludeAttentionRequired = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeAttentionRequired) ?? true;
+        IncludeDeliverables      = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeDeliverables)      ?? true;
+        IncludeEffortSummary     = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeEffortSummary)     ?? true;
+        IncludeMilestones        = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeMilestones)        ?? true;
+        IncludeWbsTree           = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeWbsTree)           ?? true;
     }
 
-    public void OnNavigatedTo(object? parameter) => _ = LoadAsync();
+    public void OnNavigatedTo(object? parameter) { }
     public void OnNavigatedFrom() { }
 
-    partial void OnSelectedAssigneeChanged(string? value) => RebuildCharts();
-    partial void OnSelectedStatusChanged(WbsStatus? value) => RebuildCharts();
-    partial void OnFilterStartDateChanged(DateTimeOffset? value) => RebuildCharts();
-    partial void OnFilterEndDateChanged(DateTimeOffset? value) => RebuildCharts();
-
-    [RelayCommand]
-    private async Task LoadAsync()
+    /// <summary>
+    /// Generates a PDF report with the user-selected sections and saves it to <paramref name="filePath"/>.
+    /// Returns <see langword="true"/> on success; errors are surfaced via <see cref="IDialogService"/>.
+    /// </summary>
+    public async Task<bool> ExportPdfAsync(string filePath)
     {
-        if (_projectStateService.ActiveProject is not { Id: var projectId }) return;
+        if (IsExporting) return false;
+        IsExporting = true;
         try
         {
-            _allNodes = await _wbsService.GetAllByProjectAsync(projectId);
-            RebuildAssigneeOptions();
-            RebuildCharts();
+            var options = new ReportOptions
+            {
+                IncludeSummary           = IncludeSummary,
+                IncludeAttentionRequired = IncludeAttentionRequired,
+                IncludeDeliverables      = IncludeDeliverables,
+                IncludeEffortSummary     = IncludeEffortSummary,
+                IncludeMilestones        = IncludeMilestones,
+                IncludeWbsTree           = IncludeWbsTree,
+            };
+            await _reportExportService.ExportAsync(filePath, options);
+            LastExportPath = filePath;
+            return true;
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Reports Error", ex.Message);
+            await _dialogService.ShowErrorAsync("Export Failed", ex.Message);
+            return false;
         }
-    }
-
-    private void RebuildAssigneeOptions()
-    {
-        AssigneeOptions.Clear();
-        AssigneeOptions.Add("All");
-        foreach (string a in _allNodes
-            .Select(n => n.AssignedTo)
-            .Where(a => !string.IsNullOrWhiteSpace(a))
-            .Distinct()
-            .OrderBy(a => a))
+        finally
         {
-            AssigneeOptions.Add(a);
+            IsExporting = false;
         }
-    }
-
-    private void RebuildCharts()
-    {
-        IEnumerable<WbsNode> filtered = _allNodes;
-
-        if (!string.IsNullOrEmpty(SelectedAssignee) && SelectedAssignee != "All")
-            filtered = filtered.Where(n => n.AssignedTo == SelectedAssignee);
-        if (SelectedStatus.HasValue)
-            filtered = filtered.Where(n => n.Status == SelectedStatus);
-        if (FilterStartDate.HasValue)
-            filtered = filtered.Where(n => n.DueDate.HasValue && n.DueDate.Value >= FilterStartDate.Value.UtcDateTime);
-        if (FilterEndDate.HasValue)
-            filtered = filtered.Where(n => n.DueDate.HasValue && n.DueDate.Value <= FilterEndDate.Value.UtcDateTime);
-
-        List<WbsNode> nodes = filtered.ToList();
-        BuildProgressChart(nodes);
-        BuildBurnDownChart(nodes);
-    }
-
-    private void BuildProgressChart(List<WbsNode> nodes)
-    {
-        if (nodes.Count == 0)
-        {
-            ProgressSeries = Array.Empty<ISeries>();
-            ProgressXAxes = Array.Empty<ICartesianAxis>();
-            return;
-        }
-
-        int total = nodes.Count;
-        int complete = nodes.Count(n => n.Status == WbsStatus.Complete);
-        int inProgress = nodes.Count(n => n.Status == WbsStatus.InProgress);
-        double remaining = total - complete - inProgress;
-
-        ProgressSeries = new ISeries[]
-        {
-            new ColumnSeries<double>
-            {
-                Name = "Complete",
-                Values = new[] { (double)complete },
-                Fill = new SolidColorPaint(ChartPalette.CompleteAlpha)
-            },
-            new ColumnSeries<double>
-            {
-                Name = "In Progress",
-                Values = new[] { (double)inProgress },
-                Fill = new SolidColorPaint(ChartPalette.InProgressAlpha)
-            },
-            new ColumnSeries<double>
-            {
-                Name = "Remaining",
-                Values = new[] { remaining },
-                Fill = new SolidColorPaint(ChartPalette.NotStartedAlpha)
-            }
-        };
-        ProgressXAxes = new[] { new Axis { Labels = new[] { "Nodes" } } };
-    }
-
-    private void BuildBurnDownChart(List<WbsNode> nodes)
-    {
-        if (nodes.Count == 0)
-        {
-            BurnDownSeries = Array.Empty<ISeries>();
-            BurnDownXAxes = Array.Empty<ICartesianAxis>();
-            return;
-        }
-
-        double totalHours = nodes.Sum(n => n.EstimatedHours);
-        double actualHours = nodes.Sum(n => n.ActualHours);
-        double remaining = Math.Max(0, totalHours - actualHours);
-
-        DateTime? start = _projectStateService.ActiveProject?.StartDate
-            ?? nodes.Where(n => n.StartDate.HasValue).Select(n => n.StartDate!.Value).DefaultIfEmpty(DateTime.Today.AddMonths(-1)).Min();
-        DateTime? end = nodes.Where(n => n.DueDate.HasValue).Select(n => n.DueDate!.Value).DefaultIfEmpty(DateTime.Today.AddMonths(1)).Max();
-
-        if (start is null || end is null || end <= start)
-        {
-            BurnDownSeries = Array.Empty<ISeries>();
-            BurnDownXAxes = Array.Empty<ICartesianAxis>();
-            return;
-        }
-
-        var idealPoints = new DateTimePoint[]
-        {
-            new(start.Value, totalHours),
-            new(end.Value, 0)
-        };
-
-        var remainingPoints = new DateTimePoint[]
-        {
-            new(start.Value, totalHours),
-            new(DateTime.Today, remaining)
-        };
-
-        BurnDownSeries = new ISeries[]
-        {
-            new LineSeries<DateTimePoint>
-            {
-                Name = "Ideal",
-                Values = idealPoints,
-                GeometryFill = null,
-                GeometryStroke = null,
-                Stroke = new SolidColorPaint(ChartPalette.NotStarted, 2)
-            },
-            new LineSeries<DateTimePoint>
-            {
-                Name = "Remaining",
-                Values = remainingPoints,
-                GeometryFill = null,
-                GeometryStroke = null,
-                Stroke = new SolidColorPaint(ChartPalette.Blocked, 2)
-            }
-        };
-
-        BurnDownXAxes = new ICartesianAxis[] { new DateTimeAxis(TimeSpan.FromDays(30), d => d.ToString("MMM yy")) };
     }
 }
 

@@ -3,6 +3,7 @@ using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using iscWBS.Core.Services;
+using iscWBS.Helpers;
 
 namespace iscWBS.ViewModels;
 
@@ -16,6 +17,14 @@ public sealed partial class WelcomeViewModel : ObservableObject
     public partial ObservableCollection<string> RecentProjects { get; set; } = new();
 
     public bool HasRecentProjects => RecentProjects.Count > 0;
+
+    /// <summary>
+    /// Returns the last folder the user saved a project to, falling back to
+    /// <c>Documents\iscWBS Projects</c> when no preference has been recorded.
+    /// </summary>
+    public string DefaultProjectFolder =>
+        _settingsService.Get<string>(SettingsKeys.LastProjectFolder)
+        ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "iscWBS Projects");
 
     public WelcomeViewModel(
         IProjectStateService projectStateService,
@@ -52,13 +61,14 @@ public sealed partial class WelcomeViewModel : ObservableObject
     }
 
     /// <summary>Called from WelcomePage code-behind after the New Project dialog is confirmed.</summary>
-    public async Task CreateProjectAsync(string name, string owner, string currency, string folderPath)
+    public async Task CreateProjectAsync(string name, string owner, string folderPath)
     {
         try
         {
             string filePath = Path.Combine(folderPath, $"{name}.iscwbs");
-            await _projectStateService.CreateProjectAsync(name, filePath, owner, currency);
+            await _projectStateService.CreateProjectAsync(name, filePath, owner);
             _settingsService.AddRecentProject(filePath);
+            _settingsService.Set(SettingsKeys.LastProjectFolder, folderPath);
         }
         catch (Exception ex)
         {

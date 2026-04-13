@@ -1,6 +1,6 @@
 namespace iscWBS.Core.Services;
 
-/// <summary>Wraps <c>ApplicationData.LocalSettings</c> for persistent user preferences.</summary>
+/// <summary>Provides persistent user preferences backed by a JSON file in <c>%LOCALAPPDATA%\ISC\iscWBS\</c>.</summary>
 public interface ISettingsService
 {
     /// <summary>Gets a setting value by key, or <see langword="default"/> if not found.</summary>
@@ -14,4 +14,7 @@ public interface ISettingsService
 
     /// <summary>Adds a file path to the front of the recent projects list (max 10 entries).</summary>
     void AddRecentProject(string filePath);
+
+    /// <summary>Removes a file path from the recent projects list.</summary>
+    void RemoveRecentProject(string filePath);
 }

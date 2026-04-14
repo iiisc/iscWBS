@@ -83,7 +83,7 @@ jobs:
 
       # ── 4. Publish ──────────────────────────────────────────────────────────
       - name: Publish
-        run: dotnet publish ${{ env.PROJECT }} -p:PublishProfile=Release -p:Version=${{ steps.ver.outputs.VERSION }}
+        run: dotnet publish ${{ env.PROJECT }} -p:PublishProfile=Release -p:Platform=x64 -p:Version=${{ steps.ver.outputs.VERSION }}
 
       # ── 5. Rename and locate EXE ────────────────────────────────────────────
       - name: Locate EXE

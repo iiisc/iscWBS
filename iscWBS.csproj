@@ -53,8 +53,12 @@
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <!-- WinUI 3 / Windows App SDK are not trim-safe; trimming silently removes
+         XAML reflection infrastructure and causes silent startup crashes. -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <!-- Bundle native DLLs (Windows App SDK bootstrapper, SkiaSharp, etc.) into
+         the single-file EXE so the release artifact is truly a single executable. -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
 </Project>

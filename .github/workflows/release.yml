@@ -91,16 +91,20 @@ jobs:
           --self-contained
           -p:PublishSingleFile=true
           -p:Version=${{ steps.ver.outputs.VERSION }}
-          -o bin\Release\publish
+          "-p:PublishDir=${{ github.workspace }}\bin\Release\publish\"
 
       # ── 5. Rename and locate EXE ────────────────────────────────────────────
       - name: Locate EXE
         id: exe
         shell: pwsh
         run: |
-          $src = 'bin\Release\publish\iscWBS.exe'
-          $dst = "bin\Release\publish\iscWBS-${{ steps.ver.outputs.VERSION }}-x64.exe"
-          Rename-Item $src $dst
+          $exe = Get-ChildItem -Recurse -Filter 'iscWBS.exe' |
+                 Where-Object { $_.FullName -notmatch '\\obj\\' } |
+                 Select-Object -First 1
+          if (-not $exe) { throw 'iscWBS.exe was not found after publish' }
+          Write-Host "Found EXE at: $($exe.FullName)"
+          $dst = Join-Path $exe.DirectoryName "iscWBS-${{ steps.ver.outputs.VERSION }}-x64.exe"
+          Rename-Item $exe.FullName $dst
           "EXE=$dst" >> $env:GITHUB_OUTPUT
 
       # ── 6. Publish release ──────────────────────────────────────────────────

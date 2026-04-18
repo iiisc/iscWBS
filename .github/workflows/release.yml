@@ -5,10 +5,10 @@
 #   • Manual  : Actions → Run workflow  (enter version + optional pre-release flag)
 #   • Automatic: push a tag matching v#.#.#  (e.g. git tag v1.2.0 && git push --tags)
 #
-# Outputs a self-contained single-file EXE for x64, then publishes a GitHub Release.
-# Users update the app by simply replacing the EXE; project data lives in the
-# location chosen at project-creation time (default: Documents\iscWBS Projects\)
-# and is never stored alongside the executable.
+# Outputs a self-contained folder publish (ZIP) for x64, then publishes a GitHub Release.
+# Users update the app by extracting the ZIP to a folder of their choice; project data
+# lives in the location chosen at project-creation time (default: Documents\iscWBS Projects\)
+# and is never stored alongside the application files.
 #
 # ── Code-signing (optional) ──────────────────────────────────────────────────
 # Without secrets the executable is unsigned and Windows SmartScreen may warn
@@ -89,25 +89,20 @@ jobs:
           -r win-x64
           -p:Platform=x64
           --self-contained
-          -p:PublishSingleFile=true
-          -p:IncludeNativeLibrariesForSelfExtract=true
           -p:PublishTrimmed=false
           -p:Version=${{ steps.ver.outputs.VERSION }}
           "-p:PublishDir=${{ github.workspace }}\bin\Release\publish\"
 
-      # ── 5. Rename and locate EXE ────────────────────────────────────────────
-      - name: Locate EXE
-        id: exe
+      # ── 5. Zip publish folder ───────────────────────────────────────────────
+      - name: Zip publish folder
+        id: zip
         shell: pwsh
         run: |
-          $exe = Get-ChildItem -Recurse -Filter 'iscWBS.exe' |
-                 Where-Object { $_.FullName -notmatch '\\obj\\' } |
-                 Select-Object -First 1
-          if (-not $exe) { throw 'iscWBS.exe was not found after publish' }
-          Write-Host "Found EXE at: $($exe.FullName)"
-          $dst = Join-Path $exe.DirectoryName "iscWBS-${{ steps.ver.outputs.VERSION }}-x64.exe"
-          Rename-Item $exe.FullName $dst
-          "EXE=$dst" >> $env:GITHUB_OUTPUT
+          $src = "${{ github.workspace }}\bin\Release\publish"
+          $dst = "${{ github.workspace }}\iscWBS-${{ steps.ver.outputs.VERSION }}-x64.zip"
+          Compress-Archive -Path "$src\*" -DestinationPath $dst
+          Write-Host "Created ZIP at: $dst"
+          "ZIP=$dst" >> $env:GITHUB_OUTPUT
 
       # ── 6. Publish release ──────────────────────────────────────────────────
       - name: Publish GitHub release
@@ -118,7 +113,7 @@ jobs:
           prerelease: ${{ inputs.prerelease || false }}
           generate_release_notes: true
           make_latest: true
-          files: ${{ steps.exe.outputs.EXE }}
+          files: ${{ steps.zip.outputs.ZIP }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

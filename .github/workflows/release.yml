@@ -83,18 +83,20 @@ jobs:
 
       # ── 4. Publish ──────────────────────────────────────────────────────────
       - name: Publish
-        run: >
-          dotnet publish ${{ env.PROJECT }}
-          -c Release
-          -r win-x64
-          -p:Platform=x64
-          --self-contained
-          -p:PublishTrimmed=false
-          -p:SatelliteResourceLanguages=en;en-US;sv;sv-SE
-          -p:DebugType=None
-          -p:DebugSymbols=false
-          -p:Version=${{ steps.ver.outputs.VERSION }}
-          "-p:PublishDir=${{ github.workspace }}\bin\Release\publish\"
+        shell: pwsh
+        run: |
+          $langs = "en;en-US;sv;sv-SE"
+          dotnet publish ${{ env.PROJECT }} `
+            -c Release `
+            -r win-x64 `
+            -p:Platform=x64 `
+            --self-contained `
+            -p:PublishTrimmed=false `
+            "-p:SatelliteResourceLanguages=$langs" `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -p:Version=${{ steps.ver.outputs.VERSION }} `
+            "-p:PublishDir=${{ github.workspace }}\bin\Release\publish\"
 
       # ── 5. Zip publish folder ───────────────────────────────────────────────
       - name: Zip publish folder

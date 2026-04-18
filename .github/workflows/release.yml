@@ -90,6 +90,9 @@ jobs:
           -p:Platform=x64
           --self-contained
           -p:PublishTrimmed=false
+          -p:SatelliteResourceLanguages=en;en-US;sv;sv-SE
+          -p:DebugType=None
+          -p:DebugSymbols=false
           -p:Version=${{ steps.ver.outputs.VERSION }}
           "-p:PublishDir=${{ github.workspace }}\bin\Release\publish\"
 

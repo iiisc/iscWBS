@@ -97,7 +97,20 @@ jobs:
             -p:Version=${{ steps.ver.outputs.VERSION }} `
             "-p:PublishDir=${{ github.workspace }}\bin\Release\publish\"
 
-      # ── 5. Zip publish folder ───────────────────────────────────────────────
+      # ── 5. Remove unwanted language folders ────────────────────────────────
+      - name: Remove unwanted language folders
+        shell: pwsh
+        run: |
+          $keep = @('en-US', 'sv-SE')
+          $publishDir = "${{ github.workspace }}\bin\Release\publish"
+          Get-ChildItem -Path $publishDir -Directory |
+            Where-Object { $_.Name -match '^[a-z]{2}(-[A-Za-z]+)?$' -and $_.Name -notin $keep } |
+            ForEach-Object {
+              Write-Host "Removing language folder: $($_.Name)"
+              Remove-Item $_.FullName -Recurse -Force
+            }
+
+      # ── 7. Zip publish folder ───────────────────────────────────────────────
       - name: Zip publish folder
         id: zip
         shell: pwsh
@@ -108,7 +121,7 @@ jobs:
           Write-Host "Created ZIP at: $dst"
           "ZIP=$dst" >> $env:GITHUB_OUTPUT
 
-      # ── 6. Publish release ──────────────────────────────────────────────────
+      # ── 8. Publish release ──────────────────────────────────────────────────
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:

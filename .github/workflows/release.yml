@@ -85,14 +85,13 @@ jobs:
       - name: Publish
         shell: pwsh
         run: |
-          $langs = "en;en-US;sv;sv-SE"
           dotnet publish ${{ env.PROJECT }} `
             -c Release `
             -r win-x64 `
             -p:Platform=x64 `
             --self-contained `
             -p:PublishTrimmed=false `
-            "-p:SatelliteResourceLanguages=$langs" `
+            -p:SatelliteResourceLanguages=en%3Ben-US%3Bsv%3Bsv-SE `
             -p:DebugType=None `
             -p:DebugSymbols=false `
             -p:Version=${{ steps.ver.outputs.VERSION }} `

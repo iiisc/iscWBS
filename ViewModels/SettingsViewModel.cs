@@ -225,6 +225,13 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             Progress<int> progress = new(p => DownloadProgress = p);
             await _updateService.DownloadAndInstallAsync(AvailableUpdate, progress, cancellationToken);
+
+            // Updater script is now running in the background waiting for this process to exit.
+            // Close any open project cleanly before the process terminates.
+            if (_projectStateService.HasActiveProject)
+                await _projectStateService.CloseProjectAsync();
+
+            Environment.Exit(0);
         }
         catch (OperationCanceledException)
         {

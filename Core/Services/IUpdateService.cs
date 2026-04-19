@@ -18,9 +18,11 @@ public interface IUpdateService
     Task<UpdateInfo?> CheckForUpdateAsync();
 
     /// <summary>
-    /// Downloads the MSIX asset from <paramref name="info"/> to a temporary file and launches the
-    /// Windows App Installer. Falls back to opening the release page in the browser when no MSIX
-    /// asset is attached to the release.
+    /// Downloads the ZIP asset from <paramref name="info"/>, extracts it to a temporary folder,
+    /// launches a background PowerShell script that will copy the files into the install directory
+    /// once the application exits, and then returns. The caller is responsible for calling
+    /// <see cref="Environment.Exit"/> immediately after this method returns.
+    /// Falls back to opening the release page in the browser when no ZIP asset is attached.
     /// </summary>
     Task DownloadAndInstallAsync(UpdateInfo info, IProgress<int> progress, CancellationToken cancellationToken = default);
 

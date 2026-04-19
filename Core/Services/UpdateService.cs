@@ -91,16 +91,51 @@ public sealed class UpdateService : IUpdateService
         }
 
         fileStream.Close();
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (Directory.Exists(extractDir))
             Directory.Delete(extractDir, recursive: true);
 
-        System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, extractDir);
+        ZipFile.ExtractToDirectory(zipPath, extractDir);
 
-        // Open the extracted folder in Explorer so the user can copy the files
-        // over the existing installation. We cannot replace the running EXE in-place.
-        Process.Start(new ProcessStartInfo(extractDir) { UseShellExecute = true });
+        // Write a PowerShell script that waits for this process to exit, copies the
+        // extracted files over the install directory, relaunches the exe, then cleans up.
+        // The caller (SettingsViewModel) calls Environment.Exit(0) after this returns.
+        string processPath = Environment.ProcessPath ?? string.Empty;
+        string installDir  = Path.GetDirectoryName(processPath) ?? string.Empty;
+        string scriptPath  = Path.Combine(Path.GetTempPath(), $"iscWBS-updater-{info.TagName}.ps1");
+
+        string script = $$"""
+            $targetPid = {{Environment.ProcessId}}
+            $src = '{{EscapePs(extractDir)}}'
+            $dst = '{{EscapePs(installDir)}}'
+            $exe = '{{EscapePs(processPath)}}'
+            $zip = '{{EscapePs(zipPath)}}'
+
+            while (Get-Process -Id $targetPid -ErrorAction SilentlyContinue) {
+                Start-Sleep -Milliseconds 300
+            }
+
+            Copy-Item -Path "$src\*" -Destination $dst -Recurse -Force
+            Start-Process -FilePath $exe
+            Remove-Item -Path $src -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item -Path $zip -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
+            """;
+
+        await File.WriteAllTextAsync(scriptPath, script, cancellationToken);
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "powershell.exe",
+            Arguments = $"-ExecutionPolicy Bypass -NonInteractive -WindowStyle Hidden -File \"{scriptPath}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
     }
+
+    /// <summary>Escapes a path for use inside a PowerShell single-quoted string.</summary>
+    private static string EscapePs(string path) => path.Replace("'", "''");
 
     /// <inheritdoc/>
     public Task OpenReleasePageAsync(UpdateInfo info)

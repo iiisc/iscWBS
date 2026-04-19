@@ -8,6 +8,9 @@
             <SolidColorBrush x:Key="WbsStatusInProgressBrush" Color="#0078D4" />
             <SolidColorBrush x:Key="WbsStatusCompleteBrush"   Color="#107C10" />
             <SolidColorBrush x:Key="WbsStatusBlockedBrush"    Color="#C50F1F" />
+            <!-- Solid backgrounds prevent content bleed-through in light mode -->
+            <SolidColorBrush x:Key="ComboBoxDropDownBackground"     Color="#F3F3F3" />
+            <SolidColorBrush x:Key="MenuFlyoutPresenterBackground"  Color="#F3F3F3" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
             <SolidColorBrush x:Key="WbsStatusNotStartedBrush" Color="#9E9E9E" />

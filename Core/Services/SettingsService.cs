@@ -3,16 +3,21 @@ using iscWBS.Helpers;
 
 namespace iscWBS.Core.Services;
 
-public sealed class SettingsService : ISettingsService
+/// <summary>User preferences, stored as JSON in <c>%LOCALAPPDATA%\ISC\iscWBS\settings.json</c>.</summary>
+public sealed class SettingsService
 {
-    private static readonly string _settingsPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ISC", "iscWBS", "settings.json");
+    /// <summary><c>%LOCALAPPDATA%\ISC\iscWBS</c>; the log folder lives here too.</summary>
+    public static readonly string AppDataFolder = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ISC", "iscWBS");
 
+    private static readonly JsonSerializerOptions _writeOptions = new() { WriteIndented = true };
+
+    private readonly string _settingsPath;
     private readonly Dictionary<string, JsonElement> _values;
 
-    public SettingsService()
+    public SettingsService(string? settingsPath = null)
     {
+        _settingsPath = settingsPath ?? Path.Combine(AppDataFolder, "settings.json");
         _values = Load();
     }
 
@@ -28,7 +33,10 @@ public sealed class SettingsService : ISettingsService
 
     public void Set<T>(string key, T value)
     {
-        _values[key] = JsonSerializer.SerializeToElement(value);
+        JsonElement element = JsonSerializer.SerializeToElement(value);
+        if (_values.TryGetValue(key, out JsonElement existing) && existing.GetRawText() == element.GetRawText())
+            return;
+        _values[key] = element;
         Save();
     }
 
@@ -52,7 +60,11 @@ public sealed class SettingsService : ISettingsService
             Set(SettingsKeys.RecentProjects, projects);
     }
 
-    private static Dictionary<string, JsonElement> Load()
+    public string GetDefaultProjectFolder()
+        => Get<string>(SettingsKeys.LastProjectFolder)
+           ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "iscWBS Projects");
+
+    private Dictionary<string, JsonElement> Load()
     {
         try
         {
@@ -72,7 +84,7 @@ public sealed class SettingsService : ISettingsService
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_settingsPath)!);
             File.WriteAllText(_settingsPath,
-                JsonSerializer.Serialize(_values, new JsonSerializerOptions { WriteIndented = true }));
+                JsonSerializer.Serialize(_values, _writeOptions));
         }
         catch { }
     }

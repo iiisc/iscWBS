@@ -3,19 +3,23 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
+using iscWBS.Helpers;
 
 namespace iscWBS.ViewModels;
 
-public sealed partial class MilestonesViewModel : ObservableObject, INavigationAware
+public sealed partial class MilestonesViewModel : ObservableObject
 {
-    private readonly IMilestoneService _milestoneService;
-    private readonly IWbsService _wbsService;
-    private readonly IProjectStateService _projectStateService;
-    private readonly IDialogService _dialogService;
+    private readonly MilestoneService _milestoneService;
+    private readonly WbsService _wbsService;
+    private readonly ProjectStateService _projectStateService;
+    private readonly DialogService _dialogService;
 
     public ObservableCollection<MilestoneRowViewModel> Milestones { get; } = new();
     public ObservableCollection<WbsNode> LinkedNodes { get; } = new();
-    public ObservableCollection<WbsNode> AllProjectNodes { get; } = new();
+
+    // WBS nodes aren't edited on this page, so one load per visit serves every selection.
+    [ObservableProperty]
+    public partial IReadOnlyList<WbsNode> AllProjectNodes { get; private set; } = [];
 
     [ObservableProperty]
     public partial MilestoneRowViewModel? SelectedMilestone { get; set; }
@@ -39,10 +43,10 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
     public bool IsSelectedMilestoneIncomplete => SelectedMilestone?.Milestone.IsComplete == false;
 
     public MilestonesViewModel(
-        IMilestoneService milestoneService,
-        IWbsService wbsService,
-        IProjectStateService projectStateService,
-        IDialogService dialogService)
+        MilestoneService milestoneService,
+        WbsService wbsService,
+        ProjectStateService projectStateService,
+        DialogService dialogService)
     {
         _milestoneService = milestoneService;
         _wbsService = wbsService;
@@ -50,8 +54,7 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         _dialogService = dialogService;
     }
 
-    public void OnNavigatedTo(object? parameter) => _ = LoadMilestonesAsync();
-    public void OnNavigatedFrom() { }
+    public void OnNavigatedTo() => _ = LoadAsync();
 
     partial void OnSelectedMilestoneChanged(MilestoneRowViewModel? value)
     {
@@ -60,16 +63,35 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         if (value is null)
         {
             LinkedNodes.Clear();
-            AllProjectNodes.Clear();
             return;
         }
         EditTitle = value.Milestone.Title;
-        EditDueDate = new DateTimeOffset(DateTime.SpecifyKind(value.Milestone.DueDate, DateTimeKind.Utc));
+        EditDueDate = CalendarDates.ToPickerValue(value.Milestone.DueDate);
         _ = LoadLinkedNodesAsync(value.Milestone);
-        _ = LoadAllProjectNodesAsync();
     }
 
-    [RelayCommand]
+    private async Task LoadAsync()
+    {
+        if (_projectStateService.ActiveProject is not { Id: var projectId }) return;
+        try
+        {
+            AllProjectNodes = await _wbsService.GetAllByProjectAsync(projectId);
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync("ErrorTitle_Load", ex);
+        }
+        await LoadMilestonesAsync();
+    }
+
+    /// <summary>Reloads the list (link counts included) and reselects the current milestone.</summary>
+    private async Task ReloadKeepingSelectionAsync()
+    {
+        Guid? selectedId = SelectedMilestone?.Milestone.Id;
+        await LoadMilestonesAsync();
+        SelectedMilestone = Milestones.FirstOrDefault(r => r.Milestone.Id == selectedId);
+    }
+
     private async Task LoadMilestonesAsync()
     {
         if (_projectStateService.ActiveProject is not { Id: var projectId }) return;
@@ -85,14 +107,13 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
                 Milestones.Add(new MilestoneRowViewModel
                 {
                     Milestone = m,
-                    DueDateLabel = m.DueDate.ToString("dd MMM yyyy"),
                     LinkedNodeCount = counts.TryGetValue(m.Id, out int c) ? c : 0
                 });
             }
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Load Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Load", ex);
         }
     }
 
@@ -102,7 +123,7 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         if (_projectStateService.ActiveProject is not { Id: var projectId }) return;
         if (string.IsNullOrWhiteSpace(NewTitle)) return;
 
-        DateTime dueDate = NewDueDate?.UtcDateTime ?? DateTime.UtcNow.Date.AddDays(7);
+        DateTime dueDate = NewDueDate?.Date ?? DateTime.Today.AddDays(7);
         try
         {
             await _milestoneService.CreateAsync(projectId, NewTitle, dueDate);
@@ -112,7 +133,7 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Add Milestone Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_AddMilestone", ex);
         }
     }
 
@@ -121,19 +142,17 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
     {
         if (SelectedMilestone is null || string.IsNullOrWhiteSpace(EditTitle)) return;
 
-        Guid savedId = SelectedMilestone.Milestone.Id;
         SelectedMilestone.Milestone.Title = EditTitle.Trim();
         if (EditDueDate.HasValue)
-            SelectedMilestone.Milestone.DueDate = EditDueDate.Value.UtcDateTime;
+            SelectedMilestone.Milestone.DueDate = EditDueDate.Value.Date;
         try
         {
             await _milestoneService.UpdateAsync(SelectedMilestone.Milestone);
-            await LoadMilestonesAsync();
-            SelectedMilestone = Milestones.FirstOrDefault(r => r.Milestone.Id == savedId);
+            await ReloadKeepingSelectionAsync();
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Save Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Save", ex);
         }
     }
 
@@ -143,8 +162,8 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         if (row is null || row.Milestone.IsComplete) return;
 
         bool confirmed = await _dialogService.ShowConfirmAsync(
-            "Mark Complete",
-            $"Mark \"{row.Milestone.Title}\" as complete?");
+            Strings.Get("Milestones_MarkCompleteTitle"),
+            Strings.Format("Milestones_MarkCompleteConfirm", row.Milestone.Title));
         if (!confirmed) return;
 
         try
@@ -155,7 +174,7 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Mark Complete Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_MarkComplete", ex);
         }
     }
 
@@ -165,8 +184,8 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         if (row is null) return;
 
         bool confirmed = await _dialogService.ShowConfirmAsync(
-            "Delete Milestone",
-            $"Delete \"{row.Milestone.Title}\"?");
+            Strings.Get("Milestones_DeleteTitle"),
+            Strings.Format("Milestones_DeleteConfirm", row.Milestone.Title));
         if (!confirmed) return;
 
         try
@@ -177,7 +196,7 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Delete Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Delete", ex);
         }
     }
 
@@ -188,12 +207,11 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         try
         {
             await _milestoneService.LinkNodeAsync(SelectedMilestone.Milestone.Id, NewLinkedNode.Id);
-            NewLinkedNode = null;
-            await LoadLinkedNodesAsync(SelectedMilestone.Milestone);
+            await ReloadKeepingSelectionAsync();
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Link Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Link", ex);
         }
     }
 
@@ -204,11 +222,11 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         try
         {
             await _milestoneService.UnlinkNodeAsync(SelectedMilestone.Milestone.Id, node.Id);
-            await LoadLinkedNodesAsync(SelectedMilestone.Milestone);
+            await ReloadKeepingSelectionAsync();
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Unlink Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Unlink", ex);
         }
     }
 
@@ -219,31 +237,15 @@ public sealed partial class MilestonesViewModel : ObservableObject, INavigationA
         try
         {
             IReadOnlyList<Guid> ids = await _milestoneService.GetLinkedNodeIdsAsync(milestone.Id);
+            Dictionary<Guid, WbsNode> nodesById = AllProjectNodes.ToDictionary(n => n.Id);
             foreach (Guid id in ids)
             {
-                WbsNode? node = await _wbsService.GetByIdAsync(id);
-                if (node is not null) LinkedNodes.Add(node);
+                if (nodesById.TryGetValue(id, out WbsNode? node)) LinkedNodes.Add(node);
             }
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Load Error", ex.Message);
-        }
-    }
-
-    private async Task LoadAllProjectNodesAsync()
-    {
-        AllProjectNodes.Clear();
-        if (_projectStateService.ActiveProject is not { Id: var projectId }) return;
-        try
-        {
-            IReadOnlyList<WbsNode> nodes = await _wbsService.GetAllByProjectAsync(projectId);
-            foreach (WbsNode node in nodes)
-                AllProjectNodes.Add(node);
-        }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowErrorAsync("Load Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Load", ex);
         }
     }
 }

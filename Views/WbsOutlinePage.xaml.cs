@@ -18,13 +18,7 @@ public sealed partial class WbsOutlinePage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        ViewModel.OnNavigatedTo(e.Parameter);
-    }
-
-    protected override void OnNavigatedFrom(NavigationEventArgs e)
-    {
-        base.OnNavigatedFrom(e);
-        ViewModel.OnNavigatedFrom();
+        ViewModel.OnNavigatedTo();
     }
 
     private void OutlineListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

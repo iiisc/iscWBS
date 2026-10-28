@@ -7,13 +7,10 @@ using iscWBS.Core.Models;
 
 namespace iscWBS.Core.Services;
 
-/// <inheritdoc cref="IUpdateService"/>
-public sealed class UpdateService : IUpdateService
+/// <summary>Checks GitHub Releases for a newer version and installs its ZIP over this one.</summary>
+public sealed class UpdateService
 {
     private const string _gitHubApiUrl = "https://api.github.com/repos/iiisc/iscWBS/releases/latest";
-
-    /// <inheritdoc/>
-    public string RepositoryUrl { get; } = "https://github.com/iiisc/iscWBS";
 
     private readonly HttpClient _httpClient;
 
@@ -24,7 +21,6 @@ public sealed class UpdateService : IUpdateService
         _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github+json");
     }
 
-    /// <inheritdoc/>
     public string CurrentVersion
     {
         get
@@ -36,35 +32,28 @@ public sealed class UpdateService : IUpdateService
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>The latest release, or <see langword="null"/> when this version is already current.</summary>
     public async Task<UpdateInfo?> CheckForUpdateAsync()
     {
         GitHubRelease? release = await _httpClient.GetFromJsonAsync<GitHubRelease>(_gitHubApiUrl);
-
-        if (release is null)
+        if (release is null
+            || !Version.TryParse(release.TagName.TrimStart('v'), out Version? latestVersion)
+            || !Version.TryParse(CurrentVersion, out Version? currentVersion)
+            || latestVersion <= currentVersion)
             return null;
 
-        string tag = release.TagName.TrimStart('v');
-        if (!Version.TryParse(tag, out Version? latestVersion))
-            return null;
-
-        if (!Version.TryParse(CurrentVersion, out Version? currentVersion))
-            return null;
-
-        if (latestVersion <= currentVersion)
-            return null;
-
-        string? exeUrl = FindZipAsset(release.Assets);
-
-        return new UpdateInfo(release.TagName, release.Name, release.HtmlUrl, exeUrl);
+        return new UpdateInfo(release.TagName, release.Name, release.HtmlUrl, FindZipAsset(release.Assets));
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Downloads and extracts the release, then starts a script that copies it over the install folder once
+    /// this process exits. The caller must exit straight afterwards. Without a ZIP asset, opens the release page.
+    /// </summary>
     public async Task DownloadAndInstallAsync(UpdateInfo info, IProgress<int> progress, CancellationToken cancellationToken = default)
     {
         if (info.DownloadUrl is null)
         {
-            await OpenReleasePageAsync(info);
+            OpenReleasePage(info);
             return;
         }
 
@@ -98,9 +87,7 @@ public sealed class UpdateService : IUpdateService
 
         ZipFile.ExtractToDirectory(zipPath, extractDir);
 
-        // Write a PowerShell script that waits for this process to exit, copies the
-        // extracted files over the install directory, relaunches the exe, then cleans up.
-        // The caller (SettingsViewModel) calls Environment.Exit(0) after this returns.
+        // The files can't be replaced while this process runs, so a script waits for it to exit, copies them and relaunches.
         string processPath = Environment.ProcessPath ?? string.Empty;
         string installDir  = Path.GetDirectoryName(processPath) ?? string.Empty;
         string scriptPath  = Path.Combine(Path.GetTempPath(), $"iscWBS-updater-{info.TagName}.ps1");
@@ -137,25 +124,16 @@ public sealed class UpdateService : IUpdateService
     /// <summary>Escapes a path for use inside a PowerShell single-quoted string.</summary>
     private static string EscapePs(string path) => path.Replace("'", "''");
 
-    /// <inheritdoc/>
-    public Task OpenReleasePageAsync(UpdateInfo info)
-    {
-        Process.Start(new ProcessStartInfo(info.ReleasePageUrl) { UseShellExecute = true });
-        return Task.CompletedTask;
-    }
+    public void OpenReleasePage(UpdateInfo info)
+        => Process.Start(new ProcessStartInfo(info.ReleasePageUrl) { UseShellExecute = true });
 
+    /// <summary>The x64 ZIP if there is one, otherwise any ZIP.</summary>
     private static string? FindZipAsset(List<GitHubAsset> assets)
-    {
-        // Prefer the x64 ZIP; fall back to any ZIP if no arch-specific one is found.
-        return assets
-            .FirstOrDefault(a =>
-                a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
-                a.Name.Contains("x64", StringComparison.OrdinalIgnoreCase))
-            ?.BrowserDownloadUrl
-            ?? assets
-                .FirstOrDefault(a => a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-                ?.BrowserDownloadUrl;
-    }
+        => assets
+            .Where(a => a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(a => a.Name.Contains("x64", StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault()
+            ?.BrowserDownloadUrl;
 
     private sealed class GitHubRelease
     {

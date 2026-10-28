@@ -49,6 +49,7 @@ permissions:
 env:
   DOTNET_VERSION: '10.0.x'
   PROJECT: 'iscWBS.csproj'
+  TEST_PROJECT: 'tests/iscWBS.Tests'
 
 jobs:
   release:
@@ -81,7 +82,12 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      # ── 4. Publish ──────────────────────────────────────────────────────────
+      # ── 4. Test ─────────────────────────────────────────────────────────────
+      - name: Test
+        shell: pwsh
+        run: dotnet test ${{ env.TEST_PROJECT }} -c Release
+
+      # ── 5. Publish ──────────────────────────────────────────────────────────
       - name: Publish
         shell: pwsh
         run: |
@@ -97,7 +103,7 @@ jobs:
             -p:Version=${{ steps.ver.outputs.VERSION }} `
             "-p:PublishDir=${{ github.workspace }}\bin\Release\publish\"
 
-      # ── 5. Remove unwanted language folders ────────────────────────────────
+      # ── 6. Remove unwanted language folders ────────────────────────────────
       - name: Remove unwanted language folders
         shell: pwsh
         run: |

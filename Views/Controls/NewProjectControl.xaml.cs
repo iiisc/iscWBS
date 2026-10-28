@@ -1,9 +1,11 @@
 using System.IO;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
+using iscWBS.Core.Services;
+using iscWBS.Helpers;
 
 namespace iscWBS.Views.Controls;
 
@@ -11,30 +13,36 @@ public sealed partial class NewProjectControl : UserControl
 {
     public string ProjectName => TxtName.Text.Trim();
     public string Owner => TxtOwner.Text.Trim();
-    public string FolderPath { get; private set; } = string.Empty;
+    public string FilePath => Path.Combine(_folderPath, $"{ProjectName}.iscwbs");
 
-    /// <summary>
-    /// Sets both the displayed path label and the <see cref="FolderPath"/> backing value.
-    /// Call this before the dialog is shown to pre-populate a sensible default.
-    /// </summary>
-    public string DefaultFolderPath
-    {
-        set
-        {
-            FolderPath = value;
-            TxtSavePath.Text = value;
-        }
-    }
+    private string _folderPath = App.Services.GetRequiredService<SettingsService>().GetDefaultProjectFolder();
 
     public NewProjectControl()
     {
         InitializeComponent();
+        TxtSavePath.Text = _folderPath;
+    }
 
-        string defaultFolder = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "iscWBS Projects");
-        FolderPath = defaultFolder;
-        TxtSavePath.Text = defaultFolder;
+    /// <summary>Shows the New Project dialog; returns the filled-in control, or null when cancelled or incomplete.</summary>
+    public static async Task<NewProjectControl?> ShowAsync(XamlRoot xamlRoot)
+    {
+        var control = new NewProjectControl();
+        var dialog = new ContentDialog
+        {
+            Title = Strings.Get("NewProject_DialogTitle"),
+            Content = control,
+            PrimaryButtonText = Strings.Get("NewProject_Create"),
+            CloseButtonText = Strings.Get("Dialog_Cancel"),
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = xamlRoot
+        };
+
+        ContentDialogResult result = await dialog.ShowAsync();
+        return result == ContentDialogResult.Primary
+            && !string.IsNullOrWhiteSpace(control.ProjectName)
+            && !string.IsNullOrWhiteSpace(control._folderPath)
+            ? control
+            : null;
     }
 
     private async void BtnPickFolder_Click(object sender, RoutedEventArgs e)
@@ -43,11 +51,7 @@ public sealed partial class NewProjectControl : UserControl
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(App.MainWindow));
         picker.FileTypeFilter.Add("*");
 
-        StorageFolder? folder = await picker.PickSingleFolderAsync();
-        if (folder is not null)
-        {
-            FolderPath = folder.Path;
-            TxtSavePath.Text = folder.Path;
-        }
+        if (await picker.PickSingleFolderAsync() is { } folder)
+            TxtSavePath.Text = _folderPath = folder.Path;
     }
 }

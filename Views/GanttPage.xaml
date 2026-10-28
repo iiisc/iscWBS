@@ -26,6 +26,7 @@
                 Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
                 CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
                 <TextBlock
+                    x:Uid="GanttPage_BetaFeature"
                     Text="BETA" FontSize="11" FontWeight="SemiBold"
                     Foreground="{ThemeResource SystemFillColorCautionBrush}"
                     AutomationProperties.Name="Beta feature" />
@@ -36,10 +37,9 @@
                 VerticalAlignment="Center"
                 Style="{ThemeResource BodyTextBlockStyle}" />
             <ComboBox
-                x:Name="ZoomCombo"
+                x:Uid="GanttPage_ZoomCombo"
                 Width="110"
-                SelectedIndex="0"
-                SelectionChanged="ZoomCombo_SelectionChanged"
+                SelectedIndex="{x:Bind ViewModel.SelectedZoomIndex, Mode=TwoWay}"
                 AutomationProperties.Name="Zoom level">
                 <ComboBoxItem x:Uid="GanttPage_ZoomDay" Content="Day" />
                 <ComboBoxItem x:Uid="GanttPage_ZoomWeek" Content="Week" />
@@ -47,7 +47,6 @@
             </ComboBox>
         </StackPanel>
 
-        <!-- Sticky header row — never scrolls vertically -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="220" />
@@ -69,7 +68,6 @@
             </ScrollViewer>
         </Grid>
 
-        <!-- Scrollable task rows -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="220" />

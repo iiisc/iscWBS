@@ -3,12 +3,7 @@
     x:Class="iscWBS.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:converters="using:iscWBS.Converters"
     xmlns:viewmodels="using:iscWBS.ViewModels">
-
-    <Page.Resources>
-        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-    </Page.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="24" Padding="32" MaxWidth="680" HorizontalAlignment="Left">
@@ -18,7 +13,6 @@
                 Text="Settings"
                 Style="{ThemeResource TitleLargeTextBlockStyle}" />
 
-            <!-- Project -->
             <StackPanel Spacing="8">
                 <TextBlock
                     x:Uid="SettingsPage_ProjectSection"
@@ -33,29 +27,27 @@
                     Padding="16">
                     <StackPanel Spacing="12">
 
-                        <!-- Active project info -->
                         <StackPanel
                             Spacing="2"
-                            Visibility="{x:Bind ViewModel.HasActiveProject, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            Visibility="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                             <TextBlock
                                 x:Uid="SettingsPage_ActiveProjectLabel"
                                 Text="Active Project"
                                 Style="{ThemeResource CaptionTextBlockStyle}" />
                             <TextBlock
+                                x:Uid="SettingsPage_ActiveProjectName"
                                 Text="{x:Bind ViewModel.ActiveProjectName, Mode=OneWay}"
                                 FontWeight="SemiBold"
                                 AutomationProperties.Name="Active project name" />
                         </StackPanel>
 
-                        <!-- No active project message -->
                         <TextBlock
                             x:Uid="SettingsPage_NoActiveProject"
                             Text="No project is currently open."
                             Style="{ThemeResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Visibility="{x:Bind ViewModel.HasNoActiveProject, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            Visibility="{x:Bind ViewModel.HasNoActiveProject, Mode=OneWay}" />
 
-                        <!-- Action buttons -->
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button
                                 x:Uid="SettingsPage_NewProjectBtn"
@@ -75,15 +67,15 @@
                                 AutomationProperties.Name="Close current project" />
                         </StackPanel>
 
-                        <!-- Recent projects -->
                         <StackPanel
                             Spacing="6"
-                            Visibility="{x:Bind ViewModel.HasRecentProjects, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            Visibility="{x:Bind ViewModel.HasRecentProjects, Mode=OneWay}">
                             <TextBlock
                                 x:Uid="SettingsPage_RecentProjectsLabel"
                                 Text="Recent Projects"
                                 Style="{ThemeResource CaptionTextBlockStyle}" />
                             <ListView
+                                x:Uid="SettingsPage_RecentProjectsList"
                                 x:Name="RecentProjectsList"
                                 ItemsSource="{x:Bind ViewModel.RecentProjects, Mode=OneWay}"
                                 IsItemClickEnabled="True"
@@ -121,7 +113,6 @@
                 </Border>
             </StackPanel>
 
-            <!-- Software Updates -->
             <StackPanel Spacing="8">
                 <TextBlock
                     x:Uid="SettingsPage_UpdatesSection"
@@ -136,7 +127,6 @@
                     Padding="16">
                     <StackPanel Spacing="12">
 
-                        <!-- Version row + check button -->
                         <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -149,6 +139,7 @@
                                     Text="Current Version"
                                     Style="{ThemeResource CaptionTextBlockStyle}" />
                                 <TextBlock
+                                    x:Uid="SettingsPage_CurrentApplicationVersion"
                                     Text="{x:Bind ViewModel.CurrentVersion, Mode=OneWay}"
                                     FontWeight="SemiBold"
                                     AutomationProperties.Name="Current application version" />
@@ -163,11 +154,10 @@
                                 AutomationProperties.Name="Check for updates" />
                         </Grid>
 
-                        <!-- Checking spinner -->
                         <StackPanel
                             Orientation="Horizontal"
                             Spacing="8"
-                            Visibility="{x:Bind ViewModel.IsCheckingForUpdate, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            Visibility="{x:Bind ViewModel.IsCheckingForUpdate, Mode=OneWay}">
                             <ProgressRing
                                 IsActive="True"
                                 Width="16"
@@ -179,38 +169,35 @@
                                 VerticalAlignment="Center" />
                         </StackPanel>
 
-                        <!-- Info status (up to date / download cancelled) -->
                         <InfoBar
                             IsOpen="{x:Bind ViewModel.HasStatusMessage, Mode=OneWay}"
                             Message="{x:Bind ViewModel.UpdateStatusMessage, Mode=OneWay}"
                             Severity="Informational"
                             IsClosable="False" />
 
-                        <!-- Error status (not found / rate limited / network failure) -->
                         <InfoBar
                             IsOpen="{x:Bind ViewModel.HasErrorMessage, Mode=OneWay}"
                             Message="{x:Bind ViewModel.UpdateErrorMessage, Mode=OneWay}"
                             Severity="Error"
                             IsClosable="False" />
 
-                        <!-- Update available panel -->
                         <Border
                             Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                             CornerRadius="6"
                             Padding="12"
-                            Visibility="{x:Bind ViewModel.IsUpdateAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            Visibility="{x:Bind ViewModel.IsUpdateAvailable, Mode=OneWay}">
                             <StackPanel Spacing="12">
 
                                 <TextBlock
+                                    x:Uid="SettingsPage_AvailableUpdateName"
                                     Text="{x:Bind ViewModel.AvailableUpdate.ReleaseName, Mode=OneWay}"
                                     FontWeight="SemiBold"
                                     AutomationProperties.Name="Available update name" />
 
-                                <!-- Action buttons -->
                                 <StackPanel
                                     Orientation="Horizontal"
                                     Spacing="8"
-                                    Visibility="{x:Bind ViewModel.IsNotDownloadingUpdate, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    Visibility="{x:Bind ViewModel.IsNotDownloadingUpdate, Mode=OneWay}">
                                     <Button
                                         x:Uid="SettingsPage_DownloadInstallBtn"
                                         Content="Download &amp; Install"
@@ -224,16 +211,16 @@
                                         AutomationProperties.Name="Open release notes in browser" />
                                 </StackPanel>
 
-                                <!-- Download progress -->
                                 <StackPanel
                                     Spacing="6"
-                                    Visibility="{x:Bind ViewModel.IsDownloadingUpdate, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    Visibility="{x:Bind ViewModel.IsDownloadingUpdate, Mode=OneWay}">
                                     <Grid ColumnSpacing="8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <ProgressBar
+                                            x:Uid="SettingsPage_DownloadProgress"
                                             Grid.Column="0"
                                             Value="{x:Bind ViewModel.DownloadProgress, Mode=OneWay}"
                                             Minimum="0"
@@ -260,7 +247,6 @@
                 </Border>
             </StackPanel>
 
-            <!-- Language -->
             <StackPanel Spacing="8">
                 <TextBlock
                     x:Uid="SettingsPage_LanguageSection"
@@ -279,6 +265,7 @@
                                 x:Uid="SettingsPage_LanguageLabel"
                                 Style="{ThemeResource CaptionTextBlockStyle}" />
                             <ComboBox
+                                x:Uid="SettingsPage_ApplicationLanguage"
                                 ItemsSource="{x:Bind ViewModel.AvailableLanguages}"
                                 SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=TwoWay}"
                                 MinWidth="200"

@@ -45,7 +45,7 @@
                 <StackPanel
                     Spacing="8"
                     Margin="0,16,0,0"
-                    Visibility="{x:Bind ViewModel.HasRecentProjects, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    Visibility="{x:Bind ViewModel.HasRecentProjects, Mode=OneWay}">
 
                     <TextBlock
                         x:Uid="WelcomePage_RecentProjectsLabel"

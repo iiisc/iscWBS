@@ -2,18 +2,18 @@
 
 A Windows desktop application for project management centred on a Work Breakdown Structure editor.
 
-Built with **WinUI 3** and **.NET 10**, distributed as a single self-contained executable — no installation required. Project data lives in a portable `.iscwbs` file (SQLite) that you place wherever you like.
+Built with **WinUI 3** and **.NET 10**, distributed as a self-contained ZIP — no installation required. Project data lives in a portable `.iscwbs` file (SQLite) that you place wherever you like. The UI is available in English and Swedish.
 
 ---
 
 ## Features
 
-- **WBS Tree** — hierarchical node editor with auto-generated codes, status tracking, hour and cost estimates
-- **WBS Outline** — spreadsheet-style flat view of all nodes with inline editing
-- **Gantt Chart** — timeline view with dependency arrows and milestone markers
-- **Milestones** — dedicated milestone tracker linked to WBS nodes
-- **Dashboard** — at-a-glance progress charts and project summary
-- **Reports** — export project status reports to PDF and Excel
+- **WBS Tree** — hierarchical diagram editor with auto-generated codes, status tracking, hour estimates and dependencies (FS/SS/FF/SF)
+- **WBS Outline** — flat list of all nodes; select a row to open it in the tree
+- **Gantt Chart** (beta) — timeline view with dependency arrows and milestone markers
+- **Milestones** — milestone tracker linked to WBS nodes
+- **Dashboard** — progress KPIs, status chart and deliverables, filterable by assignee, status and date
+- **Reports** — export a project status report to PDF
 
 ---
 
@@ -29,11 +29,14 @@ Built with **WinUI 3** and **.NET 10**, distributed as a single self-contained e
 
 ## Getting Started
 
-1. Download the latest `iscWBS.exe` from [Releases](../../releases).
-2. Run the executable — no installer, no admin rights required.
-3. Choose **New Project** to create a `.iscwbs` project file, or **Open Project** to load an existing one.
+1. Download the latest `iscWBS-<version>-x64.zip` from [Releases](../../releases).
+2. Extract it to a folder you can write to (the in-app updater replaces files in that folder, so avoid `Program Files`).
+3. Run `iscWBS.exe` — no installer, no admin rights required.
+4. Choose **New Project** to create a `.iscwbs` project file, or **Open Project** to load an existing one.
 
-> Windows SmartScreen may warn on first launch because the executable is unsigned. Click **More info → Run anyway** to proceed.
+Settings and logs are stored under `%LOCALAPPDATA%\ISC\iscWBS\`.
+
+> Windows SmartScreen may warn on first launch while the executable is unsigned. Click **More info → Run anyway** to proceed.
 
 ---
 
@@ -42,7 +45,8 @@ Built with **WinUI 3** and **.NET 10**, distributed as a single self-contained e
 ```powershell
 git clone https://github.com/iiisc/iscWBS.git
 cd iscWBS
-dotnet build -c Debug
+dotnet build iscWBS.csproj -c Debug -p:Platform=x64
+dotnet test tests/iscWBS.Tests
 ```
 
 **Prerequisites:** Visual Studio 2022 or later with the **Windows App SDK** workload, or the [Windows App SDK](https://learn.microsoft.com/windows/apps/windows-app-sdk/downloads) standalone installer.
@@ -59,7 +63,6 @@ dotnet build -c Debug
 | Database | SQLite via sqlite-net-pcl |
 | Charts | LiveChartsCore (SkiaSharp) |
 | PDF export | QuestPDF |
-| Excel export | ClosedXML |
 
 ---
 

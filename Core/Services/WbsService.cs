@@ -1,308 +1,161 @@
 using SQLite;
+using iscWBS.Core.Data;
 using iscWBS.Core.Exceptions;
 using iscWBS.Core.Models;
-using iscWBS.Core.Repositories;
 
 namespace iscWBS.Core.Services;
 
-public sealed class WbsService : IWbsService
+/// <summary>Reads and edits the WBS nodes and dependencies of the open project, keeping outline codes in step.</summary>
+public sealed class WbsService
 {
-    private readonly WbsNodeRepository _repository;
-    private readonly NodeDependencyRepository _dependencyRepository;
-    private readonly MilestoneNodeLinkRepository _linkRepository;
-    private readonly IProjectStateService _projectStateService;
+    private readonly ProjectStateService _projectStateService;
 
-    public WbsService(
-        WbsNodeRepository repository,
-        NodeDependencyRepository dependencyRepository,
-        MilestoneNodeLinkRepository linkRepository,
-        IProjectStateService projectStateService)
+    public WbsService(ProjectStateService projectStateService)
     {
-        _repository = repository;
-        _dependencyRepository = dependencyRepository;
-        _linkRepository = linkRepository;
         _projectStateService = projectStateService;
     }
 
-    public Task<WbsNode?> GetByIdAsync(Guid id)
-        => _repository.GetByIdAsync(id);
+    private SQLiteAsyncConnection Db => _projectStateService.Connection;
 
-    public Task<IReadOnlyList<WbsNode>> GetRootNodesAsync(Guid projectId)
-        => _repository.GetRootNodesAsync(projectId);
+    public async Task<WbsNode?> GetByIdAsync(Guid id)
+        => await Db.Table<WbsNode>().Where(n => n.Id == id).FirstOrDefaultAsync();
 
-    public Task<IReadOnlyList<WbsNode>> GetChildrenAsync(Guid parentId)
-        => _repository.GetChildrenAsync(parentId);
+    /// <summary>All nodes of the project, ordered by <c>Code</c>.</summary>
+    public async Task<IReadOnlyList<WbsNode>> GetAllByProjectAsync(Guid projectId)
+        => await Db.QueryAsync<WbsNode>(
+            "SELECT * FROM WbsNodes WHERE ProjectId = ? ORDER BY Code",
+            projectId.ToString());
 
-    public Task<bool> HasChildrenAsync(Guid nodeId)
-        => _repository.HasChildrenAsync(nodeId);
-
-    public Task<IReadOnlyList<WbsNode>> GetAllByProjectAsync(Guid projectId)
-        => _repository.GetAllByProjectAsync(projectId);
-
-    public async Task<WbsNode> AddRootNodeAsync(Guid projectId, string title)
-    {
-        IReadOnlyList<WbsNode> roots = await _repository.GetRootNodesAsync(projectId);
-        var node = new WbsNode
-        {
-            ProjectId = projectId,
-            Title = title,
-            SortOrder = roots.Count
-        };
-        await RunInTransactionAsync(async () =>
-        {
-            await _repository.InsertAsync(node);
-            await RecodeAsync(null, projectId, string.Empty);
-        });
-        return await _repository.GetByIdAsync(node.Id) ?? throw new WbsNotFoundException(node.Id);
-    }
+    public Task<WbsNode> AddRootNodeAsync(Guid projectId, string title)
+        => InsertNodeAsync(projectId, null, null, title);
 
     public async Task<WbsNode> AddChildNodeAsync(Guid parentId, string title)
     {
-        WbsNode parent = await _repository.GetByIdAsync(parentId)
-            ?? throw new WbsNotFoundException(parentId);
-        IReadOnlyList<WbsNode> children = await _repository.GetChildrenAsync(parentId);
-        var node = new WbsNode
-        {
-            ProjectId = parent.ProjectId,
-            ParentId = parentId,
-            Title = title,
-            SortOrder = children.Count
-        };
-        await RunInTransactionAsync(async () =>
-        {
-            await _repository.InsertAsync(node);
-            await RecodeAsync(parentId, parent.ProjectId, parent.Code);
-        });
-        return await _repository.GetByIdAsync(node.Id) ?? throw new WbsNotFoundException(node.Id);
+        WbsNode parent = await GetByIdAsync(parentId)
+            ?? throw WbsException.NodeNotFound(parentId);
+        return await InsertNodeAsync(parent.ProjectId, parentId, null, title);
     }
 
+    /// <summary>Inserts a node directly after <paramref name="siblingId"/>, shifting later siblings down.</summary>
     public async Task<WbsNode> AddSiblingNodeAsync(Guid siblingId, string title)
     {
-        WbsNode sibling = await _repository.GetByIdAsync(siblingId)
-            ?? throw new WbsNotFoundException(siblingId);
+        WbsNode sibling = await GetByIdAsync(siblingId)
+            ?? throw WbsException.NodeNotFound(siblingId);
+        return await InsertNodeAsync(sibling.ProjectId, sibling.ParentId, sibling.SortOrder + 1, title);
+    }
 
-        Guid projectId = sibling.ProjectId;
-        Guid? parentId = sibling.ParentId;
-        int insertAt = sibling.SortOrder + 1;
-
-        IReadOnlyList<WbsNode> siblings = parentId.HasValue
-            ? await _repository.GetChildrenAsync(parentId.Value)
-            : await _repository.GetRootNodesAsync(projectId);
-
-        List<WbsNode> toShift = siblings
-            .Where(n => n.SortOrder >= insertAt)
-            .ToList();
-
+    /// <summary>Inserts at position <paramref name="insertAt"/> among the parent's children, or last when null, then renumbers.</summary>
+    private async Task<WbsNode> InsertNodeAsync(Guid projectId, Guid? parentId, int? insertAt, string title)
+    {
         var node = new WbsNode
         {
             ProjectId = projectId,
             ParentId = parentId,
             Title = title,
-            SortOrder = insertAt
+            SortOrder = insertAt ?? int.MaxValue
         };
-
-        string parentCode = parentId.HasValue
-            ? (await _repository.GetByIdAsync(parentId.Value))?.Code ?? string.Empty
-            : string.Empty;
-
-        await RunInTransactionAsync(async () =>
+        await Db.InTransactionAsync(async () =>
         {
-            foreach (WbsNode n in toShift)
-            {
-                n.SortOrder++;
-                await _repository.UpdateAsync(n);
-            }
-            await _repository.InsertAsync(node);
-            await RecodeAsync(parentId, projectId, parentCode);
+            // First in the list, so the stable sort puts it ahead of the sibling whose position it takes.
+            List<WbsNode> nodes = [node, .. await GetAllByProjectAsync(projectId)];
+            List<WbsNode> changed = Renumber(nodes);
+            await Db.InsertAsync(node);
+            foreach (WbsNode n in changed.Where(n => n != node))
+                await Db.UpdateAsync(n);
         });
-        return await _repository.GetByIdAsync(node.Id) ?? throw new WbsNotFoundException(node.Id);
+        return node;
     }
 
-    public Task UpdateNodeAsync(WbsNode node)
-        => _repository.UpdateAsync(node);
+    public async Task UpdateNodeAsync(WbsNode node)
+        => await Db.UpdateAsync(node);
 
+    /// <summary>Deletes the node with its whole subtree, their dependencies and milestone links, then renumbers.</summary>
     public async Task DeleteNodeAsync(Guid id)
     {
-        WbsNode node = await _repository.GetByIdAsync(id)
-            ?? throw new WbsNotFoundException(id);
+        WbsNode node = await GetByIdAsync(id)
+            ?? throw WbsException.NodeNotFound(id);
 
-        Guid? parentId = node.ParentId;
-        Guid projectId = node.ProjectId;
-        string parentCode = parentId.HasValue
-            ? (await _repository.GetByIdAsync(parentId.Value))?.Code ?? string.Empty
-            : string.Empty;
+        IReadOnlyList<WbsNode> nodes = await GetAllByProjectAsync(node.ProjectId);
+        HashSet<Guid> subtreeIds = new WbsHierarchy(nodes).CollectSubtree(node).Select(n => n.Id).ToHashSet();
+        string placeholders = string.Join(",", subtreeIds.Select(_ => "?"));
+        object[] ids = subtreeIds.Select(subtreeId => (object)subtreeId.ToString()).ToArray();
 
-        await RunInTransactionAsync(async () =>
+        await Db.InTransactionAsync(async () =>
         {
-            await DeleteRecursiveAsync(id);
-            await RecodeAsync(parentId, projectId, parentCode);
+            await Db.ExecuteAsync(
+                $"DELETE FROM NodeDependencies WHERE PredecessorId IN ({placeholders}) OR SuccessorId IN ({placeholders})",
+                [.. ids, .. ids]);
+            await Db.ExecuteAsync($"DELETE FROM MilestoneNodeLinks WHERE NodeId IN ({placeholders})", ids);
+            await Db.ExecuteAsync($"DELETE FROM WbsNodes WHERE Id IN ({placeholders})", ids);
+            foreach (WbsNode n in Renumber(nodes.Where(other => !subtreeIds.Contains(other.Id)).ToList()))
+                await Db.UpdateAsync(n);
         });
     }
 
-    public async Task MoveNodeAsync(Guid nodeId, Guid? newParentId, int newSortOrder)
+    /// <summary>Rewrites <c>SortOrder</c> and the outline <c>Code</c> of every node from tree order; returns the nodes that changed.</summary>
+    private static List<WbsNode> Renumber(IReadOnlyList<WbsNode> nodes)
     {
-        WbsNode node = await _repository.GetByIdAsync(nodeId)
-            ?? throw new WbsNotFoundException(nodeId);
+        var hierarchy = new WbsHierarchy(nodes);
+        var changed = new List<WbsNode>();
 
-        Guid projectId = node.ProjectId;
-        Guid? oldParentId = node.ParentId;
-        string oldParentCode = oldParentId.HasValue
-            ? (await _repository.GetByIdAsync(oldParentId.Value))?.Code ?? string.Empty
-            : string.Empty;
-
-        // Read phase — safe outside the transaction in a single-user app.
-        IReadOnlyList<WbsNode> oldSiblings = oldParentId.HasValue
-            ? await _repository.GetChildrenAsync(oldParentId.Value)
-            : await _repository.GetRootNodesAsync(projectId);
-
-        List<WbsNode> oldGroup = oldSiblings
-            .Where(n => n.Id != nodeId)
-            .OrderBy(n => n.SortOrder)
-            .ToList();
-
-        List<WbsNode> newGroup;
-        string newParentCode;
-        if (oldParentId == newParentId)
+        void Walk(IReadOnlyList<WbsNode> siblings, string parentCode)
         {
-            newGroup = oldGroup;
-            newParentCode = oldParentCode;
-        }
-        else
-        {
-            IReadOnlyList<WbsNode> newSiblings = newParentId.HasValue
-                ? await _repository.GetChildrenAsync(newParentId.Value)
-                : await _repository.GetRootNodesAsync(projectId);
-            newGroup = newSiblings.OrderBy(n => n.SortOrder).ToList();
-            newParentCode = newParentId.HasValue
-                ? (await _repository.GetByIdAsync(newParentId.Value))?.Code ?? string.Empty
-                : string.Empty;
-        }
-
-        int clampedSortOrder = Math.Clamp(newSortOrder, 0, newGroup.Count);
-
-        // Write phase — all mutations are atomic.
-        await RunInTransactionAsync(async () =>
-        {
-            for (int i = 0; i < oldGroup.Count; i++)
+            for (int i = 0; i < siblings.Count; i++)
             {
-                oldGroup[i].SortOrder = i;
-                await _repository.UpdateAsync(oldGroup[i]);
+                WbsNode node = siblings[i];
+                string code = parentCode.Length == 0 ? $"{i + 1}" : $"{parentCode}.{i + 1}";
+                if (node.Code != code || node.SortOrder != i)
+                {
+                    node.Code = code;
+                    node.SortOrder = i;
+                    changed.Add(node);
+                }
+                Walk(hierarchy.ChildrenOf(node.Id), code);
             }
-
-            foreach (WbsNode n in newGroup.Where(n => n.SortOrder >= clampedSortOrder))
-            {
-                n.SortOrder++;
-                await _repository.UpdateAsync(n);
-            }
-
-            node.ParentId = newParentId;
-            node.SortOrder = clampedSortOrder;
-            await _repository.UpdateAsync(node);
-
-            await RecodeAsync(oldParentId, projectId, oldParentCode);
-            if (oldParentId != newParentId)
-                await RecodeAsync(newParentId, projectId, newParentCode);
-        });
-    }
-
-    /// <summary>
-    /// Executes <paramref name="operation"/> inside an explicit SQLite transaction.
-    /// Rolls back and re-throws if the operation throws.
-    /// </summary>
-    private async Task RunInTransactionAsync(Func<Task> operation)
-    {
-        SQLiteAsyncConnection conn = _projectStateService.Database
-            ?? throw new WbsException("No project is currently open.");
-        await conn.ExecuteAsync("BEGIN TRANSACTION");
-        try
-        {
-            await operation();
-            await conn.ExecuteAsync("COMMIT");
         }
-        catch
-        {
-            try { await conn.ExecuteAsync("ROLLBACK"); } catch { }
-            throw;
-        }
+
+        Walk(nodes.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder).ToList(), string.Empty);
+        return changed;
     }
 
-    private async Task DeleteRecursiveAsync(Guid nodeId)
-    {
-        IReadOnlyList<WbsNode> children = await _repository.GetChildrenAsync(nodeId);
-        foreach (WbsNode child in children)
-            await DeleteRecursiveAsync(child.Id);
-        await _dependencyRepository.DeleteByNodeAsync(nodeId);
-        await _linkRepository.DeleteByNodeAsync(nodeId);
-        await _repository.DeleteAsync(nodeId);
-    }
-
-    private async Task RecodeAsync(Guid? parentId, Guid projectId, string parentCode)
-    {
-        IReadOnlyList<WbsNode> children = parentId.HasValue
-            ? await _repository.GetChildrenAsync(parentId.Value)
-            : await _repository.GetRootNodesAsync(projectId);
-
-        List<WbsNode> ordered = children.OrderBy(n => n.SortOrder).ToList();
-        for (int i = 0; i < ordered.Count; i++)
-        {
-            WbsNode node = ordered[i];
-            string newCode = string.IsNullOrEmpty(parentCode)
-                ? $"{i + 1}"
-                : $"{parentCode}.{i + 1}";
-
-            bool codeChanged = node.Code != newCode;
-            node.SortOrder = i;
-            node.Code = newCode;
-            await _repository.UpdateAsync(node);
-
-            if (codeChanged)
-                await RecodeAsync(node.Id, projectId, newCode);
-        }
-    }
-
-    public Task<IReadOnlyList<NodeDependency>> GetDependenciesAsync(Guid nodeId)
-        => _dependencyRepository.GetBySuccessorAsync(nodeId);
+    public async Task<IReadOnlyList<NodeDependency>> GetAllDependenciesByProjectAsync(Guid projectId)
+        => await Db.QueryAsync<NodeDependency>(
+            "SELECT d.Id, d.PredecessorId, d.SuccessorId, d.Type " +
+            "FROM NodeDependencies d " +
+            "INNER JOIN WbsNodes n ON d.SuccessorId = n.Id " +
+            "WHERE n.ProjectId = ?",
+            projectId.ToString());
 
     public async Task AddDependencyAsync(NodeDependency dependency)
     {
         if (dependency.PredecessorId == dependency.SuccessorId)
-            throw new WbsValidationException("A node cannot depend on itself.");
+            throw new WbsException("A node cannot depend on itself.").WithMessageKey("Error_SelfDependency");
 
-        WbsNode successor = await _repository.GetByIdAsync(dependency.SuccessorId)
-            ?? throw new WbsNotFoundException(dependency.SuccessorId);
+        WbsNode successor = await GetByIdAsync(dependency.SuccessorId)
+            ?? throw WbsException.NodeNotFound(dependency.SuccessorId);
 
-        IReadOnlyList<NodeDependency> existing =
-            await _dependencyRepository.GetAllByProjectAsync(successor.ProjectId);
+        IReadOnlyList<NodeDependency> existing = await GetAllDependenciesByProjectAsync(successor.ProjectId);
 
         if (existing.Any(d => d.PredecessorId == dependency.PredecessorId
                            && d.SuccessorId   == dependency.SuccessorId))
-            throw new WbsValidationException("This dependency already exists.");
+            throw new WbsException("This dependency already exists.").WithMessageKey("Error_DuplicateDependency");
 
         if (WouldCreateCycle(dependency.PredecessorId, dependency.SuccessorId, existing))
-            throw new WbsValidationException(
-                "Adding this dependency would create a circular dependency.");
+            throw new WbsException(
+                "Adding this dependency would create a circular dependency.").WithMessageKey("Error_CircularDependency");
 
-        await _dependencyRepository.InsertAsync(dependency);
+        await Db.InsertAsync(dependency);
     }
 
-    public Task RemoveDependencyAsync(int id)
-        => _dependencyRepository.DeleteAsync(id);
+    public async Task RemoveDependencyAsync(int id)
+        => await Db.DeleteAsync<NodeDependency>(id);
 
-    public Task<IReadOnlyList<NodeDependency>> GetAllDependenciesByProjectAsync(Guid projectId)
-        => _dependencyRepository.GetAllByProjectAsync(projectId);
-
-    /// <summary>
-    /// Returns <see langword="true"/> if adding the edge predecessorId→successorId to the
-    /// existing dependency graph would introduce a cycle. Uses an iterative DFS from
-    /// <paramref name="successorId"/>, following outgoing edges, to determine whether
-    /// <paramref name="predecessorId"/> is already reachable from the proposed successor.
-    /// </summary>
+    /// <summary>Whether <paramref name="predecessorId"/> is already reachable from <paramref name="successorId"/>, so the new edge would close a loop.</summary>
     private static bool WouldCreateCycle(
         Guid predecessorId,
         Guid successorId,
         IReadOnlyList<NodeDependency> existing)
     {
-        // Build adjacency list: each node → its direct successors
         var adj = new Dictionary<Guid, List<Guid>>();
         foreach (NodeDependency dep in existing)
         {
@@ -311,7 +164,6 @@ public sealed class WbsService : IWbsService
             list.Add(dep.SuccessorId);
         }
 
-        // Iterative DFS from successorId; if we reach predecessorId the new edge closes a cycle
         var visited = new HashSet<Guid>();
         var stack   = new Stack<Guid>();
         stack.Push(successorId);
@@ -327,166 +179,5 @@ public sealed class WbsService : IWbsService
         }
 
         return false;
-    }
-
-    public IReadOnlySet<Guid> ResolveBlockedNodeIds(
-        IReadOnlyList<WbsNode> nodes,
-        IReadOnlyList<NodeDependency> dependencies)
-    {
-        var statusMap = nodes.ToDictionary(n => n.Id, n => n.Status);
-        var blocked = new HashSet<Guid>();
-
-        foreach (NodeDependency dep in dependencies)
-        {
-            if (!statusMap.TryGetValue(dep.SuccessorId, out WbsStatus successorStatus))
-                continue;
-
-            // Already active or finished — dependency no longer constrains it
-            if (successorStatus is WbsStatus.Complete or WbsStatus.InProgress)
-                continue;
-
-            if (!statusMap.TryGetValue(dep.PredecessorId, out WbsStatus predecessorStatus))
-                continue;
-
-            bool isBlocked = DependencyConstraints.IsStartViolated(dep.Type, predecessorStatus);
-
-            if (isBlocked)
-                blocked.Add(dep.SuccessorId);
-        }
-
-        return blocked;
-    }
-
-    public IReadOnlySet<Guid> ResolveCompletionBlockedNodeIds(
-        IReadOnlyList<WbsNode> nodes,
-        IReadOnlyList<NodeDependency> dependencies)
-    {
-        var statusMap   = nodes.ToDictionary(n => n.Id, n => n.Status);
-        IReadOnlySet<Guid> startBlocked = ResolveBlockedNodeIds(nodes, dependencies);
-        var completionBlocked = new HashSet<Guid>();
-
-        foreach (NodeDependency dep in dependencies)
-        {
-            if (!DependencyConstraints.IsFinishConstraint(dep.Type))
-                continue;
-
-            if (!statusMap.TryGetValue(dep.SuccessorId, out WbsStatus successorStatus))
-                continue;
-
-            if (successorStatus == WbsStatus.Complete)
-                continue;
-
-            // Start-blocked nodes carry the more severe indicator; don't double-flag them.
-            if (startBlocked.Contains(dep.SuccessorId))
-                continue;
-
-            if (!statusMap.TryGetValue(dep.PredecessorId, out WbsStatus predecessorStatus))
-                continue;
-
-            bool isCompletionBlocked = DependencyConstraints.IsFinishViolated(dep.Type, predecessorStatus);
-
-            if (isCompletionBlocked)
-                completionBlocked.Add(dep.SuccessorId);
-        }
-
-        return completionBlocked;
-    }
-
-    public IReadOnlySet<Guid> ResolveViolatedCompleteNodeIds(
-        IReadOnlyList<WbsNode> nodes,
-        IReadOnlyList<NodeDependency> dependencies)
-    {
-        var statusMap = nodes.ToDictionary(n => n.Id, n => n.Status);
-        var violated  = new HashSet<Guid>();
-
-        foreach (NodeDependency dep in dependencies)
-        {
-            if (!statusMap.TryGetValue(dep.SuccessorId, out WbsStatus successorStatus))
-                continue;
-
-            // Only Complete nodes can be retroactively violated.
-            if (successorStatus != WbsStatus.Complete)
-                continue;
-
-            if (!statusMap.TryGetValue(dep.PredecessorId, out WbsStatus predecessorStatus))
-                continue;
-
-            bool isViolated = DependencyConstraints.IsViolated(dep.Type, predecessorStatus);
-
-            if (isViolated)
-                violated.Add(dep.SuccessorId);
-        }
-
-        return violated;
-    }
-
-    public IReadOnlySet<Guid> ResolveViolatedInProgressNodeIds(
-        IReadOnlyList<WbsNode> nodes,
-        IReadOnlyList<NodeDependency> dependencies)
-    {
-        var statusMap = nodes.ToDictionary(n => n.Id, n => n.Status);
-        var violated  = new HashSet<Guid>();
-
-        foreach (NodeDependency dep in dependencies)
-        {
-            if (!statusMap.TryGetValue(dep.SuccessorId, out WbsStatus successorStatus))
-                continue;
-
-            if (successorStatus != WbsStatus.InProgress)
-                continue;
-
-            if (!statusMap.TryGetValue(dep.PredecessorId, out WbsStatus predecessorStatus))
-                continue;
-
-            if (DependencyConstraints.IsStartViolated(dep.Type, predecessorStatus))
-                violated.Add(dep.SuccessorId);
-        }
-
-        return violated;
-    }
-
-    public ProjectSummary ComputeProjectSummary(
-        IReadOnlyList<WbsNode> nodes,
-        IReadOnlySet<Guid> blockedNodeIds)
-    {
-        int total      = nodes.Count;
-        int complete   = nodes.Count(n => n.Status == WbsStatus.Complete);
-        int inProgress = nodes.Count(n => n.Status == WbsStatus.InProgress);
-        int blocked    = blockedNodeIds.Count;
-        int notStarted = nodes.Count(n =>
-            n.Status != WbsStatus.Complete &&
-            n.Status != WbsStatus.InProgress &&
-            !blockedNodeIds.Contains(n.Id));
-        int overdue = nodes.Count(n =>
-            n.DueDate.HasValue &&
-            n.DueDate.Value < DateTime.UtcNow &&
-            n.Status != WbsStatus.Complete);
-        double pct = total == 0 ? 0 : Math.Round(complete * 100.0 / total, 1);
-
-        return new ProjectSummary(total, complete, inProgress, notStarted, blocked, overdue, pct);
-    }
-
-    public IReadOnlyList<NodeDependency> GetStatusTransitionBlockers(
-        WbsStatus targetStatus,
-        IReadOnlyList<NodeDependency> predecessorDependencies,
-        IReadOnlyDictionary<Guid, WbsStatus> predecessorStatusMap)
-    {
-        var blockers = new List<NodeDependency>();
-        foreach (NodeDependency dep in predecessorDependencies)
-        {
-            if (!predecessorStatusMap.TryGetValue(dep.PredecessorId, out WbsStatus predStatus))
-                continue;
-
-            bool isBlocked = targetStatus switch
-            {
-                WbsStatus.InProgress => DependencyConstraints.IsStartViolated(dep.Type, predStatus),
-                WbsStatus.Complete   => DependencyConstraints.IsViolated(dep.Type, predStatus),
-                _                    => false,
-            };
-
-            if (isBlocked)
-                blockers.Add(dep);
-        }
-        return blockers;
     }
 }

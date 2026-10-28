@@ -1,41 +1,35 @@
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Dispatching;
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
+using iscWBS.Helpers;
 
 namespace iscWBS.ViewModels;
 
-public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAware
+public sealed partial class WbsTreeViewModel : ObservableObject
 {
-    private readonly IWbsService _wbsService;
-    private readonly IProjectStateService _projectStateService;
-    private readonly IDialogService _dialogService;
-    private readonly IMilestoneService _milestoneService;
+    private readonly WbsService _wbsService;
+    private readonly ProjectStateService _projectStateService;
+    private readonly DialogService _dialogService;
+    private readonly MilestoneService _milestoneService;
 
     private bool _isLoadingEditFields;
     private bool _hasPendingEdit;
     private int _saveVersion;
     private Guid _pendingSelectNodeId;
     private CancellationTokenSource? _pageCts;
-    private CancellationTokenSource? _selectionCts;
-    private IReadOnlyList<NodeDependency> _cachedDependencies = Array.Empty<NodeDependency>();
-
-    public ObservableCollection<DependencyRowViewModel> NodeDependencies { get; } = new();
-    public ObservableCollection<WbsNode> AllProjectNodes { get; } = new();
-    public ObservableCollection<MilestoneRowViewModel> LinkedMilestones { get; } = new();
 
     public IReadOnlyList<DependencyTypeOption> DependencyTypeOptions { get; } =
-    [
-        new(DependencyType.FinishToStart,  "Finish → Start (FS)",  "Predecessor must finish before this node can start"),
-        new(DependencyType.StartToStart,   "Start → Start (SS)",   "Predecessor must start before this node can start"),
-        new(DependencyType.FinishToFinish, "Finish → Finish (FF)", "Predecessor must finish before this node can finish"),
-        new(DependencyType.StartToFinish,  "Start → Finish (SF)",  "Predecessor must start before this node can finish"),
-    ];
+        Enum.GetValues<DependencyType>()
+            .Select(t => new DependencyTypeOption(
+                t,
+                $"{DisplayText.GetLabel(t)} ({DependencyConstraints.GetAbbreviation(t)})",
+                DisplayText.GetDescription(t)))
+            .ToList();
 
     [ObservableProperty]
-    public partial WbsNodeViewModel? SelectedNode { get; set; }
+    public partial WbsNode? SelectedNode { get; set; }
 
     [ObservableProperty]
     public partial string EditTitle { get; set; } = string.Empty;
@@ -47,79 +41,39 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
     public partial string EditAssignedTo { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial WbsStatus? EditStatus { get; set; } = WbsStatus.NotStarted;
+    public partial WbsStatus EditStatus { get; set; }
 
-    /// <summary>Zero-based index of <see cref="EditStatus"/> within <see cref="StatusOptions"/>, or -1 when null.</summary>
-    public int EditStatusIndex
+    partial void OnEditStatusChanged(WbsStatus value)
     {
-        get => EditStatus.HasValue ? (int)EditStatus.Value : -1;
-        set => EditStatus = value >= 0 ? (WbsStatus)value : (WbsStatus?)null;
-    }
+        if (_isLoadingEditFields || SelectedNode is not { } node) return;
 
-    /// <summary>
-    /// Non-nullable binding surface for <see cref="ComboBox.SelectedItem"/>.
-    /// Avoids boxing <see cref="WbsStatus?"/> as a nullable so the ComboBox
-    /// equality scan against <see cref="StatusOptions"/> always succeeds.
-    /// </summary>
-    public WbsStatus EditStatusItem
-    {
-        get => EditStatus ?? WbsStatus.NotStarted;
-        set => EditStatus = value;
-    }
+        IReadOnlyList<NodeDependency> blockers = DependencyConstraints.TransitionBlockers(
+            value,
+            DiagramDependencies.Where(d => d.SuccessorId == node.Id),
+            (DiagramNodes ?? []).ToDictionary(n => n.Id, n => n.Status));
 
-    partial void OnEditStatusChanged(WbsStatus? value)
-    {
-        OnPropertyChanged(nameof(EditStatusIndex));
-        OnPropertyChanged(nameof(EditStatusItem));
-        if (!_isLoadingEditFields) RefreshBlockedIds();
-
-        if (!_isLoadingEditFields && value is WbsStatus.InProgress or WbsStatus.Complete
-            && SelectedNode is { } selectedNode)
+        if (blockers.Count == 0)
         {
-            IReadOnlyList<NodeDependency> nodePredecessors = _cachedDependencies
-                .Where(d => d.SuccessorId == selectedNode.Node.Id)
-                .ToList();
-
-            IReadOnlyDictionary<Guid, WbsStatus> statusMap =
-                DiagramNodes?.ToDictionary(n => n.Id, n => n.Status)
-                ?? (IReadOnlyDictionary<Guid, WbsStatus>)new Dictionary<Guid, WbsStatus>();
-
-            IReadOnlyList<NodeDependency> blockers = _wbsService.GetStatusTransitionBlockers(
-                value.Value, nodePredecessors, statusMap);
-
-            if (blockers.Count > 0)
-            {
-                // Revert the ViewModel state synchronously so it is never wrong.
-                _isLoadingEditFields = true;
-                try   { EditStatus = selectedNode.Node.Status; }
-                finally { _isLoadingEditFields = false; }
-                RefreshBlockedIds();
-
-                // x:Bind TwoWay suppresses PropertyChanged for EditStatusIndex while
-                // the ComboBox SelectionChanged dispatch is still on the stack.
-                // Post a deferred notification so the ComboBox re-reads the already-
-                // reverted value once that dispatch — and its feedback-loop guard — clears.
-                DispatcherQueue.GetForCurrentThread()?.TryEnqueue(
-                    () => OnPropertyChanged(nameof(EditStatusItem)));
-
-                string title = value == WbsStatus.InProgress
-                    ? "Cannot Mark as In Progress"
-                    : "Cannot Mark as Complete";
-                string intro = value == WbsStatus.InProgress
-                    ? "This node cannot be started until the following predecessor constraints are met:"
-                    : "This node cannot be completed until the following predecessor constraints are met:";
-
-                List<DependencyRowViewModel> violators = blockers
-                    .Select(b => NodeDependencies.FirstOrDefault(r => r.Dependency.Id == b.Id))
-                    .OfType<DependencyRowViewModel>()
-                    .ToList();
-
-                _ = NotifyStatusBlockedAsync(title, intro, violators);
-                return;
-            }
+            RefreshBlockedIds();
+            ScheduleSave();
+            return;
         }
 
-        ScheduleSave();
+        _isLoadingEditFields = true;
+        try   { EditStatus = node.Status; }
+        finally { _isLoadingEditFields = false; }
+
+        // x:Bind TwoWay suppresses PropertyChanged for EditStatus while the ComboBox SelectionChanged
+        // dispatch is still on the stack, so re-notify once it clears for the ComboBox to show the reverted value.
+        DispatcherQueue.GetForCurrentThread()?.TryEnqueue(() => OnPropertyChanged(nameof(EditStatus)));
+
+        bool starting = value == WbsStatus.InProgress;
+        string details = string.Join("\n", NodeDependencies
+            .Where(r => blockers.Any(b => b.Id == r.Dependency.Id))
+            .Select(r => $"  • {r.PredecessorCode} {r.PredecessorTitle}: {r.BlockingReason}"));
+        _ = _dialogService.ShowErrorAsync(
+            Strings.Get(starting ? "Wbs_CannotStartTitle" : "Wbs_CannotCompleteTitle"),
+            $"{Strings.Get(starting ? "Wbs_CannotStartIntro" : "Wbs_CannotCompleteIntro")}\n\n{details}");
     }
 
     partial void OnEditTitleChanged(string value) => ScheduleSave();
@@ -149,40 +103,31 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
     [ObservableProperty]
     public partial IReadOnlyList<WbsNode>? DiagramNodes { get; set; }
 
-    private IReadOnlySet<Guid>? _blockedNodeIds;
-    public IReadOnlySet<Guid>? BlockedNodeIds
-    {
-        get => _blockedNodeIds;
-        private set => SetProperty(ref _blockedNodeIds, value);
-    }
+    [ObservableProperty]
+    public partial IReadOnlySet<Guid>? BlockedNodeIds { get; private set; }
 
-    private IReadOnlySet<Guid>? _completionBlockedNodeIds;
-    public IReadOnlySet<Guid>? CompletionBlockedNodeIds
-    {
-        get => _completionBlockedNodeIds;
-        private set => SetProperty(ref _completionBlockedNodeIds, value);
-    }
+    [ObservableProperty]
+    public partial IReadOnlySet<Guid>? CompletionBlockedNodeIds { get; private set; }
 
-    private IReadOnlySet<Guid>? _violatedCompleteNodeIds;
-    public IReadOnlySet<Guid>? ViolatedCompleteNodeIds
-    {
-        get => _violatedCompleteNodeIds;
-        private set => SetProperty(ref _violatedCompleteNodeIds, value);
-    }
+    [ObservableProperty]
+    public partial IReadOnlySet<Guid>? ViolatedCompleteNodeIds { get; private set; }
 
-    private IReadOnlySet<Guid>? _violatedInProgressNodeIds;
-    public IReadOnlySet<Guid>? ViolatedInProgressNodeIds
-    {
-        get => _violatedInProgressNodeIds;
-        private set => SetProperty(ref _violatedInProgressNodeIds, value);
-    }
+    [ObservableProperty]
+    public partial IReadOnlySet<Guid>? ViolatedInProgressNodeIds { get; private set; }
 
-    private IReadOnlyList<NodeDependency>? _diagramDependencies;
-    public IReadOnlyList<NodeDependency>? DiagramDependencies
-    {
-        get => _diagramDependencies;
-        private set => SetProperty(ref _diagramDependencies, value);
-    }
+    [ObservableProperty]
+    public partial IReadOnlyList<NodeDependency> DiagramDependencies { get; private set; } = [];
+
+    /// <summary>Predecessor rows of <see cref="SelectedNode"/>.</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<DependencyRowViewModel> NodeDependencies { get; private set; } = [];
+
+    /// <summary>Every node but <see cref="SelectedNode"/>, for the add-predecessor picker.</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<WbsNode> PredecessorOptions { get; private set; } = [];
+
+    [ObservableProperty]
+    public partial IReadOnlyList<MilestoneRowViewModel> LinkedMilestones { get; private set; } = [];
 
     [ObservableProperty]
     public partial bool IsSaving { get; set; }
@@ -196,27 +141,27 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
     public partial WbsNode? NewDepPredecessor { get; set; }
 
     [ObservableProperty]
-    public partial DependencyTypeOption? NewDepTypeOption { get; set; } =
-        new(DependencyType.FinishToStart, "Finish → Start (FS)", "Predecessor must finish before this node can start");
+    public partial DependencyTypeOption? NewDepTypeOption { get; set; }
 
     public bool IsDetailVisible => SelectedNode is not null;
 
     /// <summary>The id of <see cref="SelectedNode"/> for the diagram highlight, or <see cref="Guid.Empty"/> when nothing is selected.</summary>
-    public Guid SelectedNodeId => SelectedNode?.Node.Id ?? Guid.Empty;
+    public Guid SelectedNodeId => SelectedNode?.Id ?? Guid.Empty;
 
     public IReadOnlyList<WbsStatus> StatusOptions { get; } =
         Enum.GetValues<WbsStatus>().Except([WbsStatus.Blocked]).ToList();
 
     public WbsTreeViewModel(
-        IWbsService wbsService,
-        IProjectStateService projectStateService,
-        IDialogService dialogService,
-        IMilestoneService milestoneService)
+        WbsService wbsService,
+        ProjectStateService projectStateService,
+        DialogService dialogService,
+        MilestoneService milestoneService)
     {
         _wbsService = wbsService;
         _projectStateService = projectStateService;
         _dialogService = dialogService;
         _milestoneService = milestoneService;
+        NewDepTypeOption = DependencyTypeOptions[0];
     }
 
     public void OnNavigatedTo(object? parameter)
@@ -226,209 +171,132 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
         _pageCts = new CancellationTokenSource();
         if (parameter is Guid nodeId)
             _pendingSelectNodeId = nodeId;
-        _ = LoadRootNodesAsync();
+        _ = LoadDiagramNodesAsync(PageToken);
     }
 
     public void OnNavigatedFrom()
     {
-        if (_hasPendingEdit && SelectedNode is { } nodeVm)
-        {
-            _hasPendingEdit = false;
-            ApplyEditFieldsToNode(nodeVm);
-            _ = _wbsService.UpdateNodeAsync(nodeVm.Node); // best-effort, no error UI
-        }
-        _saveVersion++;
+        FlushPendingEdit();
         _pageCts?.Cancel();
         _pageCts?.Dispose();
         _pageCts = null;
-        _selectionCts?.Cancel();
-        _selectionCts?.Dispose();
-        _selectionCts = null;
     }
 
-    partial void OnSelectedNodeChanged(WbsNodeViewModel? value)
+    partial void OnSelectedNodeChanged(WbsNode? value)
     {
         _saveVersion++;
+        _hasPendingEdit = false;
         IsSaving = false;
-        _selectionCts?.Cancel();
-        _selectionCts?.Dispose();
-        _selectionCts = null;
         OnPropertyChanged(nameof(IsDetailVisible));
         OnPropertyChanged(nameof(SelectedNodeId));
-        if (value is null)
-        {
-            NodeDependencies.Clear();
-            AllProjectNodes.Clear();
-            LinkedMilestones.Clear();
-            return;
-        }
-        _selectionCts = new CancellationTokenSource();
-        LoadEditFieldsFromNode(value.Node);
-        _ = LoadDependenciesAsync(value.Node.Id, _selectionCts.Token);
-        _ = LoadAllProjectNodesAsync(_selectionCts.Token);
-        _ = LoadLinkedMilestonesAsync(value.Node.Id, _selectionCts.Token);
+        NewDepPredecessor = null;
+        RefreshSelectionLists();
+        LinkedMilestones = [];
+        if (value is null) return;
+        LoadEditFieldsFromNode(value);
+        _ = LoadLinkedMilestonesAsync(value.Id);
     }
 
-    private Task LoadRootNodesAsync()
-        => LoadDiagramNodesAsync(_pageCts?.Token ?? default);
+    private CancellationToken PageToken => _pageCts?.Token ?? default;
 
     [RelayCommand]
     private async Task AddRootNodeAsync()
     {
-        if (_projectStateService.ActiveProject is not { Id: var projectId }) return;
+        if (_projectStateService.ActiveProject is { Id: var projectId })
+            await AddNodeAsync(title => _wbsService.AddRootNodeAsync(projectId, title), "ErrorTitle_AddNode");
+    }
+
+    [RelayCommand]
+    private async Task AddChildNodeAsync(WbsNode? node)
+    {
+        if (node is not null)
+            await AddNodeAsync(title => _wbsService.AddChildNodeAsync(node.Id, title), "ErrorTitle_AddChild");
+    }
+
+    [RelayCommand]
+    private async Task AddSiblingNodeAsync(WbsNode? node)
+    {
+        if (node is not null)
+            await AddNodeAsync(title => _wbsService.AddSiblingNodeAsync(node.Id, title), "ErrorTitle_AddSibling");
+    }
+
+    private async Task AddNodeAsync(Func<string, Task<WbsNode>> add, string errorTitleKey)
+    {
         try
         {
-            await _wbsService.AddRootNodeAsync(projectId, "New Node");
-            await LoadRootNodesAsync();
+            await add(Strings.Get("Wbs_NewNodeTitle"));
+            await LoadDiagramNodesAsync(PageToken);
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Add Node Error", ex.Message);
+            await _dialogService.ShowErrorAsync(errorTitleKey, ex);
         }
     }
 
     [RelayCommand]
-    private async Task AddChildNodeAsync(WbsNodeViewModel? nodeVm)
+    private async Task DeleteNodeAsync(WbsNode? node)
     {
-        if (nodeVm is null) return;
-        try
-        {
-            await _wbsService.AddChildNodeAsync(nodeVm.Node.Id, "New Node");
-            await LoadDiagramNodesAsync(_pageCts?.Token ?? default);
-        }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowErrorAsync("Add Child Error", ex.Message);
-        }
-    }
-
-    [RelayCommand]
-    private async Task AddSiblingNodeAsync(WbsNodeViewModel? nodeVm)
-    {
-        if (nodeVm is null) return;
-        try
-        {
-            await _wbsService.AddSiblingNodeAsync(nodeVm.Node.Id, "New Node");
-            await LoadRootNodesAsync();
-        }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowErrorAsync("Add Sibling Error", ex.Message);
-        }
-    }
-
-    [RelayCommand]
-    private async Task DeleteNodeAsync(WbsNodeViewModel? nodeVm)
-    {
-        if (nodeVm is null) return;
+        if (node is null) return;
 
         bool confirmed = await _dialogService.ShowConfirmAsync(
-            "Delete Node",
-            $"Delete \"{nodeVm.Node.Title}\" and all its children?");
+            Strings.Get("Wbs_DeleteNodeTitle"),
+            Strings.Format("Wbs_DeleteNodeConfirm", node.Title));
         if (!confirmed) return;
 
         try
         {
-            await _wbsService.DeleteNodeAsync(nodeVm.Node.Id);
-            if (SelectedNode == nodeVm)
-            {
-                _hasPendingEdit = false;
-                _saveVersion++;
+            await _wbsService.DeleteNodeAsync(node.Id);
+            if (SelectedNode == node)
                 SelectedNode = null;
-            }
-            await LoadRootNodesAsync();
+            await LoadDiagramNodesAsync(PageToken);
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Delete Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Delete", ex);
         }
     }
 
     [RelayCommand]
     private void ClearSelection()
     {
-        if (_hasPendingEdit && SelectedNode is { } nodeVm)
-        {
-            _hasPendingEdit = false;
-            _saveVersion++;
-            ApplyEditFieldsToNode(nodeVm);
-            _ = _wbsService.UpdateNodeAsync(nodeVm.Node);
-        }
-        else
-        {
-            _saveVersion++;
-        }
-        IsSaving = false;
+        FlushPendingEdit();
         SelectedNode = null;
     }
 
-    private void ApplyEditFieldsToNode(WbsNodeViewModel nodeVm)
+    /// <summary>Saves the selected node, then reloads and warns about any dependencies the edit newly broke.</summary>
+    private async Task SaveNodeAsync()
     {
-        nodeVm.Node.Title       = EditTitle;
-        nodeVm.Node.Description = EditDescription;
-        nodeVm.Node.AssignedTo  = EditAssignedTo;
-        nodeVm.Node.Status      = EditStatus ?? WbsStatus.NotStarted;
-        nodeVm.Node.EstimatedHours = EditEstimatedHours;
-        nodeVm.Node.ActualHours    = EditActualHours;
-        nodeVm.Node.StartDate = EditStartDate?.UtcDateTime;
-        nodeVm.Node.DueDate   = EditDueDate?.UtcDateTime;
-        nodeVm.Node.IsDeliverable = EditIsDeliverable;
-        nodeVm.Title = EditTitle;
-    }
+        if (SelectedNode is not { } node) return;
 
-    private async Task FlushSaveAsync(
-        WbsNodeViewModel nodeVm,
-        CancellationToken ct,
-        IReadOnlySet<Guid>? preSaveCompleteViolations = null,
-        IReadOnlySet<Guid>? preSaveInProgressViolations = null)
-    {
+        // Snapshot before the edit is applied: the selected node is usually the same instance as in DiagramNodes.
+        IReadOnlyList<WbsNode> nodes = DiagramNodes ?? [];
+        IReadOnlySet<Guid> completeBefore   = DependencyConstraints.ViolatedCompleteNodeIds(nodes, DiagramDependencies);
+        IReadOnlySet<Guid> inProgressBefore = DependencyConstraints.ViolatedInProgressNodeIds(nodes, DiagramDependencies);
+
+        node.Title          = EditTitle;
+        node.Description    = EditDescription;
+        node.AssignedTo     = EditAssignedTo;
+        node.Status         = EditStatus;
+        node.EstimatedHours = EditEstimatedHours;
+        node.ActualHours    = EditActualHours;
+        node.StartDate      = EditStartDate?.Date;
+        node.DueDate        = EditDueDate?.Date;
+        node.IsDeliverable  = EditIsDeliverable;
+
         try
         {
-            // Callers that mutate a node before calling us must pass the snapshot taken
-            // BEFORE the mutation; otherwise we fall back to computing it here.
-            preSaveCompleteViolations    ??= DiagramNodes is not null
-                ? _wbsService.ResolveViolatedCompleteNodeIds(DiagramNodes, _cachedDependencies)
-                : (IReadOnlySet<Guid>)new HashSet<Guid>();
-            preSaveInProgressViolations ??= DiagramNodes is not null
-                ? _wbsService.ResolveViolatedInProgressNodeIds(DiagramNodes, _cachedDependencies)
-                : (IReadOnlySet<Guid>)new HashSet<Guid>();
+            await _wbsService.UpdateNodeAsync(node);
+            await LoadDiagramNodesAsync(PageToken);
 
-            await _wbsService.UpdateNodeAsync(nodeVm.Node);
-            await LoadDiagramNodesAsync(ct);
+            await WarnNewlyViolatedAsync(ViolatedCompleteNodeIds, completeBefore,
+                "Wbs_CompleteViolatedTitle", "Wbs_CompleteViolatedIntro", "Wbs_CompleteViolatedOutro");
 
-            // Warn about any Complete nodes whose constraints were just invalidated.
-            if (ViolatedCompleteNodeIds is { Count: > 0 } && DiagramNodes is not null)
-            {
-                List<string> newlyViolated = DiagramNodes
-                    .Where(n => ViolatedCompleteNodeIds.Contains(n.Id) &&
-                                !preSaveCompleteViolations.Contains(n.Id))
-                    .Select(n => $"  \u2022 {n.Code} {n.Title}")
-                    .ToList();
-
-                if (newlyViolated.Count > 0)
-                    await _dialogService.ShowErrorAsync(
-                        "Completed Node Affected",
-                        $"This change has created dependency violations for the following completed nodes:\n\n{string.Join("\n", newlyViolated)}\n\nThese nodes remain marked as Complete but their predecessor constraints are no longer satisfied. Review their status if needed.");
-            }
-
-            // Warn about any In Progress nodes whose start constraints were just invalidated.
-            if (ViolatedInProgressNodeIds is { Count: > 0 } && DiagramNodes is not null)
-            {
-                List<string> newlyViolated = DiagramNodes
-                    .Where(n => ViolatedInProgressNodeIds.Contains(n.Id) &&
-                                !preSaveInProgressViolations.Contains(n.Id))
-                    .Select(n => $"  \u2022 {n.Code} {n.Title}")
-                    .ToList();
-
-                if (newlyViolated.Count > 0)
-                    await _dialogService.ShowErrorAsync(
-                        "In Progress Node Affected",
-                        $"This change has created start constraint violations for the following in-progress nodes:\n\n{string.Join("\n", newlyViolated)}\n\nThese nodes are already in progress but their start dependencies are no longer satisfied. Review their status if needed.");
-            }
+            await WarnNewlyViolatedAsync(ViolatedInProgressNodeIds, inProgressBefore,
+                "Wbs_InProgressViolatedTitle", "Wbs_InProgressViolatedIntro", "Wbs_InProgressViolatedOutro");
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Save Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Save", ex);
         }
         finally
         {
@@ -436,106 +304,63 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
         }
     }
 
-    private async Task SaveNodeAsync()
+    private async Task WarnNewlyViolatedAsync(
+        IReadOnlySet<Guid>? current, IReadOnlySet<Guid> before, string titleKey, string introKey, string outroKey)
     {
-        if (SelectedNode is null) return;
-        IReadOnlySet<Guid> preSaveComplete    = DiagramNodes is not null
-            ? _wbsService.ResolveViolatedCompleteNodeIds(DiagramNodes, _cachedDependencies)
-            : (IReadOnlySet<Guid>)new HashSet<Guid>();
-        IReadOnlySet<Guid> preSaveInProgress  = DiagramNodes is not null
-            ? _wbsService.ResolveViolatedInProgressNodeIds(DiagramNodes, _cachedDependencies)
-            : (IReadOnlySet<Guid>)new HashSet<Guid>();
-        ApplyEditFieldsToNode(SelectedNode);
-        await FlushSaveAsync(SelectedNode, _pageCts?.Token ?? default, preSaveComplete, preSaveInProgress);
+        if (current is not { Count: > 0 } || DiagramNodes is null) return;
+
+        List<string> newlyViolated = DiagramNodes
+            .Where(n => current.Contains(n.Id) && !before.Contains(n.Id))
+            .Select(n => $"  • {n.Code} {n.Title}")
+            .ToList();
+
+        if (newlyViolated.Count > 0)
+            await _dialogService.ShowErrorAsync(
+                Strings.Get(titleKey),
+                $"{Strings.Get(introKey)}\n\n{string.Join("\n", newlyViolated)}\n\n{Strings.Get(outroKey)}");
     }
 
     [RelayCommand]
     private async Task AddDependencyAsync()
     {
         if (SelectedNode is null || NewDepPredecessor is null) return;
-        if (NewDepPredecessor.Id == SelectedNode.Node.Id) return;
-        if (NodeDependencies.Any(d => d.Dependency.PredecessorId == NewDepPredecessor.Id)) return;
 
         var dep = new NodeDependency
         {
             PredecessorId = NewDepPredecessor.Id,
-            SuccessorId = SelectedNode.Node.Id,
+            SuccessorId = SelectedNode.Id,
             Type = NewDepTypeOption?.Type ?? DependencyType.FinishToStart
         };
         try
         {
             await _wbsService.AddDependencyAsync(dep);
-            await LoadDependenciesAsync(SelectedNode.Node.Id);
             NewDepPredecessor = null;
+            await LoadDiagramNodesAsync(PageToken);
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Add Dependency Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_AddDependency", ex);
         }
     }
 
     [RelayCommand]
     private async Task RemoveDependencyAsync(DependencyRowViewModel? row)
     {
-        if (row is null || SelectedNode is null) return;
+        if (row is null) return;
 
         bool confirmed = await _dialogService.ShowConfirmAsync(
-            "Remove Dependency",
-            $"Remove dependency from \"{row.PredecessorCode} {row.PredecessorTitle}\"?");
+            Strings.Get("Wbs_RemoveDependencyTitle"),
+            Strings.Format("Wbs_RemoveDependencyConfirm", $"{row.PredecessorCode} {row.PredecessorTitle}"));
         if (!confirmed) return;
 
         try
         {
             await _wbsService.RemoveDependencyAsync(row.Dependency.Id);
-            await LoadDependenciesAsync(SelectedNode.Node.Id);
+            await LoadDiagramNodesAsync(PageToken);
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Remove Dependency Error", ex.Message);
-        }
-    }
-
-    private async Task LoadDependenciesAsync(Guid nodeId, CancellationToken ct = default)
-    {
-        NodeDependencies.Clear();
-        NewDepPredecessor = null;
-        try
-        {
-            ct.ThrowIfCancellationRequested();
-            IReadOnlyList<NodeDependency> deps = await _wbsService.GetDependenciesAsync(nodeId);
-            foreach (NodeDependency dep in deps)
-            {
-                ct.ThrowIfCancellationRequested();
-                WbsNode? pred = await _wbsService.GetByIdAsync(dep.PredecessorId);
-                    (string typeLabel, string typeDescription) = dep.Type switch
-                    {
-                        DependencyType.FinishToStart  => ("FS", "Predecessor must finish before this node can start"),
-                        DependencyType.StartToStart   => ("SS", "Predecessor must start before this node can start"),
-                        DependencyType.FinishToFinish => ("FF", "Predecessor must finish before this node can finish"),
-                        DependencyType.StartToFinish  => ("SF", "Predecessor must start before this node can finish"),
-                        _                             => (dep.Type.ToString(), string.Empty),
-                    };
-
-                WbsStatus predStatus = pred?.Status ?? WbsStatus.NotStarted;
-                bool   isBlocking    = pred is not null && DependencyConstraints.IsViolated(dep.Type, predStatus);
-                string blockingReason = DependencyConstraints.GetBlockingReason(dep.Type, predStatus);
-
-                    NodeDependencies.Add(new DependencyRowViewModel
-                    {
-                        Dependency       = dep,
-                        PredecessorCode  = pred?.Code ?? "?",
-                        PredecessorTitle = pred?.Title ?? "(unknown)",
-                        TypeLabel        = typeLabel,
-                        TypeDescription  = typeDescription,
-                        IsBlocking       = isBlocking,
-                        BlockingReason   = blockingReason,
-                    });
-            }
-        }
-        catch (OperationCanceledException) { }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowErrorAsync("Load Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_RemoveDependency", ex);
         }
     }
 
@@ -548,13 +373,10 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
             IReadOnlyList<WbsNode> nodes = await _wbsService.GetAllByProjectAsync(projectId);
             ct.ThrowIfCancellationRequested();
             IReadOnlyList<NodeDependency> deps = await _wbsService.GetAllDependenciesByProjectAsync(projectId);
-            _cachedDependencies      = deps;
-            BlockedNodeIds           = _wbsService.ResolveBlockedNodeIds(nodes, deps);
-            CompletionBlockedNodeIds = _wbsService.ResolveCompletionBlockedNodeIds(nodes, deps);
-            ViolatedCompleteNodeIds  = _wbsService.ResolveViolatedCompleteNodeIds(nodes, deps);
-            ViolatedInProgressNodeIds = _wbsService.ResolveViolatedInProgressNodeIds(nodes, deps);
-            DiagramDependencies       = deps;
-            DiagramNodes              = nodes;
+            RecomputeConstraintSets(nodes, deps);
+            DiagramDependencies = deps;
+            DiagramNodes        = nodes;
+            RefreshSelectionLists();
 
             if (_pendingSelectNodeId != Guid.Empty)
             {
@@ -567,31 +389,58 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
         catch (OperationCanceledException) { }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Load Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Load", ex);
         }
     }
 
-    /// <summary>
-    /// Recomputes <see cref="BlockedNodeIds"/> immediately using the cached dependency list and
-    /// the currently pending status edit, without waiting for the debounced DB save to complete.
-    /// </summary>
+    /// <summary>Rebuilds the selected node's predecessor rows and picker from the loaded project, so they never lag the diagram.</summary>
+    private void RefreshSelectionLists()
+    {
+        if (SelectedNode is not { } selected || DiagramNodes is null)
+        {
+            NodeDependencies = [];
+            PredecessorOptions = [];
+            return;
+        }
+
+        Dictionary<Guid, WbsNode> nodesById = DiagramNodes.ToDictionary(n => n.Id);
+        NodeDependencies = DiagramDependencies
+            .Where(d => d.SuccessorId == selected.Id && nodesById.ContainsKey(d.PredecessorId))
+            .Select(d =>
+            {
+                WbsNode pred = nodesById[d.PredecessorId];
+                return new DependencyRowViewModel
+                {
+                    Dependency       = d,
+                    PredecessorCode  = pred.Code,
+                    PredecessorTitle = pred.Title,
+                    TypeLabel        = DependencyConstraints.GetAbbreviation(d.Type),
+                    TypeDescription  = DisplayText.GetDescription(d.Type),
+                    IsBlocking       = DependencyConstraints.IsViolated(d.Type, pred.Status),
+                    BlockingReason   = DisplayText.GetBlockingReason(d.Type, pred.Status),
+                };
+            })
+            .ToList();
+
+        // Replacing the picker's items clears its selection, so carry a half-made choice across reloads.
+        Guid? pickedId = NewDepPredecessor?.Id;
+        PredecessorOptions = DiagramNodes.Where(n => n.Id != selected.Id).ToList();
+        NewDepPredecessor = PredecessorOptions.FirstOrDefault(n => n.Id == pickedId);
+    }
+
+    /// <summary>Recomputes the constraint sets with the pending status edit applied, ahead of the debounced save.</summary>
     private void RefreshBlockedIds()
     {
         if (DiagramNodes is null || SelectedNode is null) return;
 
-        WbsNode? target = DiagramNodes.FirstOrDefault(n => n.Id == SelectedNode.Node.Id);
+        WbsNode? target = DiagramNodes.FirstOrDefault(n => n.Id == SelectedNode.Id);
         if (target is null) return;
 
-        // Temporarily apply the pending status to the in-memory node so ResolveBlockedNodeIds
-        // sees the new value; restore immediately after — synchronous so no race condition.
         WbsStatus original = target.Status;
-        target.Status = EditStatus ?? WbsStatus.NotStarted;
+        target.Status = EditStatus;
         try
         {
-            BlockedNodeIds            = _wbsService.ResolveBlockedNodeIds(DiagramNodes, _cachedDependencies);
-            CompletionBlockedNodeIds  = _wbsService.ResolveCompletionBlockedNodeIds(DiagramNodes, _cachedDependencies);
-            ViolatedCompleteNodeIds   = _wbsService.ResolveViolatedCompleteNodeIds(DiagramNodes, _cachedDependencies);
-            ViolatedInProgressNodeIds = _wbsService.ResolveViolatedInProgressNodeIds(DiagramNodes, _cachedDependencies);
+            RecomputeConstraintSets(DiagramNodes, DiagramDependencies);
         }
         finally
         {
@@ -599,55 +448,23 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
         }
     }
 
-    private async Task NotifyStatusBlockedAsync(
-        string title,
-        string intro,
-        List<DependencyRowViewModel> violators)
+    // Each new set redraws the whole diagram, so keep the old instance when the contents match.
+    private void RecomputeConstraintSets(IReadOnlyList<WbsNode> nodes, IReadOnlyList<NodeDependency> deps)
     {
-        string details = string.Join("\n", violators.Select(
-            r => $"  • {r.PredecessorCode} {r.PredecessorTitle}: {r.BlockingReason}"));
-
-        await _dialogService.ShowErrorAsync(title, $"{intro}\n\n{details}");
+        BlockedNodeIds            = Unchanged(BlockedNodeIds,            DependencyConstraints.BlockedNodeIds(nodes, deps));
+        CompletionBlockedNodeIds  = Unchanged(CompletionBlockedNodeIds,  DependencyConstraints.CompletionBlockedNodeIds(nodes, deps));
+        ViolatedCompleteNodeIds   = Unchanged(ViolatedCompleteNodeIds,   DependencyConstraints.ViolatedCompleteNodeIds(nodes, deps));
+        ViolatedInProgressNodeIds = Unchanged(ViolatedInProgressNodeIds, DependencyConstraints.ViolatedInProgressNodeIds(nodes, deps));
     }
+
+    private static IReadOnlySet<Guid> Unchanged(IReadOnlySet<Guid>? current, IReadOnlySet<Guid> next)
+        => current is not null && current.SetEquals(next) ? current : next;
 
     /// <summary>Selects a node from the diagram view, populating the detail panel.</summary>
     public void SelectDiagramNode(WbsNode node)
     {
-        if (SelectedNode is { } currentNode)
-        {
-            _hasPendingEdit = false;
-            _saveVersion++;
-            IReadOnlySet<Guid> preSaveComplete   = DiagramNodes is not null
-                ? _wbsService.ResolveViolatedCompleteNodeIds(DiagramNodes, _cachedDependencies)
-                : (IReadOnlySet<Guid>)new HashSet<Guid>();
-            IReadOnlySet<Guid> preSaveInProgress = DiagramNodes is not null
-                ? _wbsService.ResolveViolatedInProgressNodeIds(DiagramNodes, _cachedDependencies)
-                : (IReadOnlySet<Guid>)new HashSet<Guid>();
-            ApplyEditFieldsToNode(currentNode);
-            _ = FlushSaveAsync(currentNode, _pageCts?.Token ?? default, preSaveComplete, preSaveInProgress);
-        }
-        SelectedNode = new WbsNodeViewModel(node, hasChildren: false);
-    }
-
-    private async Task LoadAllProjectNodesAsync(CancellationToken ct = default)
-    {
-        AllProjectNodes.Clear();
-        if (_projectStateService.ActiveProject is not { Id: var projectId }) return;
-        try
-        {
-            ct.ThrowIfCancellationRequested();
-            IReadOnlyList<WbsNode> nodes = await _wbsService.GetAllByProjectAsync(projectId);
-            foreach (WbsNode node in nodes.Where(n => n.Id != SelectedNode?.Node.Id))
-            {
-                ct.ThrowIfCancellationRequested();
-                AllProjectNodes.Add(node);
-            }
-        }
-        catch (OperationCanceledException) { }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowErrorAsync("Load Error", ex.Message);
-        }
+        FlushPendingEdit();
+        SelectedNode = node;
     }
 
     private void LoadEditFieldsFromNode(WbsNode node)
@@ -661,12 +478,8 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
             EditStatus = node.Status;
             EditEstimatedHours = node.EstimatedHours;
             EditActualHours = node.ActualHours;
-            EditStartDate = node.StartDate.HasValue
-                ? (DateTimeOffset?)new DateTimeOffset(DateTime.SpecifyKind(node.StartDate.Value, DateTimeKind.Utc))
-                : null;
-            EditDueDate = node.DueDate.HasValue
-                ? (DateTimeOffset?)new DateTimeOffset(DateTime.SpecifyKind(node.DueDate.Value, DateTimeKind.Utc))
-                : null;
+            EditStartDate = CalendarDates.ToPickerValue(node.StartDate);
+            EditDueDate   = CalendarDates.ToPickerValue(node.DueDate);
             EditIsDeliverable = node.IsDeliverable;
         }
         finally
@@ -687,45 +500,35 @@ public sealed partial class WbsTreeViewModel : ObservableObject, INavigationAwar
     private async Task DebouncedSaveAsync(int version)
     {
         await Task.Delay(600);
-        if (_saveVersion != version || SelectedNode is null) return;
+        if (_saveVersion != version) return;
         _hasPendingEdit = false;
         await SaveNodeAsync();
     }
 
-    private async Task LoadLinkedMilestonesAsync(Guid nodeId, CancellationToken ct = default)
+    /// <summary>
+    /// Saves an edit still waiting out its debounce, before the selection or page changes under it.
+    /// A save already past the debounce is in flight and reloads on its own.
+    /// </summary>
+    private void FlushPendingEdit()
     {
-        LinkedMilestones.Clear();
-        if (_projectStateService.ActiveProject is not { Id: var projectId }) return;
+        _saveVersion++;
+        if (!_hasPendingEdit) return;
+        _hasPendingEdit = false;
+        _ = SaveNodeAsync();
+    }
+
+    private async Task LoadLinkedMilestonesAsync(Guid nodeId)
+    {
         try
         {
-            ct.ThrowIfCancellationRequested();
-            IReadOnlyList<Guid> linkedIds =
-                await _milestoneService.GetMilestoneIdsForNodeAsync(nodeId);
+            IReadOnlyList<Milestone> milestones = await _milestoneService.GetByNodeAsync(nodeId);
+            if (SelectedNode?.Id != nodeId) return;
 
-            if (linkedIds.Count == 0) return;
-
-            ct.ThrowIfCancellationRequested();
-            IReadOnlyList<Milestone> allMilestones =
-                await _milestoneService.GetByProjectAsync(projectId);
-            IReadOnlyDictionary<Guid, int> counts =
-                await _milestoneService.GetLinkedCountsByProjectAsync(projectId);
-
-            foreach (Milestone m in allMilestones.Where(m => linkedIds.Contains(m.Id)))
-            {
-                ct.ThrowIfCancellationRequested();
-                LinkedMilestones.Add(new MilestoneRowViewModel
-                {
-                    Milestone = m,
-                    DueDateLabel = DateTime.SpecifyKind(m.DueDate, DateTimeKind.Utc).ToString("d MMM yyyy"),
-                    LinkedNodeCount = counts.TryGetValue(m.Id, out int c) ? c : 0,
-                });
-            }
+            LinkedMilestones = milestones.Select(m => new MilestoneRowViewModel { Milestone = m }).ToList();
         }
-        catch (OperationCanceledException) { }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Load Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Load", ex);
         }
     }
 }
-

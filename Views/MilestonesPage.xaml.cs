@@ -20,13 +20,7 @@ public sealed partial class MilestonesPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        ViewModel.OnNavigatedTo(e.Parameter);
-    }
-
-    protected override void OnNavigatedFrom(NavigationEventArgs e)
-    {
-        base.OnNavigatedFrom(e);
-        ViewModel.OnNavigatedFrom();
+        ViewModel.OnNavigatedTo();
     }
 
     private void DeleteMilestone_Click(object sender, RoutedEventArgs e)

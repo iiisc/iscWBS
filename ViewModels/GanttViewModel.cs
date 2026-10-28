@@ -1,92 +1,47 @@
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
+using iscWBS.Helpers;
 
 namespace iscWBS.ViewModels;
 
-public sealed partial class GanttViewModel : ObservableObject, INavigationAware
+public sealed partial class GanttViewModel : ObservableObject
 {
-    private readonly IProjectStateService _projectStateService;
-    private readonly IWbsService _wbsService;
-    private readonly IDialogService _dialogService;
-    private readonly IMilestoneService _milestoneService;
-    private readonly IGanttLayoutService _ganttLayoutService;
-
-    /// <summary>Height of the two-tier timeline ruler strip at the top of the canvas.</summary>
-    public const double HeaderHeight = 56.0;
-
-    /// <summary>Width of the fixed task-label column.</summary>
-    public const double LabelWidth = 220.0;
-
-    /// <summary>Height of a single task row.</summary>
-    public const double RowHeight = 40.0;
+    private readonly ProjectStateService _projectStateService;
+    private readonly WbsService _wbsService;
+    private readonly DialogService _dialogService;
+    private readonly MilestoneService _milestoneService;
 
     [ObservableProperty]
     public partial int SelectedZoomIndex { get; set; }
 
+    private static readonly GanttLayout EmptyLayout = new([], [], [], [], 1200, 144, 0);
+
+    /// <summary>Replaced as a whole so the view redraws once per rebuild.</summary>
     [ObservableProperty]
-    public partial double TotalWidth { get; set; }
-
-    [ObservableProperty]
-    public partial double TotalHeight { get; set; }
-
-    [ObservableProperty]
-    public partial double TodayX { get; set; }
-
-    private IReadOnlyList<GanttHeaderTick>? _headerTicks;
-    public IReadOnlyList<GanttHeaderTick>? HeaderTicks
-    {
-        get => _headerTicks;
-        private set => SetProperty(ref _headerTicks, value);
-    }
-
-    private IReadOnlyList<GanttMilestoneMarker>? _milestoneMarkers;
-    public IReadOnlyList<GanttMilestoneMarker>? MilestoneMarkers
-    {
-        get => _milestoneMarkers;
-        private set => SetProperty(ref _milestoneMarkers, value);
-    }
-
-    private IReadOnlyList<GanttDependencyArrow>? _dependencyArrows;
-    public IReadOnlyList<GanttDependencyArrow>? DependencyArrows
-    {
-        get => _dependencyArrows;
-        private set => SetProperty(ref _dependencyArrows, value);
-    }
-
-    public ObservableCollection<GanttRow> Rows { get; } = new();
+    public partial GanttLayout Layout { get; private set; } = EmptyLayout;
 
     private IReadOnlyList<WbsNode> _nodes = Array.Empty<WbsNode>();
     private IReadOnlyList<Milestone> _milestones = Array.Empty<Milestone>();
     private IReadOnlyList<NodeDependency> _dependencies = Array.Empty<NodeDependency>();
     private DateTime? _projectStartDate;
 
-    public string[] ZoomOptions { get; } = { "Day", "Week", "Month" };
-
     public GanttViewModel(
-        IProjectStateService projectStateService,
-        IWbsService wbsService,
-        IDialogService dialogService,
-        IMilestoneService milestoneService,
-        IGanttLayoutService ganttLayoutService)
+        ProjectStateService projectStateService,
+        WbsService wbsService,
+        DialogService dialogService,
+        MilestoneService milestoneService)
     {
         _projectStateService = projectStateService;
         _wbsService = wbsService;
         _dialogService = dialogService;
         _milestoneService = milestoneService;
-        _ganttLayoutService = ganttLayoutService;
-        TotalWidth = 1200;
-        TotalHeight = 200;
     }
 
-    public void OnNavigatedTo(object? parameter) => _ = LoadAsync();
-    public void OnNavigatedFrom() { }
+    public void OnNavigatedTo() => _ = LoadAsync();
 
     partial void OnSelectedZoomIndexChanged(int value) => RebuildLayout();
 
-    [RelayCommand]
     private async Task LoadAsync()
     {
         if (_projectStateService.ActiveProject is not { Id: var projectId } project) return;
@@ -102,36 +57,20 @@ public sealed partial class GanttViewModel : ObservableObject, INavigationAware
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Gantt Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Gantt", ex);
         }
     }
 
     private void RebuildLayout()
     {
-        Rows.Clear();
         if (_nodes.Count == 0)
         {
-            TotalWidth       = 1200;
-            TotalHeight      = 200;
-            TodayX           = 0;
-            HeaderTicks      = null;
-            MilestoneMarkers = null;
-            DependencyArrows = null;
+            Layout = EmptyLayout;
             return;
         }
 
-        IReadOnlySet<Guid> blockedIds = _wbsService.ResolveBlockedNodeIds(_nodes, _dependencies);
-        GanttLayout layout = _ganttLayoutService.Build(
+        IReadOnlySet<Guid> blockedIds = DependencyConstraints.BlockedNodeIds(_nodes, _dependencies);
+        Layout = GanttLayoutBuilder.Build(
             _nodes, _milestones, _dependencies, blockedIds, _projectStartDate, SelectedZoomIndex);
-
-        foreach (GanttRow row in layout.Rows)
-            Rows.Add(row);
-
-        HeaderTicks      = layout.HeaderTicks;
-        MilestoneMarkers = layout.MilestoneMarkers;
-        DependencyArrows = layout.DependencyArrows;
-        TotalWidth       = layout.TotalWidth;
-        TotalHeight      = layout.TotalHeight;
-        TodayX           = layout.TodayX;
     }
 }

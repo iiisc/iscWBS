@@ -1,18 +1,17 @@
-using iscWBS.Core.Models;
+namespace iscWBS.Core.Models;
 
-namespace iscWBS.Core.Services;
-
-public sealed class GanttLayoutService : IGanttLayoutService
+/// <summary>Turns project data into pixel positions for the Gantt chart.</summary>
+public static class GanttLayoutBuilder
 {
     private static readonly double[] _pixelsPerDayByZoom = { 40.0, 8.0, 2.0 };
 
-    private const double _rowHeight     = 40.0;
-    private const double _barOffsetY    = 8.0;
-    private const double _barHeight     = 24.0;
-    private const double _headerHeight  = 56.0;
+    private const double _rowHeight     = GanttLayout.RowHeight;
+    private const double _barHeight     = GanttLayout.BarHeight;
+    private const double _barOffsetY    = (_rowHeight - _barHeight) / 2.0;
     private const double _minTotalWidth = 600.0;
 
-    public GanttLayout Build(
+    /// <param name="zoomIndex">0 = Day, 1 = Week, 2 = Month.</param>
+    public static GanttLayout Build(
         IReadOnlyList<WbsNode> nodes,
         IReadOnlyList<Milestone> milestones,
         IReadOnlyList<NodeDependency> dependencies,
@@ -23,34 +22,19 @@ public sealed class GanttLayoutService : IGanttLayoutService
         DateTime projectStart = projectStartDate?.Date
             ?? nodes.Where(n => n.StartDate.HasValue)
                     .Select(n => n.StartDate!.Value.Date)
-                    .DefaultIfEmpty(DateTime.UtcNow.Date)
+                    .DefaultIfEmpty(DateTime.Today)
                     .Min();
 
         double ppd      = _pixelsPerDayByZoom[zoomIndex];
         double maxRight = 0;
 
-        var groups = nodes.GroupBy(n => n.ParentId).ToList();
-
-        List<WbsNode> roots = groups
-            .FirstOrDefault(g => !g.Key.HasValue)
-            ?.OrderBy(n => n.SortOrder).ToList()
-            ?? [];
-
-        // Dictionary<Guid, …> — non-nullable key; Dictionary rejects null keys even for Guid?
-        var childMap = groups
-            .Where(g => g.Key.HasValue)
-            .ToDictionary(
-                g => g.Key!.Value,
-                g => g.OrderBy(n => n.SortOrder).ToList());
-
+        WbsHierarchy hierarchy = new(nodes);
         var barPositions = new Dictionary<Guid, (double Left, double Right, double MidY)>();
         var rows = new List<GanttRow>();
-        int rowIndex = 0;
 
-        void WalkNode(WbsNode node, int depth)
+        foreach ((WbsNode node, int depth) in hierarchy.DepthFirst())
         {
-            double rowTop = _headerHeight + rowIndex * _rowHeight;
-            bool isParent = childMap.ContainsKey(node.Id);
+            double rowTop = rows.Count * _rowHeight;
             bool hasBar   = node.StartDate.HasValue && node.DueDate.HasValue;
             double barLeft = 0, barWidth = 0;
 
@@ -62,38 +46,24 @@ public sealed class GanttLayoutService : IGanttLayoutService
                 barPositions[node.Id] = (barLeft, barLeft + barWidth, rowTop + _barOffsetY + _barHeight / 2.0);
             }
 
-            double pc = node.EstimatedHours > 0
-                ? Math.Clamp(node.ActualHours / node.EstimatedHours, 0, 1)
-                : 0.0;
-
             rows.Add(new GanttRow
             {
-                NodeId          = node.Id,
                 Label           = $"{node.Code}  {node.Title}",
                 RowTop          = rowTop,
                 HasBar          = hasBar,
                 BarLeft         = barLeft,
                 BarWidth        = barWidth,
-                Status          = blockedNodeIds.Contains(node.Id) ? WbsStatus.Blocked : node.Status,
+                Status          = DependencyConstraints.EffectiveStatus(node, blockedNodeIds),
                 Depth           = depth,
-                IsParent        = isParent,
+                IsParent        = hierarchy.HasChildren(node.Id),
                 AssignedTo      = node.AssignedTo,
-                PercentComplete = pc,
+                PercentComplete = hierarchy.Progress(node),
             });
-
-            rowIndex++;
-
-            if (childMap.TryGetValue(node.Id, out List<WbsNode>? children))
-                foreach (WbsNode child in children)
-                    WalkNode(child, depth + 1);
         }
 
-        foreach (WbsNode root in roots)
-            WalkNode(root, 0);
-
-        double totalHeight = rowIndex * _rowHeight + _headerHeight + 40;
+        double totalHeight = rows.Count * _rowHeight + 40;
         double totalWidth  = Math.Max(_minTotalWidth, maxRight + 120);
-        double todayX      = (DateTime.UtcNow.Date - projectStart).TotalDays * ppd;
+        double todayX      = (DateTime.Today - projectStart).TotalDays * ppd;
 
         return new GanttLayout(
             rows,
@@ -114,28 +84,16 @@ public sealed class GanttLayoutService : IGanttLayoutService
 
         switch (zoomIndex)
         {
-            case 0: // Day — minor = day number only; major boundary = month change
+            case 0 or 1: // Day / Week — major boundary = month change
             {
+                bool    isDay     = zoomIndex == 0;
                 string? lastMajor = null;
-                for (DateTime d = projectStart; d <= end; d = d.AddDays(1))
+                for (DateTime d = projectStart; d <= end; d = d.AddDays(isDay ? 1 : 7))
                 {
                     double x      = (d - projectStart).TotalDays * ppd;
                     string major  = d.ToString("MMMM yyyy");
-                    bool boundary = major != lastMajor;
-                    ticks.Add(new GanttHeaderTick(x, d.Day.ToString(), boundary ? major : null, boundary));
-                    lastMajor = major;
-                }
-                break;
-            }
-            case 1: // Week — minor = short date; major boundary = month change
-            {
-                string? lastMajor = null;
-                for (DateTime d = projectStart; d <= end; d = d.AddDays(7))
-                {
-                    double x      = (d - projectStart).TotalDays * ppd;
-                    string major  = d.ToString("MMMM yyyy");
-                    bool boundary = major != lastMajor;
-                    ticks.Add(new GanttHeaderTick(x, d.ToString("d MMM"), boundary ? major : null, boundary));
+                    string minor  = isDay ? d.Day.ToString() : d.ToString("d MMM");
+                    ticks.Add(new GanttHeaderTick(x, minor, major != lastMajor ? major : null));
                     lastMajor = major;
                 }
                 break;
@@ -153,7 +111,7 @@ public sealed class GanttLayoutService : IGanttLayoutService
                     lastMajor = major;
                     if (x >= 0)
                     {
-                        ticks.Add(new GanttHeaderTick(x, d.ToString("MMM"), boundary ? major : null, boundary));
+                        ticks.Add(new GanttHeaderTick(x, d.ToString("MMM"), boundary ? major : null));
                         firstVisible = true;
                     }
                     d = d.AddMonths(1);
@@ -171,7 +129,7 @@ public sealed class GanttLayoutService : IGanttLayoutService
         return milestones
             .Select(m => new GanttMilestoneMarker(
                 m.Title,
-                (DateTime.SpecifyKind(m.DueDate, DateTimeKind.Utc).Date - projectStart).TotalDays * ppd,
+                (m.DueDate.Date - projectStart).TotalDays * ppd,
                 m.IsComplete))
             .ToList();
     }

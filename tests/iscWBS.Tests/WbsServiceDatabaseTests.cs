@@ -1,0 +1,122 @@
+using iscWBS.Core.Models;
+using iscWBS.Core.Services;
+using SQLite;
+
+using static iscWBS.Tests.TestData;
+
+namespace iscWBS.Tests;
+
+public sealed class WbsServiceDatabaseTests : IAsyncLifetime
+{
+    private readonly TempDirectory _dir = new();
+    private readonly ProjectStateService _state;
+    private readonly WbsService _service;
+    private readonly MilestoneService _milestones;
+    private Guid _projectId;
+
+    public WbsServiceDatabaseTests()
+    {
+        _state = new ProjectStateService(new SettingsService(_dir.File("settings.json")));
+        _service = new WbsService(_state);
+        _milestones = new MilestoneService(_state);
+    }
+
+    private SQLiteAsyncConnection Db => _state.Connection;
+
+    public async ValueTask InitializeAsync()
+    {
+        await _state.CreateProjectAsync("Test", _dir.File("test.iscwbs"));
+        _projectId = _state.ActiveProject!.Id;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _state.CloseProjectAsync();
+        _dir.Dispose();
+    }
+
+    private async Task<string> CodeOf(WbsNode node) => (await _service.GetByIdAsync(node.Id))!.Code;
+
+    [Fact]
+    public async Task Inserts_AssignOutlineCodes_AndSiblingInsertRenumbersLaterSiblingsAndTheirChildren()
+    {
+        WbsNode root = await _service.AddRootNodeAsync(_projectId, "Root");
+        WbsNode first = await _service.AddChildNodeAsync(root.Id, "First");
+        WbsNode second = await _service.AddChildNodeAsync(root.Id, "Second");
+        WbsNode secondChild = await _service.AddChildNodeAsync(second.Id, "Second child");
+        WbsNode root2 = await _service.AddRootNodeAsync(_projectId, "Root 2");
+
+        Assert.Equal(["1", "1.1", "1.2", "1.2.1", "2"], [root.Code, first.Code, second.Code, secondChild.Code, root2.Code]);
+
+        WbsNode inserted = await _service.AddSiblingNodeAsync(first.Id, "Inserted");
+
+        Assert.Equal("1.2", inserted.Code);
+        Assert.Equal("1.1", await CodeOf(first));
+        Assert.Equal("1.3", await CodeOf(second));
+        Assert.Equal("1.3.1", await CodeOf(secondChild));
+        Assert.Equal("2", await CodeOf(root2));
+    }
+
+    [Fact]
+    public async Task Delete_RemovesSubtreeWithItsDependenciesAndMilestoneLinks_AndRecodesSiblings()
+    {
+        WbsNode root = await _service.AddRootNodeAsync(_projectId, "Root");
+        WbsNode doomed = await _service.AddChildNodeAsync(root.Id, "Doomed");
+        WbsNode doomedChild = await _service.AddChildNodeAsync(doomed.Id, "Doomed child");
+        WbsNode keptA = await _service.AddChildNodeAsync(root.Id, "Kept A");
+        WbsNode keptB = await _service.AddChildNodeAsync(root.Id, "Kept B");
+        WbsNode other = await _service.AddRootNodeAsync(_projectId, "Other");
+
+        await _service.AddDependencyAsync(new() { PredecessorId = doomedChild.Id, SuccessorId = other.Id });
+        await _service.AddDependencyAsync(new() { PredecessorId = other.Id, SuccessorId = doomed.Id });
+        await _service.AddDependencyAsync(new() { PredecessorId = keptA.Id, SuccessorId = keptB.Id });
+
+        Milestone milestone = await _milestones.CreateAsync(_projectId, "M", DateTime.Today);
+        await _milestones.LinkNodeAsync(milestone.Id, doomedChild.Id);
+        await _milestones.LinkNodeAsync(milestone.Id, keptB.Id);
+
+        await _service.DeleteNodeAsync(doomed.Id);
+
+        IReadOnlyList<WbsNode> remaining = await _service.GetAllByProjectAsync(_projectId);
+        Assert.Equal(
+            [(root.Id, "1"), (keptA.Id, "1.1"), (keptB.Id, "1.2"), (other.Id, "2")],
+            remaining.Select(n => (n.Id, n.Code)));
+
+        // Read the raw table: the project-scoped query joins on the successor and would hide orphans.
+        List<NodeDependency> deps = await Db.Table<NodeDependency>().ToListAsync();
+        Assert.Equal([(keptA.Id, keptB.Id)], deps.Select(d => (d.PredecessorId, d.SuccessorId)));
+
+        Assert.Equal([keptB.Id], await _milestones.GetLinkedNodeIdsAsync(milestone.Id));
+    }
+
+    [Fact]
+    public async Task AddDependency_RejectsSelfDuplicateAndCycles()
+    {
+        WbsNode a = await _service.AddRootNodeAsync(_projectId, "A");
+        WbsNode b = await _service.AddRootNodeAsync(_projectId, "B");
+        WbsNode c = await _service.AddRootNodeAsync(_projectId, "C");
+        await _service.AddDependencyAsync(new() { PredecessorId = a.Id, SuccessorId = b.Id });
+        await _service.AddDependencyAsync(new() { PredecessorId = b.Id, SuccessorId = c.Id, Type = DependencyType.StartToStart });
+
+        await AssertFailsWith("Error_SelfDependency",
+            () => _service.AddDependencyAsync(new() { PredecessorId = a.Id, SuccessorId = a.Id }));
+        await AssertFailsWith("Error_DuplicateDependency",
+            () => _service.AddDependencyAsync(new() { PredecessorId = a.Id, SuccessorId = b.Id, Type = DependencyType.FinishToFinish }));
+        await AssertFailsWith("Error_CircularDependency",
+            () => _service.AddDependencyAsync(new() { PredecessorId = b.Id, SuccessorId = a.Id }));
+        await AssertFailsWith("Error_CircularDependency",
+            () => _service.AddDependencyAsync(new() { PredecessorId = c.Id, SuccessorId = a.Id }));
+
+        await _service.AddDependencyAsync(new() { PredecessorId = a.Id, SuccessorId = c.Id });
+        Assert.Equal(3, (await _service.GetAllDependenciesByProjectAsync(_projectId)).Count);
+    }
+
+    [Fact]
+    public async Task AddDependency_ToUnknownSuccessor_IsNotFound()
+    {
+        WbsNode a = await _service.AddRootNodeAsync(_projectId, "A");
+
+        await AssertFailsWith("Error_NodeNotFound",
+            () => _service.AddDependencyAsync(new() { PredecessorId = a.Id, SuccessorId = Guid.NewGuid() }));
+    }
+}

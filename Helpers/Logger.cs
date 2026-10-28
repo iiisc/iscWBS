@@ -1,12 +1,11 @@
 using System.IO;
+using iscWBS.Core.Services;
 
 namespace iscWBS.Helpers;
 
 public static class Logger
 {
-    private static readonly string LogDirectory = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ISC", "iscWBS", "Logs");
+    private static readonly string LogDirectory = Path.Combine(SettingsService.AppDataFolder, "Logs");
 
     public static void Write(Exception ex)
     {

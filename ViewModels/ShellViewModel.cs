@@ -6,8 +6,8 @@ namespace iscWBS.ViewModels;
 
 public sealed partial class ShellViewModel : ObservableObject
 {
-    private readonly IProjectStateService _projectStateService;
-    private readonly INavigationService _navigationService;
+    private readonly ProjectStateService _projectStateService;
+    private readonly NavigationService _navigationService;
 
     [ObservableProperty]
     public partial bool HasActiveProject { get; set; }
@@ -15,13 +15,12 @@ public sealed partial class ShellViewModel : ObservableObject
     [ObservableProperty]
     public partial string WindowTitle { get; set; } = "iscWBS";
 
-    public ShellViewModel(IProjectStateService projectStateService, INavigationService navigationService)
+    public ShellViewModel(ProjectStateService projectStateService, NavigationService navigationService)
     {
         _projectStateService = projectStateService;
         _navigationService = navigationService;
 
         _projectStateService.ActiveProjectChanged += OnActiveProjectChanged;
-        _projectStateService.ActiveProjectUpdated += OnActiveProjectUpdated;
         HasActiveProject = _projectStateService.HasActiveProject;
     }
 
@@ -32,10 +31,5 @@ public sealed partial class ShellViewModel : ObservableObject
 
         if (project is not null)
             _navigationService.NavigateTo("DashboardPage");
-    }
-
-    private void OnActiveProjectUpdated(object? sender, Project project)
-    {
-        WindowTitle = $"iscWBS \u2014 {project.Name}";
     }
 }

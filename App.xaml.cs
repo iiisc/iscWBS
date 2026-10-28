@@ -1,8 +1,6 @@
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using QuestPDF.Infrastructure;
-using iscWBS.Core.Repositories;
 using iscWBS.Core.Services;
 using iscWBS.Helpers;
 using iscWBS.ViewModels;
@@ -15,37 +13,21 @@ public partial class App : Application
     public static IServiceProvider Services { get; private set; } = null!;
     public static Window? MainWindow { get; private set; }
 
+    private readonly SettingsService _settingsService = new();
+
     public App()
     {
+        // Must precede any XAML or resource load so x:Uid and ResourceLoader resolve in the saved language.
+        // Without a saved choice, Windows' language preferences pick between the shipped en-US and sv-SE resources.
+        if (_settingsService.Get<string>(SettingsKeys.Language) is { } language)
+            Microsoft.Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = language;
+
         InitializeComponent();
-    }
-
-    /// <summary>Returns <see langword="true"/> when the process has MSIX package identity.</summary>
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-    private static extern int GetCurrentPackageFullName(ref int length, char[]? name);
-
-    private static bool IsPackaged()
-    {
-        int length = 0;
-        const int AppmodelErrorNoPackage = 15700;
-        return GetCurrentPackageFullName(ref length, null) != AppmodelErrorNoPackage;
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         QuestPDF.Settings.License = LicenseType.Community;
-
-        // Apply saved language preference before any UI resources are loaded.
-        // A temporary SettingsService is used here because DI has not been built yet.
-        // PrimaryLanguageOverride requires package identity; skip it in unpackaged runs
-        // (e.g. direct Debug launches). The preference is persisted and takes effect in
-        // packaged builds.
-        SettingsService earlySettings = new();
-        if (IsPackaged())
-        {
-            Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride =
-                earlySettings.Get<string>(SettingsKeys.Language) ?? "en-US";
-        }
 
         ServiceCollection services = new();
         ConfigureServices(services);
@@ -53,7 +35,7 @@ public partial class App : Application
 
         UnhandledException += OnUnhandledException;
 
-        INavigationService navService = Services.GetRequiredService<INavigationService>();
+        NavigationService navService = Services.GetRequiredService<NavigationService>();
         navService.RegisterPage("WelcomePage", typeof(WelcomePage));
         navService.RegisterPage("DashboardPage", typeof(DashboardPage));
         navService.RegisterPage("WbsTreePage", typeof(WbsTreePage));
@@ -67,22 +49,17 @@ public partial class App : Application
         MainWindow.Activate();
     }
 
-    private static void ConfigureServices(ServiceCollection services)
+    private void ConfigureServices(ServiceCollection services)
     {
-        services.AddSingleton<IProjectStateService, ProjectStateService>();
-        services.AddSingleton<ISettingsService, SettingsService>();
-        services.AddSingleton<INavigationService, NavigationService>();
-        services.AddSingleton<IDialogService, DialogService>();
-        services.AddSingleton<WbsNodeRepository>();
-        services.AddSingleton<MilestoneRepository>();
-        services.AddSingleton<MilestoneNodeLinkRepository>();
-        services.AddSingleton<NodeDependencyRepository>();
-        services.AddSingleton<IWbsService, WbsService>();
-        services.AddSingleton<IMilestoneService, MilestoneService>();
-        services.AddSingleton<IGanttLayoutService, GanttLayoutService>();
-        services.AddSingleton<IUpdateService, UpdateService>();
-        services.AddSingleton<IReportExportService, ReportExportService>();
-        services.AddSingleton<ILocalizationService, LocalizationService>();
+        services.AddSingleton(_settingsService);
+        services.AddSingleton<ProjectStateService>();
+        services.AddSingleton<NavigationService>();
+        services.AddSingleton<DialogService>();
+        services.AddSingleton<WbsService>();
+        services.AddSingleton<MilestoneService>();
+        services.AddSingleton<UpdateService>();
+        services.AddSingleton<ReportExportService>();
+        services.AddSingleton<LocalizationService>();
 
         services.AddTransient<ShellViewModel>();
         services.AddTransient<WelcomeViewModel>();

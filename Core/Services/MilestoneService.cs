@@ -54,7 +54,7 @@ public sealed class MilestoneService
     public async Task MarkCompleteAsync(Guid id)
     {
         Milestone milestone = await Db.Table<Milestone>().Where(m => m.Id == id).FirstOrDefaultAsync()
-            ?? throw WbsException.NodeNotFound(id);
+            ?? throw WbsException.MilestoneNotFound(id);
         milestone.IsComplete = true;
         await Db.UpdateAsync(milestone);
     }

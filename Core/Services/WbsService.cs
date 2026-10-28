@@ -66,8 +66,16 @@ public sealed class WbsService
         return node;
     }
 
+    /// <summary>
+    /// Saves the user-editable fields only. Code, SortOrder and the tree links belong to inserts and deletes,
+    /// and the caller's copy may predate the last renumber.
+    /// </summary>
     public async Task UpdateNodeAsync(WbsNode node)
-        => await Db.UpdateAsync(node);
+        => await Db.ExecuteAsync(
+            "UPDATE WbsNodes SET Title = ?, Description = ?, AssignedTo = ?, Status = ?, EstimatedHours = ?, " +
+            "ActualHours = ?, StartDate = ?, DueDate = ?, IsDeliverable = ? WHERE Id = ?",
+            node.Title, node.Description, node.AssignedTo, node.Status, node.EstimatedHours,
+            node.ActualHours, node.StartDate, node.DueDate, node.IsDeliverable, node.Id.ToString());
 
     /// <summary>Deletes the node with its whole subtree, their dependencies and milestone links, then renumbers.</summary>
     public async Task DeleteNodeAsync(Guid id)

@@ -8,6 +8,9 @@ public sealed class WbsException : Exception
     public static WbsException NodeNotFound(Guid id)
         => new WbsException($"WBS node '{id}' was not found.").WithMessageKey("Error_NodeNotFound", id);
 
+    public static WbsException MilestoneNotFound(Guid id)
+        => new WbsException($"Milestone '{id}' was not found.").WithMessageKey("Error_MilestoneNotFound", id);
+
     public static WbsException ProjectNotFound(string filePath)
         => new WbsException($"Project file '{filePath}' was not found or could not be opened.")
             .WithMessageKey("Error_ProjectNotFound", filePath);

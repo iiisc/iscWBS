@@ -786,6 +786,9 @@
   <data name="Error_IntegrityCheckFailed" xml:space="preserve">
     <value>Projektfilen klarade inte integritetskontrollen och kan vara skadad: {0}</value>
   </data>
+  <data name="Error_MilestoneNotFound" xml:space="preserve">
+    <value>Milstolpen '{0}' hittades inte.</value>
+  </data>
   <data name="Error_NodeNotFound" xml:space="preserve">
     <value>WBS-noden '{0}' hittades inte.</value>
   </data>

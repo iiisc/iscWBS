@@ -119,4 +119,25 @@ public sealed class WbsServiceDatabaseTests : IAsyncLifetime
         await AssertFailsWith("Error_NodeNotFound",
             () => _service.AddDependencyAsync(new() { PredecessorId = a.Id, SuccessorId = Guid.NewGuid() }));
     }
+
+    [Fact]
+    public async Task UpdateNode_WithInstanceLoadedBeforeARenumber_KeepsTheCurrentOutlinePosition()
+    {
+        WbsNode root = await _service.AddRootNodeAsync(_projectId, "Root");
+        WbsNode first = await _service.AddChildNodeAsync(root.Id, "First");
+        WbsNode second = await _service.AddChildNodeAsync(root.Id, "Second");
+
+        // The detail panel keeps the instance it loaded while edits elsewhere renumber the tree.
+        await _service.AddSiblingNodeAsync(first.Id, "Inserted");
+        second.Title = "Second renamed";
+        second.DueDate = new DateTime(2026, 11, 20);
+        await _service.UpdateNodeAsync(second);
+
+        WbsNode saved = (await _service.GetByIdAsync(second.Id))!;
+        Assert.Equal(("Second renamed", new DateTime(2026, 11, 20), "1.3", 2), (saved.Title, saved.DueDate, saved.Code, saved.SortOrder));
+    }
+
+    [Fact]
+    public async Task MarkComplete_UnknownMilestone_IsMilestoneNotFound()
+        => await AssertFailsWith("Error_MilestoneNotFound", () => _milestones.MarkCompleteAsync(Guid.NewGuid()));
 }

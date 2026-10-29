@@ -939,7 +939,7 @@
   <data name="Milestones_NodeCount" xml:space="preserve">
     <value>{0} noder</value>
   </data>
-  <data name="Dashboard_AllAssignees" xml:space="preserve">
+  <data name="Dashboard_FilterAll" xml:space="preserve">
     <value>Alla</value>
   </data>
   <data name="Gantt_TaskHeader" xml:space="preserve">

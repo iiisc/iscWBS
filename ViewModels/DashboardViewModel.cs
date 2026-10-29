@@ -27,16 +27,13 @@ public sealed partial class DashboardViewModel : ObservableObject
     public partial string? SelectedAssignee { get; set; }
 
     [ObservableProperty]
-    public partial WbsStatus? SelectedStatus { get; set; }
+    public partial StatusFilterOption? SelectedStatus { get; set; }
 
     public ObservableCollection<string> AssigneeOptions { get; } = new();
 
     private readonly string _allAssignees;
 
-    public List<WbsStatus?> StatusOptions { get; } =
-        new WbsStatus?[] { null }
-            .Concat(Enum.GetValues<WbsStatus>().Cast<WbsStatus?>())
-            .ToList();
+    public List<StatusFilterOption> StatusOptions { get; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(OverallPercentText))]
@@ -61,13 +58,14 @@ public sealed partial class DashboardViewModel : ObservableObject
         _wbsService = wbsService;
         _milestoneService = milestoneService;
         _dialogService = dialogService;
-        _allAssignees = Strings.Get("Dashboard_AllAssignees");
+        _allAssignees = Strings.Get("Dashboard_FilterAll");
+        StatusOptions = [new(null, _allAssignees), .. Enum.GetValues<WbsStatus>().Select(s => new StatusFilterOption(s, s.ToDisplayString()))];
     }
 
     public void OnNavigatedTo() => _ = LoadAsync();
 
     partial void OnSelectedAssigneeChanged(string? value)       => RebuildReport();
-    partial void OnSelectedStatusChanged(WbsStatus? value)      => RebuildReport();
+    partial void OnSelectedStatusChanged(StatusFilterOption? value) => RebuildReport();
     partial void OnFilterStartDateChanged(DateTimeOffset? value) => RebuildReport();
     partial void OnFilterEndDateChanged(DateTimeOffset? value)   => RebuildReport();
 
@@ -112,8 +110,8 @@ public sealed partial class DashboardViewModel : ObservableObject
 
         if (!string.IsNullOrEmpty(SelectedAssignee) && SelectedAssignee != _allAssignees)
             filtered = filtered.Where(n => n.AssignedTo == SelectedAssignee);
-        if (SelectedStatus.HasValue)
-            filtered = filtered.Where(n => n.Status == SelectedStatus);
+        if (SelectedStatus?.Status is { } status)
+            filtered = filtered.Where(n => n.Status == status);
         if (FilterStartDate.HasValue)
             filtered = filtered.Where(n => n.DueDate.HasValue && n.DueDate.Value.Date >= FilterStartDate.Value.Date);
         if (FilterEndDate.HasValue)
@@ -170,4 +168,10 @@ public sealed class StatusSlice(WbsStatus status, int count)
     public WbsStatus Status { get; } = status;
     public int Count { get; } = count;
     public string Label => $"{Status.ToDisplayString()} ({Count})";
+}
+
+public sealed class StatusFilterOption(WbsStatus? status, string label)
+{
+    public WbsStatus? Status { get; } = status;
+    public string Label { get; } = label;
 }

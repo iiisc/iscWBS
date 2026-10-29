@@ -72,8 +72,8 @@
                 MinWidth="140"
                 AutomationProperties.Name="Filter by status">
                 <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Converter={StaticResource StatusToStringConverter}}" />
+                    <DataTemplate x:DataType="vm:StatusFilterOption">
+                        <TextBlock Text="{x:Bind Label}" />
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>

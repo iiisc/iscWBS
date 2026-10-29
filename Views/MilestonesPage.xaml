@@ -43,7 +43,9 @@
             </Grid.ColumnDefinitions>
 
             <ListView
+                x:Uid="MilestonesPage_MilestoneList"
                 Grid.Column="0"
+                AutomationProperties.Name="Milestones"
                 ItemsSource="{x:Bind ViewModel.Milestones, Mode=OneWay}"
                 SelectedItem="{x:Bind ViewModel.SelectedMilestone, Mode=TwoWay}"
                 SelectionMode="Single">

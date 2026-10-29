@@ -16,7 +16,6 @@ public sealed partial class WbsTreeViewModel : ObservableObject
 
     private bool _isLoadingEditFields;
     private bool _hasPendingEdit;
-    private int _saveVersion;
     private Guid _pendingSelectNodeId;
     private CancellationTokenSource? _pageCts;
 
@@ -55,7 +54,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         if (blockers.Count == 0)
         {
             RefreshBlockedIds();
-            ScheduleSave();
+            SaveNow();
             return;
         }
 
@@ -76,14 +75,15 @@ public sealed partial class WbsTreeViewModel : ObservableObject
             $"{Strings.Get(starting ? "Wbs_CannotStartIntro" : "Wbs_CannotCompleteIntro")}\n\n{details}");
     }
 
-    partial void OnEditTitleChanged(string value) => ScheduleSave();
-    partial void OnEditDescriptionChanged(string value) => ScheduleSave();
-    partial void OnEditAssignedToChanged(string value) => ScheduleSave();
-    partial void OnEditEstimatedHoursChanged(double value) => ScheduleSave();
-    partial void OnEditActualHoursChanged(double value) => ScheduleSave();
-    partial void OnEditStartDateChanged(DateTimeOffset? value) => ScheduleSave();
-    partial void OnEditDueDateChanged(DateTimeOffset? value) => ScheduleSave();
-    partial void OnEditIsDeliverableChanged(bool value) => ScheduleSave();
+    // Text is saved when its box loses focus (SaveIfDirty), not per keystroke; the other inputs commit once.
+    partial void OnEditTitleChanged(string value) => MarkDirty();
+    partial void OnEditDescriptionChanged(string value) => MarkDirty();
+    partial void OnEditAssignedToChanged(string value) => MarkDirty();
+    partial void OnEditEstimatedHoursChanged(double value) => SaveNow();
+    partial void OnEditActualHoursChanged(double value) => SaveNow();
+    partial void OnEditStartDateChanged(DateTimeOffset? value) => SaveNow();
+    partial void OnEditDueDateChanged(DateTimeOffset? value) => SaveNow();
+    partial void OnEditIsDeliverableChanged(bool value) => SaveNow();
 
     [ObservableProperty]
     public partial double EditEstimatedHours { get; set; }
@@ -129,9 +129,6 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     [ObservableProperty]
     public partial List<MilestoneRowViewModel> LinkedMilestones { get; private set; } = [];
 
-    [ObservableProperty]
-    public partial bool IsSaving { get; set; }
-
     public bool HasNoNodes => DiagramNodes is null || DiagramNodes.Count == 0;
 
     partial void OnDiagramNodesChanged(IReadOnlyList<WbsNode>? value)
@@ -176,7 +173,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
 
     public void OnNavigatedFrom()
     {
-        FlushPendingEdit();
+        SaveIfDirty();
         _pageCts?.Cancel();
         _pageCts?.Dispose();
         _pageCts = null;
@@ -184,9 +181,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
 
     partial void OnSelectedNodeChanged(WbsNode? value)
     {
-        _saveVersion++;
         _hasPendingEdit = false;
-        IsSaving = false;
         OnPropertyChanged(nameof(IsDetailVisible));
         OnPropertyChanged(nameof(SelectedNodeId));
         NewDepPredecessor = null;
@@ -259,7 +254,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     [RelayCommand]
     private void ClearSelection()
     {
-        FlushPendingEdit();
+        SaveIfDirty();
         SelectedNode = null;
     }
 
@@ -297,10 +292,6 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         catch (Exception ex)
         {
             await _dialogService.ShowErrorAsync("ErrorTitle_Save", ex);
-        }
-        finally
-        {
-            IsSaving = false;
         }
     }
 
@@ -463,7 +454,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     /// <summary>Selects a node from the diagram view, populating the detail panel.</summary>
     public void SelectDiagramNode(WbsNode node)
     {
-        FlushPendingEdit();
+        SaveIfDirty();
         SelectedNode = node;
     }
 
@@ -488,30 +479,21 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         }
     }
 
-    private void ScheduleSave()
+    private void MarkDirty()
     {
-        if (_isLoadingEditFields || SelectedNode is null) return;
-        _hasPendingEdit = true;
-        IsSaving = true;
-        int version = ++_saveVersion;
-        _ = DebouncedSaveAsync(version);
+        if (!_isLoadingEditFields && SelectedNode is not null)
+            _hasPendingEdit = true;
     }
 
-    private async Task DebouncedSaveAsync(int version)
+    private void SaveNow()
     {
-        await Task.Delay(600);
-        if (_saveVersion != version) return;
-        _hasPendingEdit = false;
-        await SaveNodeAsync();
+        MarkDirty();
+        SaveIfDirty();
     }
 
-    /// <summary>
-    /// Saves an edit still waiting out its debounce, before the selection or page changes under it.
-    /// A save already past the debounce is in flight and reloads on its own.
-    /// </summary>
-    private void FlushPendingEdit()
+    /// <summary>Saves the selected node if it has unsaved edits; called on blur, before the selection or page changes, and on close.</summary>
+    public void SaveIfDirty()
     {
-        _saveVersion++;
         if (!_hasPendingEdit) return;
         _hasPendingEdit = false;
         _ = SaveNodeAsync();

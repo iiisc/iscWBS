@@ -21,15 +21,6 @@
                     Text="Node Details"
                     Style="{ThemeResource SubtitleTextBlockStyle}"
                     VerticalAlignment="Center" />
-                <TextBlock
-                    Grid.Column="1"
-                    x:Uid="WbsDetail_SavingText"
-                    Text="Saving…"
-                    Style="{ThemeResource CaptionTextBlockStyle}"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    VerticalAlignment="Center"
-                    Margin="0,0,8,0"
-                    Visibility="{x:Bind ViewModel.IsSaving, Mode=OneWay}" />
                 <Button
                     x:Uid="WbsDetail_CloseDetailPanel"
                     Grid.Column="2"
@@ -38,7 +29,11 @@
                     FontSize="12"
                     Padding="4"
                     Command="{x:Bind ViewModel.ClearSelectionCommand}"
-                    AutomationProperties.Name="Close detail panel" />
+                    AutomationProperties.Name="Close detail panel">
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="Escape" />
+                    </Button.KeyboardAccelerators>
+                </Button>
             </Grid>
 
             <StackPanel Spacing="4">
@@ -55,6 +50,7 @@
                 <TextBox
                     x:Uid="WbsDetail_TitleInput"
                     Text="{x:Bind ViewModel.EditTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    LostFocus="{x:Bind ViewModel.SaveIfDirty}"
                     PlaceholderText="Node title…"
                     AutomationProperties.Name="Title" />
             </StackPanel>
@@ -64,6 +60,7 @@
                 <TextBox
                     x:Uid="WbsDetail_Description"
                     Text="{x:Bind ViewModel.EditDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    LostFocus="{x:Bind ViewModel.SaveIfDirty}"
                     AcceptsReturn="True"
                     Height="80"
                     TextWrapping="Wrap"
@@ -75,6 +72,7 @@
                 <TextBox
                     x:Uid="WbsDetail_AssignedTo"
                     Text="{x:Bind ViewModel.EditAssignedTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    LostFocus="{x:Bind ViewModel.SaveIfDirty}"
                     AutomationProperties.Name="Assigned to" />
             </StackPanel>
 

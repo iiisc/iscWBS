@@ -1,11 +1,8 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
 using iscWBS.Helpers;
-using Windows.Storage;
-using Windows.System;
 
 namespace iscWBS.ViewModels;
 
@@ -15,7 +12,6 @@ public sealed partial class DashboardViewModel : ObservableObject
     private readonly WbsService _wbsService;
     private readonly MilestoneService _milestoneService;
     private readonly DialogService _dialogService;
-    private readonly ReportExportService _reportExportService;
 
     private IReadOnlyList<WbsNode> _allNodes = Array.Empty<WbsNode>();
     private IReadOnlySet<Guid> _blockedIds = new HashSet<Guid>();
@@ -59,14 +55,12 @@ public sealed partial class DashboardViewModel : ObservableObject
         ProjectStateService projectStateService,
         WbsService wbsService,
         MilestoneService milestoneService,
-        DialogService dialogService,
-        ReportExportService reportExportService)
+        DialogService dialogService)
     {
         _projectStateService = projectStateService;
         _wbsService = wbsService;
         _milestoneService = milestoneService;
         _dialogService = dialogService;
-        _reportExportService = reportExportService;
         _allAssignees = Strings.Get("Dashboard_AllAssignees");
     }
 
@@ -168,22 +162,6 @@ public sealed partial class DashboardViewModel : ObservableObject
             UpcomingMilestones.Add(new MilestoneRowViewModel { Milestone = m });
     }
 
-    [RelayCommand]
-    private async Task ExportPdfAsync()
-    {
-        StorageFile? file = await FilePickers.PickStatusReportSaveFileAsync();
-        if (file is null) return;
-        try
-        {
-            await _reportExportService.ExportAsync(file.Path, ReportOptions.All);
-        }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowErrorAsync("ErrorTitle_Export", ex);
-            return;
-        }
-        await Launcher.LaunchFileAsync(file);
-    }
 }
 
 // Get-only properties: the XAML type metadata generator emits setters for init-only ones, which don't compile.

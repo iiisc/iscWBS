@@ -39,6 +39,8 @@ public sealed partial class ShellWindow : Window
         AppWindow.Title = ViewModel.WindowTitle;
 
         RootGrid.Loaded += OnLoaded;
+        // Text in the WBS detail panel is saved on blur, which closing the window skips.
+        Closed += (_, _) => (ContentFrame.Content as WbsTreePage)?.ViewModel.SaveIfDirty();
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)

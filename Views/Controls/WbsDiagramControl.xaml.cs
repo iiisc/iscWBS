@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.Foundation;
-using Windows.UI.ViewManagement;
+using Windows.System;
 using iscWBS.Core.Models;
 using iscWBS.Helpers;
 
@@ -143,16 +143,23 @@ public sealed partial class WbsDiagramControl : UserControl
     private readonly Brush                    _white          = new SolidColorBrush(Colors.White);
     private readonly FontFamily               _iconFont       = new("Segoe MDL2 Assets");
 
-    // Theme brushes, resolved once per rebuild.
-    private Dictionary<WbsStatus, Brush> _statusBrushes = new();
-    private Brush _secondaryBrush = null!;
-    private Brush _selectionBrush = null!;
-    private Brush _connectorBrush = null!;
-    private Guid  _highlightedId;
+    // Proxy brushes from the XAML resources; their colours follow the theme.
+    private readonly Dictionary<WbsStatus, Brush> _statusBrushes;
+    private readonly Brush _secondaryBrush;
+    private readonly Brush _selectionBrush;
+    private readonly Brush _connectorBrush;
+    private readonly Brush _cardBackground;
+    private Guid _highlightedId;
+    private WbsHierarchy? _hierarchy;
 
     public WbsDiagramControl()
     {
         InitializeComponent();
+        _statusBrushes  = Enum.GetValues<WbsStatus>().ToDictionary(s => s, s => (Brush)Resources[$"DiagramStatus{s}"]);
+        _secondaryBrush = (Brush)Resources["DiagramSecondaryText"];
+        _selectionBrush = (Brush)Resources["DiagramSelection"];
+        _connectorBrush = (Brush)Resources["DiagramConnector"];
+        _cardBackground = (Brush)Resources["DiagramCardBackground"];
         // Cards are built in code with brushes resolved for the current theme, so rebuild on a theme switch.
         ActualThemeChanged += (_, _) => RebuildDiagram();
     }
@@ -207,12 +214,7 @@ public sealed partial class WbsDiagramControl : UserControl
 
         if (AllNodes is null || AllNodes.Count == 0) return;
 
-        _statusBrushes  = Enum.GetValues<WbsStatus>().ToDictionary(s => s, s => ResolveBrush($"WbsStatus{s}Brush", Colors.Gray));
-        _secondaryBrush = ResolveBrush("TextFillColorSecondaryBrush", Colors.Gray);
-        _selectionBrush = ResolveBrush("DiagramSelection", Colors.Blue);
-        _connectorBrush = ResolveBrush("DiagramConnector", Colors.Gray);
-
-        var hierarchy = new WbsHierarchy(AllNodes);
+        var hierarchy = _hierarchy = new WbsHierarchy(AllNodes);
         DiagramNode Build(WbsNode n)
         {
             var node = new DiagramNode { Data = n };
@@ -391,11 +393,12 @@ public sealed partial class WbsDiagramControl : UserControl
             CornerRadius     = new CornerRadius(6),
             BorderThickness  = new Thickness(1.5),
             BorderBrush      = statusBrush,
-            Background       = ResolveBrush("DiagramCardBackground", Colors.White),
+            Background       = _cardBackground,
             Tag              = node.Data,
             Child            = BuildCardContent(node.Data, statusBrush),
         };
         AutomationProperties.SetName(card, $"{node.Data.Code} — {node.Data.Title}");
+        card.PointerPressed += Card_PointerPressed;
         card.Tapped      += Card_Tapped;
         card.RightTapped += Card_RightTapped;
 
@@ -671,6 +674,11 @@ public sealed partial class WbsDiagramControl : UserControl
         card.BorderBrush     = selected ? _selectionBrush : _statusBrushes[((WbsNode)card.Tag).Status];
     }
 
+    // Taking focus on press, before Tapped selects, makes a focused detail-panel text box commit its
+    // edit (on LostFocus) to the node it belongs to.
+    private void Card_PointerPressed(object sender, PointerRoutedEventArgs e)
+        => DiagramScroller.Focus(FocusState.Pointer);
+
     private void Card_Tapped(object sender, TappedRoutedEventArgs e)
     {
         if (sender is Border { Tag: WbsNode node })
@@ -683,25 +691,38 @@ public sealed partial class WbsDiagramControl : UserControl
             NodeRightTapped?.Invoke(this, (node, e.GetPosition(this)));
     }
 
-    private Brush ResolveBrush(string key, Windows.UI.Color fallback)
+    /// <summary>Arrow keys move the selection: Up to the parent, Down to the first visible child, Left/Right between siblings.</summary>
+    private void DiagramScroller_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (Resources.ContainsKey(key))
-            return (Brush)Resources[key];
-        if (Application.Current.Resources.ContainsKey(key))
-            return (Brush)Application.Current.Resources[key];
-        // ContainsKey does not search ThemeDictionaries in WinUI 3, and the WbsStatus* brushes live in the
-        // merged Themes/Generic.xaml — look in each dictionary's active theme directly.
-        string themeKey = new AccessibilitySettings().HighContrast ? "HighContrast"
-            : ActualTheme == ElementTheme.Dark ? "Dark" : "Light";
-        ResourceDictionary appResources = Application.Current.Resources;
-        foreach (ResourceDictionary dict in appResources.MergedDictionaries.Prepend(appResources))
+        if (_hierarchy is null || AllNodes is null) return;
+
+        WbsNode? current = AllNodes.FirstOrDefault(n => n.Id == SelectedNodeId);
+        WbsNode? target;
+        if (current is null)
         {
-            if (dict.ThemeDictionaries.TryGetValue(themeKey, out object? themeObj)
-                && themeObj is ResourceDictionary themeDict
-                && themeDict.TryGetValue(key, out object? value)
-                && value is Brush brush)
-                return brush;
+            target = e.Key is VirtualKey.Up or VirtualKey.Down or VirtualKey.Left or VirtualKey.Right
+                ? _hierarchy.DepthFirst().Select(entry => entry.Node).FirstOrDefault()
+                : null;
         }
-        return new SolidColorBrush(fallback);
+        else
+        {
+            IReadOnlyList<WbsNode> siblings = current.ParentId is { } parentId
+                ? _hierarchy.ChildrenOf(parentId)
+                : AllNodes.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder).ToList();
+            int index = siblings.Select(n => n.Id).ToList().IndexOf(current.Id);
+            target = e.Key switch
+            {
+                VirtualKey.Up    => AllNodes.FirstOrDefault(n => n.Id == current.ParentId),
+                VirtualKey.Down  => _collapsedNodes.Contains(current.Id) ? null : _hierarchy.ChildrenOf(current.Id).FirstOrDefault(),
+                VirtualKey.Left  => index > 0 ? siblings[index - 1] : null,
+                VirtualKey.Right => index < siblings.Count - 1 ? siblings[index + 1] : null,
+                _ => null
+            };
+        }
+
+        if (target is null || !_cards.TryGetValue(target.Id, out Border? card)) return;
+        e.Handled = true;
+        card.StartBringIntoView();
+        NodeSelected?.Invoke(this, target);
     }
 }

@@ -81,9 +81,6 @@
   <data name="DashboardPage_Title.Text" xml:space="preserve">
     <value>Dashboard</value>
   </data>
-  <data name="DashboardPage_ExportPdfBtn.Text" xml:space="preserve">
-    <value>Export to PDF</value>
-  </data>
   <data name="DashboardPage_FilterStartDate.PlaceholderText" xml:space="preserve">
     <value>Start date</value>
   </data>
@@ -137,9 +134,6 @@
   </data>
   <data name="DashboardPage_BetaFeature.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Beta feature</value>
-  </data>
-  <data name="DashboardPage_ExportPdfButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Export project status report to PDF</value>
   </data>
   <data name="DashboardPage_OverallPercentComplete.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Overall percent complete</value>
@@ -452,9 +446,6 @@
   <!-- ─── WBS Detail control ───────────────────────────────────────────────── -->
   <data name="WbsDetail_Title.Text" xml:space="preserve">
     <value>Node Details</value>
-  </data>
-  <data name="WbsDetail_SavingText.Text" xml:space="preserve">
-    <value>Saving…</value>
   </data>
   <data name="WbsDetail_CodeLabel.Text" xml:space="preserve">
     <value>Code</value>
@@ -1107,5 +1098,11 @@
   </data>
   <data name="Report_PageOf" xml:space="preserve">
     <value>of</value>
+  </data>
+  <data name="MilestonesPage_MilestoneList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Milestones</value>
+  </data>
+  <data name="WelcomePage_RecentProjectsList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Recent projects</value>
   </data>
 </root>

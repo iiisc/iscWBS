@@ -114,6 +114,9 @@
                     HorizontalAlignment="Center"
                     AutomationProperties.Name="Generate PDF report"
                     Command="{x:Bind ViewModel.ExportPdfCommand}">
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="E" />
+                    </Button.KeyboardAccelerators>
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon Glyph="&#xE792;" FontSize="14" />
                         <TextBlock x:Uid="ReportsPage_GeneratePdfBtn" Text="Generate PDF Report" />

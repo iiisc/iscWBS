@@ -21,21 +21,34 @@
                 x:Uid="WbsTreePage_AddRootNodeBtn"
                 Content="Add Root Node"
                 Command="{x:Bind ViewModel.AddRootNodeCommand}"
-                AutomationProperties.Name="Add root node" />
+                AutomationProperties.Name="Add root node">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Control,Shift" Key="N" />
+                </Button.KeyboardAccelerators>
+            </Button>
             <Button
                 x:Uid="WbsTreePage_AddChildBtn"
                 Content="Add Child"
                 Command="{x:Bind ViewModel.AddChildNodeCommand}"
                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
                 IsEnabled="{x:Bind ViewModel.IsDetailVisible, Mode=OneWay}"
-                AutomationProperties.Name="Add child node" />
+                AutomationProperties.Name="Add child node">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Control" Key="N" />
+                </Button.KeyboardAccelerators>
+            </Button>
             <Button
                 x:Uid="WbsTreePage_DeleteNodeBtn"
                 Content="Delete Node"
                 Command="{x:Bind ViewModel.DeleteNodeCommand}"
                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
                 IsEnabled="{x:Bind ViewModel.IsDetailVisible, Mode=OneWay}"
-                AutomationProperties.Name="Delete selected node" />
+                AutomationProperties.Name="Delete selected node">
+                <Button.KeyboardAccelerators>
+                    <!-- Scoped to the diagram so Delete in a detail text box still deletes text. -->
+                    <KeyboardAccelerator Key="Delete" ScopeOwner="{x:Bind WbsDiagram}" />
+                </Button.KeyboardAccelerators>
+            </Button>
             <Rectangle Width="1" Height="20" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" VerticalAlignment="Center" />
             <Button
                 x:Uid="WbsTreePage_CollapseAllBtn"

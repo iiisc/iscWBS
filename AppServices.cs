@@ -28,7 +28,7 @@ public sealed class AppServices
 
     public ShellViewModel CreateShellViewModel() => new(ProjectState, Navigation);
     public WelcomeViewModel CreateWelcomeViewModel() => new(ProjectState, Settings, Dialog);
-    public DashboardViewModel CreateDashboardViewModel() => new(ProjectState, Wbs, Milestones, Dialog, ReportExport);
+    public DashboardViewModel CreateDashboardViewModel() => new(ProjectState, Wbs, Milestones, Dialog);
     public WbsTreeViewModel CreateWbsTreeViewModel() => new(Wbs, ProjectState, Dialog, Milestones);
     public WbsOutlineViewModel CreateWbsOutlineViewModel() => new(Wbs, ProjectState, Dialog, Navigation);
     public GanttViewModel CreateGanttViewModel() => new(ProjectState, Wbs, Dialog, Milestones);

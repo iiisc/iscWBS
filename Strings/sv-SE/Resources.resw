@@ -15,7 +15,7 @@
 
   <!-- ─── Shell / Navigation ─────────────────────────────────────────────── -->
   <data name="Shell_NavDashboard.Text" xml:space="preserve">
-    <value>Dashboard</value>
+    <value>Instrumentpanel</value>
   </data>
   <data name="Shell_NavWbsTree.Content" xml:space="preserve">
     <value>WBS-träd</value>
@@ -48,7 +48,7 @@
     <value>Inställningar</value>
   </data>
   <data name="Shell_NavDashboardItem.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Dashboard (beta)</value>
+    <value>Instrumentpanel (beta)</value>
   </data>
   <data name="Shell_NavGanttItem.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Gantt (beta)</value>
@@ -59,7 +59,7 @@
 
   <!-- ─── Welcome page ────────────────────────────────────────────────────── -->
   <data name="WelcomePage_Subtitle.Text" xml:space="preserve">
-    <value>Projektledning och arbetsstruktur</value>
+    <value>Projektledning och arbetsnedbrytningsstruktur</value>
   </data>
   <data name="WelcomePage_NewProjectBtn.Content" xml:space="preserve">
     <value>Nytt projekt</value>
@@ -79,10 +79,7 @@
 
   <!-- ─── Dashboard page ──────────────────────────────────────────────────── -->
   <data name="DashboardPage_Title.Text" xml:space="preserve">
-    <value>Dashboard</value>
-  </data>
-  <data name="DashboardPage_ExportPdfBtn.Text" xml:space="preserve">
-    <value>Exportera till PDF</value>
+    <value>Instrumentpanel</value>
   </data>
   <data name="DashboardPage_FilterStartDate.PlaceholderText" xml:space="preserve">
     <value>Startdatum</value>
@@ -109,10 +106,10 @@
     <value>Filtrera på status</value>
   </data>
   <data name="DashboardPage_KpiCompletePercent.Text" xml:space="preserve">
-    <value>% Klart</value>
+    <value>% klart</value>
   </data>
   <data name="DashboardPage_KpiComplete.Text" xml:space="preserve">
-    <value>Klart</value>
+    <value>Klara</value>
   </data>
   <data name="DashboardPage_KpiInProgress.Text" xml:space="preserve">
     <value>Pågående</value>
@@ -121,10 +118,10 @@
     <value>I riskzonen</value>
   </data>
   <data name="DashboardPage_KpiOverdue.Text" xml:space="preserve">
-    <value>Försenat</value>
+    <value>Försenade</value>
   </data>
   <data name="DashboardPage_KpiBlocked.Text" xml:space="preserve">
-    <value>Blockerat</value>
+    <value>Blockerade</value>
   </data>
   <data name="DashboardPage_DeliverablesTitle.Text" xml:space="preserve">
     <value>Leverabler</value>
@@ -133,13 +130,10 @@
     <value>Statusuppdelning</value>
   </data>
   <data name="DashboardPage_UpcomingMilestonesTitle.Text" xml:space="preserve">
-    <value>Kommande milstolpar — Nästa 60 dagar</value>
+    <value>Kommande milstolpar — nästa 60 dagar</value>
   </data>
   <data name="DashboardPage_BetaFeature.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Betafunktion</value>
-  </data>
-  <data name="DashboardPage_ExportPdfButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Exportera projektstatusrapport till PDF</value>
   </data>
   <data name="DashboardPage_OverallPercentComplete.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Total andel klart</value>
@@ -198,10 +192,10 @@
     <value>Fäll ihop alla noder</value>
   </data>
   <data name="WbsTreePage_ExpandAllBtn.Content" xml:space="preserve">
-    <value>Expandera alla</value>
+    <value>Fäll ut alla</value>
   </data>
   <data name="WbsTreePage_ExpandAllBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Expandera alla noder</value>
+    <value>Fäll ut alla noder</value>
   </data>
   <data name="WbsTreePage_ContextAddChild.Text" xml:space="preserve">
     <value>Lägg till undernod</value>
@@ -210,10 +204,10 @@
     <value>Lägg till undernod</value>
   </data>
   <data name="WbsTreePage_ContextAddSibling.Text" xml:space="preserve">
-    <value>Lägg till systernod</value>
+    <value>Lägg till syskonnod</value>
   </data>
   <data name="WbsTreePage_ContextAddSibling.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Lägg till systernod</value>
+    <value>Lägg till syskonnod</value>
   </data>
   <data name="WbsTreePage_ContextDelete.Text" xml:space="preserve">
     <value>Ta bort</value>
@@ -225,7 +219,7 @@
     <value>Inga noder ännu</value>
   </data>
   <data name="WbsTreePage_EmptyHint.Text" xml:space="preserve">
-    <value>Klicka på 'Lägg till rotnod' för att börja</value>
+    <value>Klicka på ”Lägg till rotnod” för att komma igång</value>
   </data>
 
   <!-- ─── WBS Outline page ────────────────────────────────────────────────── -->
@@ -239,19 +233,19 @@
     <value>Titel</value>
   </data>
   <data name="WbsOutlinePage_ColAssignedTo.Text" xml:space="preserve">
-    <value>Tilldelad</value>
+    <value>Ansvarig</value>
   </data>
   <data name="WbsOutlinePage_ColStatus.Text" xml:space="preserve">
     <value>Status</value>
   </data>
   <data name="WbsOutlinePage_ColEstHours.Text" xml:space="preserve">
-    <value>Beräknade tim.</value>
+    <value>Uppskattade tim.</value>
   </data>
   <data name="WbsOutlinePage_ColActHours.Text" xml:space="preserve">
     <value>Faktiska tim.</value>
   </data>
   <data name="WbsOutlinePage_ColDueDate.Text" xml:space="preserve">
-    <value>Förfallodat.</value>
+    <value>Förfallodatum</value>
   </data>
   <data name="WbsOutlinePage_OutlineListView.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>WBS-översikt</value>
@@ -285,19 +279,19 @@
     <value>Rapporter</value>
   </data>
   <data name="ReportsPage_Subtitle.Text" xml:space="preserve">
-    <value>Anpassa och generera en PDF-ögonblicksbild av aktuell projektstatus.</value>
+    <value>Välj vad som ska ingå och skapa en PDF-rapport över projektets aktuella status.</value>
   </data>
   <data name="ReportsPage_SectionsTitle.Text" xml:space="preserve">
-    <value>Avsnitt att inkludera</value>
+    <value>Avsnitt som ska ingå</value>
   </data>
   <data name="ReportsPage_ToggleSummary.Header" xml:space="preserve">
     <value>Sammanfattning (KPI-totaler)</value>
   </data>
   <data name="ReportsPage_ToggleSummary.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleSummary.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
   </data>
   <data name="ReportsPage_ToggleSummary.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Inkludera avsnittet Sammanfattning</value>
@@ -306,10 +300,10 @@
     <value>Kräver uppmärksamhet</value>
   </data>
   <data name="ReportsPage_ToggleAttention.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleAttention.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
   </data>
   <data name="ReportsPage_ToggleAttention.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Inkludera avsnittet Kräver uppmärksamhet</value>
@@ -318,58 +312,58 @@
     <value>Leverabler</value>
   </data>
   <data name="ReportsPage_ToggleDeliverables.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleDeliverables.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
   </data>
   <data name="ReportsPage_ToggleDeliverables.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Inkludera avsnittet Leverabler</value>
   </data>
   <data name="ReportsPage_ToggleEffort.Header" xml:space="preserve">
-    <value>Insatssammanfattning</value>
+    <value>Tidsåtgång</value>
   </data>
   <data name="ReportsPage_ToggleEffort.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleEffort.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
   </data>
   <data name="ReportsPage_ToggleEffort.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Inkludera avsnittet Insatssammanfattning</value>
+    <value>Inkludera avsnittet Tidsåtgång</value>
   </data>
   <data name="ReportsPage_ToggleMilestones.Header" xml:space="preserve">
     <value>Kommande milstolpar</value>
   </data>
   <data name="ReportsPage_ToggleMilestones.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleMilestones.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
   </data>
   <data name="ReportsPage_ToggleMilestones.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Inkludera avsnittet Kommande milstolpar</value>
   </data>
   <data name="ReportsPage_ToggleWbsTree.Header" xml:space="preserve">
-    <value>WBS-träd översikt</value>
+    <value>WBS-trädöversikt</value>
   </data>
   <data name="ReportsPage_ToggleWbsTree.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleWbsTree.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
   </data>
   <data name="ReportsPage_ToggleWbsTree.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Inkludera avsnittet WBS-trädöversikt</value>
   </data>
   <data name="ReportsPage_GeneratePdfBtn.Text" xml:space="preserve">
-    <value>Generera PDF-rapport</value>
+    <value>Skapa PDF-rapport</value>
   </data>
   <data name="ReportsPage_BetaFeature.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Betafunktion</value>
   </data>
   <data name="ReportsPage_ExportPdfButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Generera PDF-rapport</value>
+    <value>Skapa PDF-rapport</value>
   </data>
 
   <!-- ─── Milestones page ──────────────────────────────────────────────────── -->
@@ -453,9 +447,6 @@
   <data name="WbsDetail_Title.Text" xml:space="preserve">
     <value>Nodinformation</value>
   </data>
-  <data name="WbsDetail_SavingText.Text" xml:space="preserve">
-    <value>Sparar…</value>
-  </data>
   <data name="WbsDetail_CodeLabel.Text" xml:space="preserve">
     <value>Kod</value>
   </data>
@@ -466,13 +457,13 @@
     <value>Beskrivning</value>
   </data>
   <data name="WbsDetail_AssignedToLabel.Text" xml:space="preserve">
-    <value>Tilldelad</value>
+    <value>Ansvarig</value>
   </data>
   <data name="WbsDetail_StatusLabel.Text" xml:space="preserve">
     <value>Status</value>
   </data>
   <data name="WbsDetail_EstHoursLabel.Text" xml:space="preserve">
-    <value>Beräknade tim.</value>
+    <value>Uppskattade tim.</value>
   </data>
   <data name="WbsDetail_ActHoursLabel.Text" xml:space="preserve">
     <value>Faktiska tim.</value>
@@ -490,7 +481,7 @@
     <value>Titel</value>
   </data>
   <data name="WbsDetail_DeliverableToggle.Header" xml:space="preserve">
-    <value>Inkludera i rapport</value>
+    <value>Ta med i rapporten</value>
   </data>
   <data name="WbsDetail_DeliverableToggle.OnContent" xml:space="preserve">
     <value>Leverabel</value>
@@ -532,13 +523,13 @@
     <value>Beskrivning</value>
   </data>
   <data name="WbsDetail_AssignedTo.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Tilldelad</value>
+    <value>Ansvarig</value>
   </data>
   <data name="WbsDetail_Status.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Status</value>
   </data>
   <data name="WbsDetail_EstimatedHours.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Beräknade timmar</value>
+    <value>Uppskattade timmar</value>
   </data>
   <data name="WbsDetail_ActualHours.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Faktiska timmar</value>
@@ -618,10 +609,10 @@
     <value>Ladda ner och installera uppdateringen</value>
   </data>
   <data name="SettingsPage_ReleaseNotesBtn.Content" xml:space="preserve">
-    <value>Visa versionsnoteringar</value>
+    <value>Visa versionsinformation</value>
   </data>
   <data name="SettingsPage_ReleaseNotesBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Öppna versionsnoteringar i webbläsaren</value>
+    <value>Öppna versionsinformationen i webbläsaren</value>
   </data>
   <data name="SettingsPage_CancelBtn.Content" xml:space="preserve">
     <value>Avbryt</value>
@@ -636,10 +627,10 @@
     <value>Programspråk</value>
   </data>
   <data name="SettingsPage_ApplyLanguageBtn.Content" xml:space="preserve">
-    <value>Tillämpa</value>
+    <value>Verkställ</value>
   </data>
   <data name="SettingsPage_ApplyLanguageBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Tillämpa språkändring</value>
+    <value>Verkställ språkändringen</value>
   </data>
   <data name="SettingsPage_RestartNote.Message" xml:space="preserve">
     <value>Språkändringar träder i kraft efter omstart av programmet.</value>
@@ -713,7 +704,7 @@
     <value>Fel</value>
   </data>
   <data name="ErrorTitle_Dashboard" xml:space="preserve">
-    <value>Fel i dashboarden</value>
+    <value>Fel i instrumentpanelen</value>
   </data>
   <data name="ErrorTitle_Export" xml:space="preserve">
     <value>Exporten misslyckades</value>
@@ -758,7 +749,7 @@
     <value>Det gick inte att lägga till undernoden</value>
   </data>
   <data name="ErrorTitle_AddSibling" xml:space="preserve">
-    <value>Det gick inte att lägga till systernoden</value>
+    <value>Det gick inte att lägga till syskonnoden</value>
   </data>
   <data name="ErrorTitle_AddDependency" xml:space="preserve">
     <value>Det gick inte att lägga till beroendet</value>
@@ -914,7 +905,7 @@
     <value>Startvillkor brutet — noden pågår men en föregångare uppfyller inte längre startberoendet</value>
   </data>
   <data name="Diagram_ExpandChildren" xml:space="preserve">
-    <value>Expandera undernoder</value>
+    <value>Fäll ut undernoder</value>
   </data>
   <data name="Diagram_CollapseChildren" xml:space="preserve">
     <value>Fäll ihop undernoder</value>
@@ -1001,7 +992,7 @@
     <value>{0} — Statusrapport</value>
   </data>
   <data name="Report_GeneratedAt" xml:space="preserve">
-    <value>Genererad  {0}</value>
+    <value>Skapad  {0}</value>
   </data>
   <data name="Report_HealthAtRisk" xml:space="preserve">
     <value>● I RISKZONEN</value>
@@ -1022,7 +1013,7 @@
     <value>LEVERABLER</value>
   </data>
   <data name="Report_EffortSummary" xml:space="preserve">
-    <value>INSATSSAMMANFATTNING</value>
+    <value>TIDSÅTGÅNG</value>
   </data>
   <data name="Report_UpcomingMilestones" xml:space="preserve">
     <value>KOMMANDE MILSTOLPAR</value>
@@ -1031,7 +1022,7 @@
     <value>ARBETSNEDBRYTNINGSSTRUKTUR</value>
   </data>
   <data name="Report_NoDeliverables" xml:space="preserve">
-    <value>Inga leverabler hittades. Öppna en nod i WBS-redigeraren och aktivera ”Inkludera i rapport” för att lägga till den här.</value>
+    <value>Inga leverabler hittades. Öppna en nod i WBS-redigeraren och aktivera ”Ta med i rapporten” för att lägga till den här.</value>
   </data>
   <data name="Report_ColCode" xml:space="preserve">
     <value>Kod</value>
@@ -1055,7 +1046,7 @@
     <value>Milstolpe</value>
   </data>
   <data name="Report_ColEstimated" xml:space="preserve">
-    <value>Beräknat</value>
+    <value>Uppskattat</value>
   </data>
   <data name="Report_ColActual" xml:space="preserve">
     <value>Faktiskt</value>
@@ -1064,13 +1055,13 @@
     <value>Återstår</value>
   </data>
   <data name="Report_ColBurnRate" xml:space="preserve">
-    <value>Förbrukning</value>
+    <value>Förbrukningsgrad</value>
   </data>
   <data name="Report_ColTasks" xml:space="preserve">
     <value>Aktiviteter</value>
   </data>
   <data name="Report_ColEstHours" xml:space="preserve">
-    <value>Beräknade tim.</value>
+    <value>Uppskattade tim.</value>
   </data>
   <data name="Report_ColActHours" xml:space="preserve">
     <value>Faktiska tim.</value>
@@ -1100,12 +1091,18 @@
     <value>förfaller om {0} d</value>
   </data>
   <data name="Report_GeneratedBy" xml:space="preserve">
-    <value>Genererad av iscWBS</value>
+    <value>Skapad med iscWBS</value>
   </data>
   <data name="Report_Page" xml:space="preserve">
     <value>Sida</value>
   </data>
   <data name="Report_PageOf" xml:space="preserve">
     <value>av</value>
+  </data>
+  <data name="MilestonesPage_MilestoneList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Milstolpar</value>
+  </data>
+  <data name="WelcomePage_RecentProjectsList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Senaste projekt</value>
   </data>
 </root>

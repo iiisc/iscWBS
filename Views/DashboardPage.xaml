@@ -41,7 +41,6 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <CalendarDatePicker
@@ -78,19 +77,6 @@
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
-
-            <Button
-                x:Uid="DashboardPage_ExportPdfButton"
-                Grid.Column="5"
-                Style="{ThemeResource AccentButtonStyle}"
-                VerticalAlignment="Center"
-                AutomationProperties.Name="Export project status report to PDF"
-                Command="{x:Bind ViewModel.ExportPdfCommand}">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <FontIcon Glyph="&#xE792;" FontSize="14" />
-                    <TextBlock x:Uid="DashboardPage_ExportPdfBtn" Text="Export to PDF" />
-                </StackPanel>
-            </Button>
         </Grid>
 
         <Grid Grid.Row="2" Margin="12,0,12,8" ColumnSpacing="8">

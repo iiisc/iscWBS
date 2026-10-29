@@ -80,15 +80,12 @@ public sealed partial class GanttPage : Page
         ChartCanvas.Height = rowsH;
         ChartCanvas.Children.Clear();
 
-        bool isDark      = ActualTheme == ElementTheme.Dark;
-        var  labelFg     = new SolidColorBrush(isDark ? Colors.White : Colors.Black);
-        var  headerBrush = new SolidColorBrush(isDark
-            ? Color.FromArgb(0x28, 0xFF, 0xFF, 0xFF)
-            : Color.FromArgb(0x14, 0x00, 0x00, 0x00));
+        var labelFg     = (Brush)Resources["GanttLabelForeground"];
+        var headerBrush = (Brush)Resources["GanttHeaderBackground"];
 
         DrawLabelHeader(headerBrush, labelFg);
-        DrawChartHeader(chartW, isDark, headerBrush, labelFg);
-        DrawRowBands(chartW, isDark);
+        DrawChartHeader(chartW, headerBrush, labelFg);
+        DrawRowBands(chartW);
         DrawVerticalGridLines(rowsH);
         DrawLabels(labelFg);
         DrawBars();
@@ -97,7 +94,7 @@ public sealed partial class GanttPage : Page
         DrawTodayLine(rowsH);
     }
 
-    private void DrawLabelHeader(SolidColorBrush headerBrush, SolidColorBrush labelFg)
+    private void DrawLabelHeader(Brush headerBrush, Brush labelFg)
     {
         Place(LabelHeaderCanvas, new Rectangle { Width = _labelWidth, Height = _headerHeight, Fill = headerBrush }, 0, 0);
         AddHLine(LabelHeaderCanvas, 0, _labelWidth, _headerHeight, _majorLineBrush, 1);
@@ -112,11 +109,9 @@ public sealed partial class GanttPage : Page
         Place(LabelHeaderCanvas, title, 12, (_headerHeight - 16) / 2.0);
     }
 
-    private void DrawChartHeader(double chartW, bool isDark, SolidColorBrush headerBrush, SolidColorBrush labelFg)
+    private void DrawChartHeader(double chartW, Brush headerBrush, Brush labelFg)
     {
-        var bottomBrush = new SolidColorBrush(isDark
-            ? Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF)
-            : Color.FromArgb(0x0A, 0x00, 0x00, 0x00));
+        var bottomBrush = (Brush)Resources["GanttHeaderBottomBackground"];
         Place(HeaderCanvas, new Rectangle { Width = chartW, Height = _headerTierH, Fill = headerBrush }, 0, 0);
         Place(HeaderCanvas, new Rectangle { Width = chartW, Height = _headerTierH, Fill = bottomBrush }, 0, _headerTierH);
 
@@ -148,11 +143,9 @@ public sealed partial class GanttPage : Page
     }
 
     /// <summary>Zebra bands and row separators, drawn on both the label and the chart canvas so they line up.</summary>
-    private void DrawRowBands(double chartW, bool isDark)
+    private void DrawRowBands(double chartW)
     {
-        var bandBrush = new SolidColorBrush(isDark
-            ? Color.FromArgb(0x0F, 0xFF, 0xFF, 0xFF)
-            : Color.FromArgb(0x0A, 0x00, 0x00, 0x00));
+        var bandBrush = (Brush)Resources["GanttRowBand"];
         IReadOnlyList<GanttRow> rows = ViewModel.Layout.Rows;
         for (int i = 0; i < rows.Count; i++)
         {
@@ -172,7 +165,7 @@ public sealed partial class GanttPage : Page
             AddVLine(ChartCanvas, tick.X, 0, rowsH, _gridLineBrush, 0.5);
     }
 
-    private void DrawLabels(SolidColorBrush labelFg)
+    private void DrawLabels(Brush labelFg)
     {
         foreach (GanttRow row in ViewModel.Layout.Rows)
         {

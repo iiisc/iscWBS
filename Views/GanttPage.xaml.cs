@@ -25,7 +25,6 @@ public sealed partial class GanttPage : Page
     private readonly SolidColorBrush _majorLineBrush   = new(Color.FromArgb(0x40, 0x80, 0x80, 0x80));
     private readonly SolidColorBrush _progressBrush    = new(Color.FromArgb(0x45, 0xFF, 0xFF, 0xFF));
     private readonly SolidColorBrush _barTextBrush     = new(Colors.White);
-    private readonly SolidColorBrush _assigneeBrush    = new(Color.FromArgb(0xA0, 0x80, 0x80, 0x80));
     private readonly SolidColorBrush _noBarDotBrush    = new(Color.FromArgb(0x60, 0x80, 0x80, 0x80));
     private readonly SolidColorBrush _parentAccentBrush = new(Color.FromArgb(0x90, 0x00, 0x78, 0xD4));
     private readonly Dictionary<WbsStatus, SolidColorBrush> _statusBrushes =
@@ -200,6 +199,7 @@ public sealed partial class GanttPage : Page
 
     private void DrawBars()
     {
+        var assigneeFg = (Brush)Resources["GanttAssigneeForeground"];
         foreach (GanttRow row in ViewModel.Layout.Rows)
         {
             double barTop = row.RowTop + _barOffsetY;
@@ -246,7 +246,7 @@ public sealed partial class GanttPage : Page
 
             if (!string.IsNullOrEmpty(row.AssignedTo) && row.BarWidth > 30)
             {
-                var assignee = new TextBlock { Text = row.AssignedTo, FontSize = 9, Foreground = _assigneeBrush };
+                var assignee = new TextBlock { Text = row.AssignedTo, FontSize = 9, Foreground = assigneeFg };
                 Place(ChartCanvas, assignee, row.BarLeft, barTop + _barHeight + 1);
             }
         }
@@ -339,7 +339,7 @@ public sealed partial class GanttPage : Page
             Text       = Strings.Get("Gantt_Today"),
             FontSize   = 9,
             FontWeight = FontWeights.SemiBold,
-            Foreground = todayBrush
+            Foreground = (Brush)Resources["GanttTodayForeground"]
         };
         // In the top tier, which only holds the month names; the bottom tier's day numbers would collide.
         Place(HeaderCanvas, todayLabel, todayX + 3, 4);

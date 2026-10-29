@@ -10,6 +10,8 @@
         <SolidColorBrush x:Key="GanttHeaderBackground"       Color="{ThemeResource GanttHeaderBackgroundColor}" />
         <SolidColorBrush x:Key="GanttHeaderBottomBackground" Color="{ThemeResource GanttHeaderBottomBackgroundColor}" />
         <SolidColorBrush x:Key="GanttRowBand"                Color="{ThemeResource GanttRowBandColor}" />
+        <SolidColorBrush x:Key="GanttAssigneeForeground"     Color="{ThemeResource TextFillColorSecondary}" />
+        <SolidColorBrush x:Key="GanttTodayForeground"        Color="{ThemeResource WbsStatusBlockedColor}" />
     </Page.Resources>
 
     <Grid>

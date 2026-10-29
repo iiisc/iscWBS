@@ -1,5 +1,5 @@
 using System.IO;
-using SQLite;
+using Microsoft.Data.Sqlite;
 using iscWBS.Core.Exceptions;
 using iscWBS.Core.Models;
 using iscWBS.Core.Data;
@@ -17,7 +17,7 @@ public sealed class ProjectStateService
     public Project? ActiveProject => _activeProject;
     public bool HasActiveProject => _activeProject is not null;
 
-    public SQLiteAsyncConnection Connection => _database?.Connection ?? throw WbsException.NoProjectOpen();
+    public SqliteConnection Connection => _database?.Connection ?? throw WbsException.NoProjectOpen();
 
     public event EventHandler<Project?>? ActiveProjectChanged;
 
@@ -33,7 +33,18 @@ public sealed class ProjectStateService
 
         await OpenDatabaseAsync(filePath);
 
-        Project? project = await Connection.Table<Project>().FirstOrDefaultAsync();
+        Project? project = (await Connection.QueryAsync(
+            "SELECT Id, Name, Description, Owner, CreatedAt, UpdatedAt, StartDate FROM Projects LIMIT 1",
+            r => new Project
+            {
+                Id = r.GetGuidText(0),
+                Name = r.GetText(1),
+                Description = r.GetText(2),
+                Owner = r.GetText(3),
+                CreatedAt = r.GetNullableDateTime(4) ?? default,
+                UpdatedAt = r.GetNullableDateTime(5),
+                StartDate = r.GetNullableDateTime(6)
+            })).FirstOrDefault();
         if (project is null)
         {
             await CloseInternalAsync();
@@ -60,7 +71,9 @@ public sealed class ProjectStateService
             Owner = owner,
             CreatedAt = DateTime.UtcNow
         };
-        await Connection.InsertAsync(project);
+        await Connection.ExecuteAsync(
+            "INSERT INTO Projects (Id, Name, Description, Owner, CreatedAt, UpdatedAt, StartDate) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+            project.Id, project.Name, project.Description, project.Owner, project.CreatedAt, project.UpdatedAt, project.StartDate);
         _activeProject = project;
 
         _settingsService.AddRecentProject(filePath);

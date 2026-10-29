@@ -1,23 +1,19 @@
-using System.Text.Json;
-using SQLite;
+using Microsoft.Data.Sqlite;
 using iscWBS.Core.Exceptions;
-using iscWBS.Core.Models;
 
 namespace iscWBS.Core.Data;
 
 /// <summary>Manages the SQLite connection and schema for a single <c>.iscwbs</c> project file.</summary>
 public sealed class WbsDatabase
 {
-    /// <summary>Increment this whenever a schema migration is added.</summary>
+    /// <summary>
+    /// Version 2 is the baseline: older layouts were never released. When the schema changes, bump this and
+    /// upgrade files whose SchemaVersion row is lower before the app reads them.
+    /// </summary>
     private const int _currentSchemaVersion = 2;
 
     private const int _appId = 0x49534357; // "ISCW"
 
-    // All tables use raw SQL (CREATE TABLE IF NOT EXISTS) instead of CreateTableAsync<T> for two reasons:
-    //   1. sqlite-net-pcl v1.9.x regression: INTEGER PRIMARY KEY columns are mis-identified as missing and
-    //      re-added via ALTER TABLE, producing a "duplicate column name" error on existing databases.
-    //   2. PublishTrimmed=True (Release) can strip the attribute metadata CreateTableAsync relies on for its
-    //      column-migration logic, causing it to treat every column as missing and trigger the same error.
     private static readonly string[] _schema =
     [
         "CREATE TABLE IF NOT EXISTS \"SchemaVersion\" (\"Version\" INTEGER NOT NULL PRIMARY KEY, \"AppliedAt\" TEXT NOT NULL DEFAULT '')",
@@ -42,30 +38,29 @@ public sealed class WbsDatabase
         "CREATE INDEX IF NOT EXISTS \"NodeDependencies_SuccessorId\" ON \"NodeDependencies\" (\"SuccessorId\")",
     ];
 
+    // Calling the bundle directly rather than letting Microsoft.Data.Sqlite find it by reflection keeps it AOT-safe.
+    static WbsDatabase() => SQLitePCL.Batteries_V2.Init();
+
     public WbsDatabase(string filePath)
     {
-        Connection = new SQLiteAsyncConnection(filePath, storeDateTimeAsTicks: false);
+        // Without pooling, closing really releases the file, so it can be moved or deleted straight away.
+        Connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = filePath, Pooling = false }.ToString());
     }
 
     /// <summary>Exposed to the services through <c>ProjectStateService.Connection</c>.</summary>
-    public SQLiteAsyncConnection Connection { get; }
+    public SqliteConnection Connection { get; }
 
-    /// <summary>Configures pragmas, creates all tables, and applies any pending schema migrations. Safe to call on every open.</summary>
+    /// <summary>Checks the file is an iscWBS project, then configures it and creates any missing tables. Safe to call on every open.</summary>
     public async Task InitializeAsync()
     {
-        // PRAGMA journal_mode returns a result row, so ExecuteScalarAsync must be used;
-        // ExecuteAsync routes through ExecuteNonQuery which throws on SQLITE_ROW.
-        await Connection.ExecuteScalarAsync<string>("PRAGMA journal_mode=WAL");
-        await Connection.ExecuteAsync("PRAGMA foreign_keys=ON");
+        await Connection.OpenAsync();
 
-        int appId = await Connection.ExecuteScalarAsync<int>("PRAGMA application_id");
+        // Everything that could reject the file runs before the first write to it.
+        int appId = await Connection.ScalarAsync<int>("PRAGMA application_id");
         if (appId == 0)
         {
-            // Unstamped is either a brand-new file or a project from before stamping existed; anything
-            // else is someone's unrelated database and must be rejected before we write to it.
-            int tableCount = await Connection.ExecuteScalarAsync<int>(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table'");
-            if (tableCount > 0 && !await TableExistsAsync("Projects"))
+            // Unstamped is a brand-new file; any existing table means it is someone else's database.
+            if (await Connection.ScalarAsync<int>("SELECT COUNT(*) FROM sqlite_master WHERE type='table'") > 0)
                 throw NotAProjectFile();
             await Connection.ExecuteAsync($"PRAGMA application_id = {_appId}");
         }
@@ -75,112 +70,24 @@ public sealed class WbsDatabase
         }
 
         // Catches file truncation and page corruption.
-        string check = await Connection.ExecuteScalarAsync<string>("PRAGMA quick_check") ?? string.Empty;
+        string check = await Connection.ScalarAsync<string>("PRAGMA quick_check") ?? string.Empty;
         if (!string.Equals(check, "ok", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException(
                 $"The project file failed integrity check and may be corrupted: {check}").WithMessageKey("Error_IntegrityCheckFailed", check);
 
-        // On files from before v2 the column must exist before CREATE TABLE IF NOT EXISTS turns into a no-op.
-        if (await TableExistsAsync("WbsNodes"))
-            await MigrateTo2Async();
+        await Connection.ExecuteAsync("PRAGMA journal_mode=WAL");
+        await Connection.ExecuteAsync("PRAGMA foreign_keys=ON");
 
         foreach (string statement in _schema)
             await Connection.ExecuteAsync(statement);
 
-        SchemaVersion? row = await Connection.Table<SchemaVersion>().FirstOrDefaultAsync();
-        if (row is null)
-        {
-            // Either a brand-new file or a pre-versioned legacy file.
-            if (await HasColumnAsync("Milestones", "LinkedNodeIds"))
-                await Connection.InTransactionAsync(MigrateTo1Async);
-
-            await Connection.InsertAsync(new SchemaVersion { Version = _currentSchemaVersion });
-        }
-        else if (row.Version < _currentSchemaVersion)
-        {
-            // v2 already ran above, ahead of table creation.
-            if (row.Version < 1)
-                await Connection.InTransactionAsync(MigrateTo1Async);
-            row.Version = _currentSchemaVersion;
-            row.AppliedAt = DateTime.UtcNow.ToString("o");
-            await Connection.UpdateAsync(row);
-        }
+        if (await Connection.ScalarAsync<int>("SELECT COUNT(*) FROM SchemaVersion") == 0)
+            await Connection.ExecuteAsync(
+                "INSERT INTO SchemaVersion (Version, AppliedAt) VALUES ($1, $2)", _currentSchemaVersion, DateTime.UtcNow.ToString("o"));
 
         static Exception NotAProjectFile() => new InvalidOperationException(
             "This file was not created by iscWBS and cannot be opened as a project.").WithMessageKey("Error_NotAProjectFile");
     }
 
-    public async Task CloseAsync() => await Connection.CloseAsync();
-
-    private async Task<bool> TableExistsAsync(string table)
-        => await Connection.ExecuteScalarAsync<int>(
-            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?", table) > 0;
-
-    private async Task<bool> HasColumnAsync(string table, string column)
-    {
-        try
-        {
-            // PRAGMA table-valued functions can't bind the table name, so it is embedded as a literal.
-            int count = await Connection.ExecuteScalarAsync<int>(
-                $"SELECT COUNT(*) FROM pragma_table_info('{table}') WHERE name = ?",
-                column);
-            return count > 0;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Migration v0 → v1: moves linked-node data from the legacy <c>LinkedNodeIds</c>
-    /// JSON column on <c>Milestones</c> into the new <c>MilestoneNodeLinks</c> junction table.
-    /// </summary>
-    private async Task MigrateTo1Async()
-    {
-        List<LegacyMilestoneLinkRow> rows = await Connection.QueryAsync<LegacyMilestoneLinkRow>(
-            "SELECT Id, LinkedNodeIds FROM Milestones " +
-            "WHERE LinkedNodeIds IS NOT NULL AND LinkedNodeIds != '[]'");
-
-        foreach (LegacyMilestoneLinkRow legacy in rows)
-        {
-            if (string.IsNullOrWhiteSpace(legacy.LinkedNodeIds))
-                continue;
-
-            try
-            {
-                List<string>? ids = JsonSerializer.Deserialize(legacy.LinkedNodeIds, AppJsonContext.Default.ListString);
-                if (ids is null) continue;
-
-                foreach (string idStr in ids)
-                {
-                    if (Guid.TryParse(idStr, out Guid nodeId))
-                    {
-                        await Connection.InsertAsync(new MilestoneNodeLink
-                        {
-                            MilestoneId = legacy.Id,
-                            NodeId = nodeId
-                        });
-                    }
-                }
-            }
-            catch { }
-        }
-    }
-
-    /// <summary>Migration v1 → v2: adds <c>WbsNodes.IsDeliverable</c>, defaulting to false. Idempotent.</summary>
-    private async Task MigrateTo2Async()
-    {
-        if (!await HasColumnAsync("WbsNodes", "IsDeliverable"))
-            await Connection.ExecuteAsync(
-                "ALTER TABLE WbsNodes ADD COLUMN IsDeliverable INTEGER NOT NULL DEFAULT 0");
-    }
-
-    // Used only by MigrateTo1Async; not part of the live schema.
-    private class LegacyMilestoneLinkRow
-    {
-        public Guid Id { get; set; }
-        public string LinkedNodeIds { get; set; } = string.Empty;
-    }
+    public async Task CloseAsync() => await Connection.DisposeAsync();
 }
-

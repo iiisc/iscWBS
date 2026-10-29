@@ -100,26 +100,24 @@ public class DependencyRulesTests
     public void ProjectSummary_CountsEachCategory()
     {
         DateTime today = DateTime.Today;
-        WbsNode resolvedBlocked = Node(NotStarted);
-        WbsNode legacyBlocked = Node(Blocked);
-        WbsNode bothBlocked = Node(Blocked);
+        WbsNode blocked = Node(NotStarted);
+        WbsNode blockedInProgress = Node(InProgress);
         WbsNode[] nodes =
         [
             Node(Complete),
             new() { Status = Complete, DueDate = today.AddDays(-3) },
             Node(InProgress),
-            resolvedBlocked,
-            legacyBlocked,
-            bothBlocked,
+            blocked,
+            blockedInProgress,
             new() { Status = InProgress, DueDate = today.AddDays(-1) },
             new() { Status = NotStarted, DueDate = today.AddDays(5) },
         ];
 
-        ProjectSummary summary = ProjectSummary.Compute(nodes, new HashSet<Guid> { resolvedBlocked.Id, bothBlocked.Id });
+        ProjectSummary summary = ProjectSummary.Compute(nodes, new HashSet<Guid> { blocked.Id, blockedInProgress.Id });
 
         Assert.Equal(new ProjectSummary(
-            TotalNodes: 8, CompleteCount: 2, InProgressCount: 2, BlockedCount: 3,
-            OverdueCount: 1, AtRiskCount: 1, PercentComplete: 25.0), summary);
+            TotalNodes: 7, CompleteCount: 2, InProgressCount: 3, BlockedCount: 2,
+            OverdueCount: 1, AtRiskCount: 1, PercentComplete: 28.6), summary);
     }
 
     [Fact]

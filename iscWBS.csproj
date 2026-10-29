@@ -45,13 +45,12 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
-    <PackageReference Include="QuestPDF" Version="2026.2.4" />
-    <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
-    <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
-    <!-- bundle_green has no newer release; pin the native SQLite build past GHSA-2m69-gcr7-jv3q. -->
-    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.14" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2957" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.6.4" />
+    <PackageReference Include="QuestPDF" Version="2026.9.1" />
+    <!-- A current native SQLite (the version number is SQLite's own); Microsoft.Data.Sqlite alone resolves an older 2.1.x build. -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
   </ItemGroup>
   <!-- Release publishes as Native AOT, which trims as well: a native exe with no JIT or IL to ship. -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -59,9 +58,5 @@
     <SatelliteResourceLanguages>en;en-US;sv;sv-SE</SatelliteResourceLanguages>
     <DebugType>none</DebugType>
   </PropertyGroup>
-  <ItemGroup Condition="'$(Configuration)' == 'Release'">
-    <!-- sqlite-net maps rows onto the model classes by reflection; keep the app's own types whole. -->
-    <TrimmerRootAssembly Include="iscWBS" />
-  </ItemGroup>
 
 </Project>

@@ -10,7 +10,7 @@ Views (XAML + thin code-behind)  →  ViewModels (CommunityToolkit.Mvvm)  →  C
 
 - `Core/Models/` — data rows plus pure, static domain logic: `DependencyConstraints`, `WbsHierarchy`, `DueDateRules`, `ProjectSummary.Compute`, `GanttLayoutBuilder`. Anything that doesn't touch the database or UI goes here, so it can be unit-tested.
 - `Core/Services/` — concrete classes, no interfaces. `ProjectStateService` owns the open file; `WbsService` and `MilestoneService` query it through `ProjectStateService.Connection`, SQL included.
-- `Core/Data/` — `WbsDatabase` (pragmas, schema, migrations).
+- `Core/Data/` — `WbsDatabase` (pragmas, schema, migrations) and `SqliteExtensions`, the query helpers over Microsoft.Data.Sqlite. Map rows by hand and bind values through those helpers: they keep the GUID and date text formats existing files use.
 - `Helpers/` — UI-side helpers: `Strings` (resource lookup), `DisplayText`, `StatusPalette`, `FilePickers`, `Logger`.
 - `AppServices` holds one instance of each service and builds a fresh view model per page; pages call `App.Services.Create…ViewModel()` in their constructor. No DI container.
 - Pages call their view model's `OnNavigatedTo`/`OnNavigatedFrom` from the matching `Page` overrides.
@@ -35,6 +35,6 @@ dotnet test tests/iscWBS.Tests
 dotnet publish iscWBS.csproj -c Release -r win-x64 -p:Platform=x64   # Native AOT; needs the MSVC build tools
 ```
 
-Release-only AOT failures don't show in Debug: run the published exe before shipping a change to bindings, JSON or sqlite-net models.
+Release-only AOT failures don't show in Debug: run the published exe before shipping a change to bindings or JSON.
 
 The test project links the Core sources it needs instead of referencing the WinUI app, so it runs on plain `net10.0`. Keep anything you want tested free of WinUI types.

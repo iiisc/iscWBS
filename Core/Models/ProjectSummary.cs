@@ -18,8 +18,7 @@ public sealed record ProjectSummary(
             total,
             complete,
             nodes.Count(n => n.Status == WbsStatus.InProgress),
-            // Status == Blocked only exists in files from older versions; it can no longer be chosen in the editor.
-            nodes.Count(n => blockedNodeIds.Contains(n.Id) || n.Status == WbsStatus.Blocked),
+            nodes.Count(n => blockedNodeIds.Contains(n.Id)),
             nodes.Count(n => DueDateRules.IsOverdue(n.DueDate, n.Status)),
             nodes.Count(n => DueDateRules.IsAtRisk(n.DueDate, n.Status)),
             total == 0 ? 0 : Math.Round(complete * 100.0 / total, 1));

@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using iscWBS.Core.Exceptions;
 using iscWBS.Core.Models;
 
@@ -10,6 +11,15 @@ internal static class TestData
 
     public static WbsNode Node(WbsStatus status = WbsStatus.NotStarted, WbsNode? parent = null, int sortOrder = 0)
         => new() { Status = status, ParentId = parent?.Id, SortOrder = sortOrder };
+
+    /// <summary>A raw connection for arranging or inspecting a file outside the services.</summary>
+    public static SqliteConnection OpenRaw(string path)
+    {
+        SQLitePCL.Batteries_V2.Init();
+        var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        connection.Open();
+        return connection;
+    }
 
     public static async Task AssertFailsWith(string messageKey, Func<Task> action)
     {

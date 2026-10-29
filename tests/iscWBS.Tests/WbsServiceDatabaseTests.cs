@@ -1,6 +1,7 @@
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
-using SQLite;
+using Microsoft.Data.Sqlite;
+using iscWBS.Core.Data;
 
 using static iscWBS.Tests.TestData;
 
@@ -21,7 +22,7 @@ public sealed class WbsServiceDatabaseTests : IAsyncLifetime
         _milestones = new MilestoneService(_state);
     }
 
-    private SQLiteAsyncConnection Db => _state.Connection;
+    private SqliteConnection Db => _state.Connection;
 
     public async ValueTask InitializeAsync()
     {
@@ -83,8 +84,9 @@ public sealed class WbsServiceDatabaseTests : IAsyncLifetime
             remaining.Select(n => (n.Id, n.Code)));
 
         // Read the raw table: the project-scoped query joins on the successor and would hide orphans.
-        List<NodeDependency> deps = await Db.Table<NodeDependency>().ToListAsync();
-        Assert.Equal([(keptA.Id, keptB.Id)], deps.Select(d => (d.PredecessorId, d.SuccessorId)));
+        var deps = await Db.QueryAsync("SELECT PredecessorId, SuccessorId FROM NodeDependencies",
+            r => (r.GetGuidText(0), r.GetGuidText(1)));
+        Assert.Equal([(keptA.Id, keptB.Id)], deps);
 
         Assert.Equal([keptB.Id], await _milestones.GetLinkedNodeIdsAsync(milestone.Id));
     }

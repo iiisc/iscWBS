@@ -47,9 +47,10 @@ git clone https://github.com/iiisc/iscWBS.git
 cd iscWBS
 dotnet build iscWBS.csproj -c Debug -p:Platform=x64
 dotnet test tests/iscWBS.Tests
+dotnet publish iscWBS.csproj -c Release -r win-x64 -p:Platform=x64
 ```
 
-**Prerequisites:** Visual Studio 2022 or later with the **Windows App SDK** workload, or the [Windows App SDK](https://learn.microsoft.com/windows/apps/windows-app-sdk/downloads) standalone installer.
+**Prerequisites:** the .NET 10 SDK. The Windows App SDK comes from NuGet and is bundled into the app. Publishing compiles to native code (Native AOT), which also needs the MSVC build tools (Visual Studio's "Desktop development with C++" workload).
 
 ---
 
@@ -60,7 +61,7 @@ dotnet test tests/iscWBS.Tests
 | UI framework | WinUI 3 (Windows App SDK) |
 | Language | C# 13 / .NET 10 |
 | Architecture | MVVM — CommunityToolkit.Mvvm |
-| Database | SQLite via sqlite-net-pcl |
+| Database | SQLite via Microsoft.Data.Sqlite |
 | PDF export | QuestPDF |
 
 ---

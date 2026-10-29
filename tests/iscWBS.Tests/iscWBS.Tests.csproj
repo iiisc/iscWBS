@@ -13,7 +13,7 @@
     <Compile Include="..\..\Core\Exceptions\*.cs" LinkBase="Linked\Exceptions" />
     <Compile Include="..\..\Core\Data\*.cs" LinkBase="Linked\Data" />
     <Compile Include="..\..\Core\Models\*.cs" LinkBase="Linked\Models" />
-    <Compile Include="..\..\Core\Services\WbsService.cs;..\..\Core\Services\MilestoneService.cs;..\..\Core\Services\ProjectStateService.cs;..\..\Core\Services\SettingsService.cs" LinkBase="Linked\Services" />
+    <Compile Include="..\..\Core\Services\WbsService.cs;..\..\Core\Services\MilestoneService.cs;..\..\Core\Services\ProjectStateService.cs;..\..\Core\Services\SettingsService.cs;..\..\Core\Services\UpdateService.cs" LinkBase="Linked\Services" />
     <Compile Include="..\..\Helpers\SettingsKeys.cs" LinkBase="Linked\Helpers" />
   </ItemGroup>
 
@@ -22,11 +22,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageReference Include="xunit.v3" Version="4.0.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" />
-    <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
-    <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
-    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.14" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
   </ItemGroup>
 </Project>

@@ -23,31 +23,34 @@ public class DeliverableRowTests
     }
 
     [Fact]
-    public void Progress_CountsWholeSubtree_OrOnlyCountedIdsWhenGiven()
+    public void MatchingIds_LeaveOutDeliverablesWithNothingMatching_ProgressStillCountsWholeSubtree()
     {
-        WbsNode d = Deliverable("1", 0);
-        WbsNode done1 = Node(WbsStatus.Complete, d, 0);
-        WbsNode open = Node(WbsStatus.NotStarted, d, 1);
-        WbsNode done2 = Node(WbsStatus.Complete, d, 2);
-        WbsNode[] nodes = [d, done1, open, done2];
+        WbsNode d1 = Deliverable("1", 0);
+        WbsNode done1 = Node(WbsStatus.Complete, d1, 0);
+        WbsNode open = Node(WbsStatus.NotStarted, d1, 1);
+        WbsNode done2 = Node(WbsStatus.Complete, d1, 2);
+        WbsNode d2 = Deliverable("2", 1);
+        WbsNode other = Node(WbsStatus.NotStarted, d2, 0);
+        WbsNode[] nodes = [d1, done1, open, done2, d2, other];
 
-        Assert.Equal(0.5, DeliverableRow.Build(nodes, NoneBlocked).Single().ProgressFraction);
-        Assert.Equal(1.0, DeliverableRow.Build(nodes, NoneBlocked, new HashSet<Guid> { done1.Id, done2.Id }).Single().ProgressFraction);
-        Assert.Equal(0.0, DeliverableRow.Build(nodes, NoneBlocked, new HashSet<Guid>()).Single().ProgressFraction);
+        Assert.Equal(["1", "2"], DeliverableRow.Build(nodes, NoneBlocked).Select(r => r.Code));
+        DeliverableRow row = DeliverableRow.Build(nodes, NoneBlocked, new HashSet<Guid> { open.Id }).Single();
+        Assert.Equal("1", row.Code);
+        Assert.Equal(0.5, row.ProgressFraction);
     }
 
     [Fact]
-    public void DueDate_IsLatestInFullSubtree_EvenWhenThatNodeIsNotCounted()
+    public void DueDate_IsLatestInFullSubtree_EvenWhenThatNodeDoesNotMatch()
     {
         WbsNode d = Deliverable("1", 0);
         d.DueDate = new DateTime(2026, 3, 1);
-        WbsNode counted = Node(WbsStatus.Complete, d);
-        counted.DueDate = new DateTime(2026, 4, 1);
-        WbsNode uncountedGrandchild = Node(WbsStatus.NotStarted, counted);
-        uncountedGrandchild.DueDate = new DateTime(2026, 6, 1);
+        WbsNode matching = Node(WbsStatus.Complete, d);
+        matching.DueDate = new DateTime(2026, 4, 1);
+        WbsNode otherGrandchild = Node(WbsStatus.NotStarted, matching);
+        otherGrandchild.DueDate = new DateTime(2026, 6, 1);
 
         DeliverableRow row = DeliverableRow.Build(
-            [d, counted, uncountedGrandchild], NoneBlocked, new HashSet<Guid> { counted.Id }).Single();
+            [d, matching, otherGrandchild], NoneBlocked, new HashSet<Guid> { matching.Id }).Single();
 
         Assert.Equal(new DateTime(2026, 6, 1), row.DueDate);
     }

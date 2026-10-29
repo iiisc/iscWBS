@@ -127,8 +127,9 @@ public sealed partial class DashboardViewModel : ObservableObject
 
         if (!string.IsNullOrEmpty(SelectedAssignee) && SelectedAssignee != _allAssignees)
             filtered = filtered.Where(n => n.AssignedTo == SelectedAssignee);
+        // The status shown everywhere else, so a node held up by a dependency counts as Blocked, not Not Started.
         if (SelectedStatus?.Status is { } status)
-            filtered = filtered.Where(n => n.Status == status);
+            filtered = filtered.Where(n => DependencyConstraints.EffectiveStatus(n, _blockedIds) == status);
         if (FilterStartDate.HasValue)
             filtered = filtered.Where(n => n.DueDate.HasValue && n.DueDate.Value.Date >= FilterStartDate.Value.Date);
         if (FilterEndDate.HasValue)
@@ -157,10 +158,15 @@ public sealed partial class DashboardViewModel : ObservableObject
     private void BuildDeliverableRows(List<WbsNode> filteredNodes)
     {
         DeliverableRows.Clear();
-        // Hierarchy and due dates come from all nodes; only progress honours the filter.
-        HashSet<Guid> filteredIds = filteredNodes.Select(n => n.Id).ToHashSet();
-        foreach (DeliverableRow row in DeliverableRow.Build(_allNodes, _blockedIds, filteredIds))
-            DeliverableRows.Add(row);
+        // A deliverable shows when something in it matches the filters. Matching on a task's status alone would list an
+        // in-progress deliverable under Complete, so the deliverable's own status has to match too.
+        HashSet<Guid> matchingIds = filteredNodes.Select(n => n.Id).ToHashSet();
+        WbsStatus? status = SelectedStatus?.Status;
+        foreach (DeliverableRow row in DeliverableRow.Build(_allNodes, _blockedIds, matchingIds))
+        {
+            if (status is null || row.Status == status)
+                DeliverableRows.Add(row);
+        }
     }
 
     private void RebuildMilestones()

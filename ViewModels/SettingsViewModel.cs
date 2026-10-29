@@ -58,7 +58,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool IsNotDownloadingUpdate => !IsDownloadingUpdate;
     public string DownloadProgressText => $"{DownloadProgress}%";
 
-    public IReadOnlyList<LanguageOption> AvailableLanguages { get; } = [
+    public List<LanguageOption> AvailableLanguages { get; } = [
         new("en-US", "English"),
         new("sv-SE", "Svenska")
     ];

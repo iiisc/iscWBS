@@ -19,7 +19,7 @@ public sealed partial class MilestonesViewModel : ObservableObject
 
     // WBS nodes aren't edited on this page, so one load per visit serves every selection.
     [ObservableProperty]
-    public partial IReadOnlyList<WbsNode> AllProjectNodes { get; private set; } = [];
+    public partial List<WbsNode> AllProjectNodes { get; private set; } = [];
 
     [ObservableProperty]
     public partial MilestoneRowViewModel? SelectedMilestone { get; set; }
@@ -75,7 +75,7 @@ public sealed partial class MilestonesViewModel : ObservableObject
         if (_projectStateService.ActiveProject is not { Id: var projectId }) return;
         try
         {
-            AllProjectNodes = await _wbsService.GetAllByProjectAsync(projectId);
+            AllProjectNodes = [.. await _wbsService.GetAllByProjectAsync(projectId)];
         }
         catch (Exception ex)
         {

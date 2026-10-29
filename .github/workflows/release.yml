@@ -5,7 +5,9 @@
 #   • Manual  : Actions → Run workflow  (enter version + optional pre-release flag)
 #   • Automatic: push a tag matching v#.#.#  (e.g. git tag v1.2.0 && git push --tags)
 #
-# Outputs a self-contained folder publish (ZIP) for x64, then publishes a GitHub Release.
+# Outputs a Native AOT folder publish (ZIP) for x64, then publishes a GitHub Release.
+# AOT settings live in iscWBS.csproj; the native link step needs the MSVC build tools, which
+# windows-latest ships with.
 # Users update the app by extracting the ZIP to a folder of their choice; project data
 # lives in the location chosen at project-creation time (default: Documents\iscWBS Projects\)
 # and is never stored alongside the application files.
@@ -95,11 +97,6 @@ jobs:
             -c Release `
             -r win-x64 `
             -p:Platform=x64 `
-            --self-contained `
-            -p:PublishTrimmed=false `
-            -p:SatelliteResourceLanguages=en%3Ben-US%3Bsv%3Bsv-SE `
-            -p:DebugType=None `
-            -p:DebugSymbols=false `
             -p:Version=${{ steps.ver.outputs.VERSION }} `
             "-p:PublishDir=${{ github.workspace }}\bin\Release\publish\"
 

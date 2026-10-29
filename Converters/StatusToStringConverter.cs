@@ -4,7 +4,7 @@ using iscWBS.Helpers;
 
 namespace iscWBS.Converters;
 
-public sealed class StatusToStringConverter : IValueConverter
+public sealed partial class StatusToStringConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
         => value is WbsStatus status ? status.ToDisplayString() : string.Empty;

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Navigation;
 using Windows.Foundation;
@@ -14,7 +13,7 @@ public sealed partial class WbsTreePage : Microsoft.UI.Xaml.Controls.Page
     public WbsTreePage()
     {
         InitializeComponent();
-        ViewModel = App.Services.GetRequiredService<WbsTreeViewModel>();
+        ViewModel = App.Services.CreateWbsTreeViewModel();
         WbsDiagram.NodeSelected    += WbsDiagram_NodeSelected;
         WbsDiagram.NodeRightTapped += WbsDiagram_NodeRightTapped;
     }

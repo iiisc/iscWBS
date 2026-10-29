@@ -20,7 +20,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     private Guid _pendingSelectNodeId;
     private CancellationTokenSource? _pageCts;
 
-    public IReadOnlyList<DependencyTypeOption> DependencyTypeOptions { get; } =
+    public List<DependencyTypeOption> DependencyTypeOptions { get; } =
         Enum.GetValues<DependencyType>()
             .Select(t => new DependencyTypeOption(
                 t,
@@ -120,14 +120,14 @@ public sealed partial class WbsTreeViewModel : ObservableObject
 
     /// <summary>Predecessor rows of <see cref="SelectedNode"/>.</summary>
     [ObservableProperty]
-    public partial IReadOnlyList<DependencyRowViewModel> NodeDependencies { get; private set; } = [];
+    public partial List<DependencyRowViewModel> NodeDependencies { get; private set; } = [];
 
     /// <summary>Every node but <see cref="SelectedNode"/>, for the add-predecessor picker.</summary>
     [ObservableProperty]
-    public partial IReadOnlyList<WbsNode> PredecessorOptions { get; private set; } = [];
+    public partial List<WbsNode> PredecessorOptions { get; private set; } = [];
 
     [ObservableProperty]
-    public partial IReadOnlyList<MilestoneRowViewModel> LinkedMilestones { get; private set; } = [];
+    public partial List<MilestoneRowViewModel> LinkedMilestones { get; private set; } = [];
 
     [ObservableProperty]
     public partial bool IsSaving { get; set; }
@@ -148,7 +148,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     /// <summary>The id of <see cref="SelectedNode"/> for the diagram highlight, or <see cref="Guid.Empty"/> when nothing is selected.</summary>
     public Guid SelectedNodeId => SelectedNode?.Id ?? Guid.Empty;
 
-    public IReadOnlyList<WbsStatus> StatusOptions { get; } =
+    public List<WbsStatus> StatusOptions { get; } =
         Enum.GetValues<WbsStatus>().Except([WbsStatus.Blocked]).ToList();
 
     public WbsTreeViewModel(

@@ -1,4 +1,3 @@
-using SkiaSharp;
 using iscWBS.Core.Models;
 
 namespace iscWBS.Helpers;
@@ -28,11 +27,5 @@ public static class StatusPalette
     {
         (byte r, byte g, byte b) = Rgb(status);
         return $"#{r:X2}{g:X2}{b:X2}";
-    }
-
-    public static SKColor SkColor(WbsStatus status)
-    {
-        (byte r, byte g, byte b) = Rgb(status);
-        return new SKColor(r, g, b);
     }
 }

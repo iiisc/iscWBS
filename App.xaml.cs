@@ -1,16 +1,14 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using QuestPDF.Infrastructure;
 using iscWBS.Core.Services;
 using iscWBS.Helpers;
-using iscWBS.ViewModels;
 using iscWBS.Views;
 
 namespace iscWBS;
 
 public partial class App : Application
 {
-    public static IServiceProvider Services { get; private set; } = null!;
+    public static AppServices Services { get; private set; } = null!;
     public static Window? MainWindow { get; private set; }
 
     private readonly SettingsService _settingsService = new();
@@ -29,13 +27,11 @@ public partial class App : Application
     {
         QuestPDF.Settings.License = LicenseType.Community;
 
-        ServiceCollection services = new();
-        ConfigureServices(services);
-        Services = services.BuildServiceProvider();
+        Services = new AppServices(_settingsService);
 
         UnhandledException += OnUnhandledException;
 
-        NavigationService navService = Services.GetRequiredService<NavigationService>();
+        NavigationService navService = Services.Navigation;
         navService.RegisterPage("WelcomePage", typeof(WelcomePage));
         navService.RegisterPage("DashboardPage", typeof(DashboardPage));
         navService.RegisterPage("WbsTreePage", typeof(WbsTreePage));
@@ -47,29 +43,6 @@ public partial class App : Application
 
         MainWindow = new ShellWindow();
         MainWindow.Activate();
-    }
-
-    private void ConfigureServices(ServiceCollection services)
-    {
-        services.AddSingleton(_settingsService);
-        services.AddSingleton<ProjectStateService>();
-        services.AddSingleton<NavigationService>();
-        services.AddSingleton<DialogService>();
-        services.AddSingleton<WbsService>();
-        services.AddSingleton<MilestoneService>();
-        services.AddSingleton<UpdateService>();
-        services.AddSingleton<ReportExportService>();
-        services.AddSingleton<LocalizationService>();
-
-        services.AddTransient<ShellViewModel>();
-        services.AddTransient<WelcomeViewModel>();
-        services.AddTransient<DashboardViewModel>();
-        services.AddTransient<WbsTreeViewModel>();
-        services.AddTransient<WbsOutlineViewModel>();
-        services.AddTransient<GanttViewModel>();
-        services.AddTransient<ReportsViewModel>();
-        services.AddTransient<SettingsViewModel>();
-        services.AddTransient<MilestonesViewModel>();
     }
 
     private static void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)

@@ -61,7 +61,6 @@ dotnet test tests/iscWBS.Tests
 | Language | C# 13 / .NET 10 |
 | Architecture | MVVM — CommunityToolkit.Mvvm |
 | Database | SQLite via sqlite-net-pcl |
-| Charts | LiveChartsCore (SkiaSharp) |
 | PDF export | QuestPDF |
 
 ---

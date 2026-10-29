@@ -1,5 +1,4 @@
 using System.IO;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Storage.Pickers;
@@ -15,7 +14,7 @@ public sealed partial class NewProjectControl : UserControl
     public string Owner => TxtOwner.Text.Trim();
     public string FilePath => Path.Combine(_folderPath, $"{ProjectName}.iscwbs");
 
-    private string _folderPath = App.Services.GetRequiredService<SettingsService>().GetDefaultProjectFolder();
+    private string _folderPath = App.Services.Settings.GetDefaultProjectFolder();
 
     public NewProjectControl()
     {

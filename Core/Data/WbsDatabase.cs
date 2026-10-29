@@ -149,7 +149,7 @@ public sealed class WbsDatabase
 
             try
             {
-                List<string>? ids = JsonSerializer.Deserialize<List<string>>(legacy.LinkedNodeIds);
+                List<string>? ids = JsonSerializer.Deserialize(legacy.LinkedNodeIds, AppJsonContext.Default.ListString);
                 if (ids is null) continue;
 
                 foreach (string idStr in ids)

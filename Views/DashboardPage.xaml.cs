@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using iscWBS.ViewModels;
@@ -12,7 +11,7 @@ public sealed partial class DashboardPage : Page
     public DashboardPage()
     {
         InitializeComponent();
-        ViewModel = App.Services.GetRequiredService<DashboardViewModel>();
+        ViewModel = App.Services.CreateDashboardViewModel();
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)

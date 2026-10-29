@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using iscWBS.ViewModels;
 
@@ -11,6 +10,6 @@ public sealed partial class ReportsPage : Page
     public ReportsPage()
     {
         InitializeComponent();
-        ViewModel = App.Services.GetRequiredService<ReportsViewModel>();
+        ViewModel = App.Services.CreateReportsViewModel();
     }
 }

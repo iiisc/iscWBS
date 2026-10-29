@@ -13,12 +13,8 @@
     <WinUISDKReferences>false</WinUISDKReferences>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- Re-enable reflection-based JSON for trimmed (Release) builds.
-         SettingsService and WbsDatabase use generic JsonSerializer APIs (Get<T>/Set<T>)
-         whose T is not known at compile time, so source generation cannot cover them.
-         This flag keeps the JSON reflection infrastructure in the trimmed binary and
-         prevents the NotSupportedException thrown when reflection is disabled. -->
-    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <!-- CsWinRT only generates the AOT marshalling code for collections bound to ItemsSource when this is on. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <!-- XAML files are included as Page items by the SDK glob and compiled by XamlPreCompile -->
   <ItemGroup>
@@ -49,8 +45,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="LiveChartsCore.SkiaSharpView.WinUI" Version="2.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
     <PackageReference Include="QuestPDF" Version="2026.2.4" />
@@ -59,16 +53,15 @@
     <!-- bundle_green has no newer release; pin the native SQLite build past GHSA-2m69-gcr7-jv3q. -->
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.14" />
   </ItemGroup>
-  <!-- Publish Properties -->
-  <PropertyGroup>
-    <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <!-- WinUI 3 / Windows App SDK are not trim-safe; trimming silently removes
-         XAML reflection infrastructure and causes silent startup crashes. -->
-    <PublishTrimmed>false</PublishTrimmed>
-    <!-- Bundle native DLLs (Windows App SDK bootstrapper, SkiaSharp, etc.) into
-         the single-file EXE so the release artifact is truly a single executable. -->
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  <!-- Release publishes as Native AOT, which trims as well: a native exe with no JIT or IL to ship. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <PublishAot>true</PublishAot>
+    <SatelliteResourceLanguages>en;en-US;sv;sv-SE</SatelliteResourceLanguages>
+    <DebugType>none</DebugType>
   </PropertyGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- sqlite-net maps rows onto the model classes by reflection; keep the app's own types whole. -->
+    <TrimmerRootAssembly Include="iscWBS" />
+  </ItemGroup>
 
 </Project>

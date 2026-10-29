@@ -8,7 +8,7 @@ using iscWBS.Core.Models;
 namespace iscWBS.Core.Services;
 
 /// <summary>Checks GitHub Releases for a newer version and installs its ZIP over this one.</summary>
-public sealed class UpdateService
+public sealed partial class UpdateService
 {
     private const string _gitHubApiUrl = "https://api.github.com/repos/iiisc/iscWBS/releases/latest";
 
@@ -35,7 +35,7 @@ public sealed class UpdateService
     /// <summary>The latest release, or <see langword="null"/> when this version is already current.</summary>
     public async Task<UpdateInfo?> CheckForUpdateAsync()
     {
-        GitHubRelease? release = await _httpClient.GetFromJsonAsync<GitHubRelease>(_gitHubApiUrl);
+        GitHubRelease? release = await _httpClient.GetFromJsonAsync(_gitHubApiUrl, GitHubJsonContext.Default.GitHubRelease);
         if (release is null
             || !Version.TryParse(release.TagName.TrimStart('v'), out Version? latestVersion)
             || !Version.TryParse(CurrentVersion, out Version? currentVersion)
@@ -134,6 +134,9 @@ public sealed class UpdateService
             .OrderByDescending(a => a.Name.Contains("x64", StringComparison.OrdinalIgnoreCase))
             .FirstOrDefault()
             ?.BrowserDownloadUrl;
+
+    [JsonSerializable(typeof(GitHubRelease))]
+    private sealed partial class GitHubJsonContext : JsonSerializerContext;
 
     private sealed class GitHubRelease
     {

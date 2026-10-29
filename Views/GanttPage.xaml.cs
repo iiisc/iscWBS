@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -36,7 +35,7 @@ public sealed partial class GanttPage : Page
 
     public GanttPage()
     {
-        ViewModel = App.Services.GetRequiredService<GanttViewModel>();
+        ViewModel = App.Services.CreateGanttViewModel();
         InitializeComponent();
         ViewModel.PropertyChanged += (_, e) =>
         {

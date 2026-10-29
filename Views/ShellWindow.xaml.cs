@@ -1,5 +1,4 @@
 using System.IO;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using iscWBS.Core.Services;
@@ -21,11 +20,11 @@ public sealed partial class ShellWindow : Window
     {
         InitializeComponent();
 
-        ViewModel = App.Services.GetRequiredService<ShellViewModel>();
-        _navigationService = App.Services.GetRequiredService<NavigationService>();
-        _dialogService = App.Services.GetRequiredService<DialogService>();
-        _settingsService = App.Services.GetRequiredService<SettingsService>();
-        _projectStateService = App.Services.GetRequiredService<ProjectStateService>();
+        ViewModel = App.Services.CreateShellViewModel();
+        _navigationService = App.Services.Navigation;
+        _dialogService = App.Services.Dialog;
+        _settingsService = App.Services.Settings;
+        _projectStateService = App.Services.ProjectState;
 
         AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;

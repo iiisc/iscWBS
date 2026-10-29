@@ -5,7 +5,7 @@ using iscWBS.Helpers;
 
 namespace iscWBS.Converters;
 
-public sealed class StatusToBrushConverter : IValueConverter
+public sealed partial class StatusToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
         => new SolidColorBrush(StatusPalette.Color(value is WbsStatus status ? status : WbsStatus.NotStarted));

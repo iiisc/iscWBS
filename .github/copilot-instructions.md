@@ -12,7 +12,7 @@ Views (XAML + thin code-behind)  →  ViewModels (CommunityToolkit.Mvvm)  →  C
 - `Core/Services/` — concrete classes, no interfaces. `ProjectStateService` owns the open file; `WbsService` and `MilestoneService` query it through `ProjectStateService.Connection`, SQL included.
 - `Core/Data/` — `WbsDatabase` (pragmas, schema, migrations).
 - `Helpers/` — UI-side helpers: `Strings` (resource lookup), `DisplayText`, `StatusPalette`, `FilePickers`, `Logger`.
-- Services are DI singletons, view models transient; pages resolve their view model with `App.Services.GetRequiredService<T>()` in the constructor.
+- `AppServices` holds one instance of each service and builds a fresh view model per page; pages call `App.Services.Create…ViewModel()` in their constructor. No DI container.
 - Pages call their view model's `OnNavigatedTo`/`OnNavigatedFrom` from the matching `Page` overrides.
 
 ## Rules that matter
@@ -22,6 +22,7 @@ Views (XAML + thin code-behind)  →  ViewModels (CommunityToolkit.Mvvm)  →  C
 - **All user-visible text is localized.** XAML uses `x:Uid`; code uses `Strings.Get`/`Strings.Format`. Add every key to both `Strings/en-US/Resources.resw` and `Strings/sv-SE/Resources.resw`. Exceptions keep English messages for the log and carry a resource key via `WithMessageKey`.
 - **Errors:** view models wrap service calls in `try/catch` and show `DialogService.ShowErrorAsync(..., DisplayText.ErrorMessage(ex))`. Expected failures are `WbsException`.
 - **Colours:** WBS status colours come from `StatusPalette`; everything else from theme resources.
+- Release builds are Native AOT. Anything bound to `ItemsSource` must be typed `List<T>` or `ObservableCollection<T>` (CsWinRT cannot marshal `IReadOnlyList<T>` or collection-expression arrays), and JSON goes through `AppJsonContext`.
 - `x:Bind` only, `Mode=TwoWay` only on editable inputs. Interactive controls get `AutomationProperties.Name`.
 - `async Task`, never `async void` outside event handlers; no `.Result`/`.Wait()`.
 - Only use packages already referenced in `iscWBS.csproj`.
@@ -31,6 +32,9 @@ Views (XAML + thin code-behind)  →  ViewModels (CommunityToolkit.Mvvm)  →  C
 ```
 dotnet build iscWBS.csproj -c Debug -p:Platform=x64
 dotnet test tests/iscWBS.Tests
+dotnet publish iscWBS.csproj -c Release -r win-x64 -p:Platform=x64   # Native AOT; needs the MSVC build tools
 ```
+
+Release-only AOT failures don't show in Debug: run the published exe before shipping a change to bindings, JSON or sqlite-net models.
 
 The test project links the Core sources it needs instead of referencing the WinUI app, so it runs on plain `net10.0`. Keep anything you want tested free of WinUI types.

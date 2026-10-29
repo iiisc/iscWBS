@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -14,7 +13,7 @@ public sealed partial class MilestonesPage : Page
     public MilestonesPage()
     {
         InitializeComponent();
-        ViewModel = App.Services.GetRequiredService<MilestonesViewModel>();
+        ViewModel = App.Services.CreateMilestonesViewModel();
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)

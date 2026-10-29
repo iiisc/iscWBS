@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using iscWBS.Helpers;
@@ -14,7 +13,7 @@ public sealed partial class WelcomePage : Page
     public WelcomePage()
     {
         InitializeComponent();
-        ViewModel = App.Services.GetRequiredService<WelcomeViewModel>();
+        ViewModel = App.Services.CreateWelcomeViewModel();
     }
 
     private async void BtnNewProject_Click(object sender, RoutedEventArgs e)

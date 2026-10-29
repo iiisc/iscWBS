@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
+using iscWBS.Core.Data;
 using iscWBS.Helpers;
 
 namespace iscWBS.Core.Services;
@@ -9,8 +11,6 @@ public sealed class SettingsService
     /// <summary><c>%LOCALAPPDATA%\ISC\iscWBS</c>; the log folder lives here too.</summary>
     public static readonly string AppDataFolder = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ISC", "iscWBS");
-
-    private static readonly JsonSerializerOptions _writeOptions = new() { WriteIndented = true };
 
     private readonly string _settingsPath;
     private readonly Dictionary<string, JsonElement> _values;
@@ -23,9 +23,10 @@ public sealed class SettingsService
 
     public T? Get<T>(string key)
     {
+        JsonTypeInfo<T> typeInfo = TypeInfo<T>();
         if (_values.TryGetValue(key, out JsonElement element))
         {
-            try { return element.Deserialize<T>(); }
+            try { return element.Deserialize(typeInfo); }
             catch { return default; }
         }
         return default;
@@ -33,7 +34,7 @@ public sealed class SettingsService
 
     public void Set<T>(string key, T value)
     {
-        JsonElement element = JsonSerializer.SerializeToElement(value);
+        JsonElement element = JsonSerializer.SerializeToElement(value, TypeInfo<T>());
         if (_values.TryGetValue(key, out JsonElement existing) && existing.GetRawText() == element.GetRawText())
             return;
         _values[key] = element;
@@ -64,6 +65,10 @@ public sealed class SettingsService
         => Get<string>(SettingsKeys.LastProjectFolder)
            ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "iscWBS Projects");
 
+    private static JsonTypeInfo<T> TypeInfo<T>()
+        => (JsonTypeInfo<T>?)AppJsonContext.Default.GetTypeInfo(typeof(T))
+           ?? throw new NotSupportedException($"{typeof(T)} must be added to {nameof(AppJsonContext)}.");
+
     private Dictionary<string, JsonElement> Load()
     {
         try
@@ -71,7 +76,7 @@ public sealed class SettingsService
             if (File.Exists(_settingsPath))
             {
                 string json = File.ReadAllText(_settingsPath);
-                return JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json) ?? new();
+                return JsonSerializer.Deserialize(json, AppJsonContext.Default.DictionaryStringJsonElement) ?? new();
             }
         }
         catch { }
@@ -84,7 +89,7 @@ public sealed class SettingsService
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_settingsPath)!);
             File.WriteAllText(_settingsPath,
-                JsonSerializer.Serialize(_values, _writeOptions));
+                JsonSerializer.Serialize(_values, AppJsonContext.Default.DictionaryStringJsonElement));
         }
         catch { }
     }

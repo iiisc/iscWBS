@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -15,7 +14,7 @@ public sealed partial class SettingsPage : Page
     public SettingsPage()
     {
         InitializeComponent();
-        ViewModel = App.Services.GetRequiredService<SettingsViewModel>();
+        ViewModel = App.Services.CreateSettingsViewModel();
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)

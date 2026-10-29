@@ -1,9 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
 using iscWBS.Helpers;
@@ -40,7 +37,7 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     private readonly string _allAssignees;
 
-    public IReadOnlyList<WbsStatus?> StatusOptions { get; } =
+    public List<WbsStatus?> StatusOptions { get; } =
         new WbsStatus?[] { null }
             .Concat(Enum.GetValues<WbsStatus>().Cast<WbsStatus?>())
             .ToList();
@@ -52,7 +49,7 @@ public sealed partial class DashboardViewModel : ObservableObject
     public string OverallPercentText => $"{Summary.PercentComplete:F1}%";
 
     [ObservableProperty]
-    public partial ISeries[] StatusSeries { get; set; } = Array.Empty<ISeries>();
+    public partial List<StatusSlice> StatusSlices { get; set; } = [];
 
     public ObservableCollection<DeliverableRow> DeliverableRows { get; } = new();
 
@@ -137,28 +134,14 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     private void BuildStatusChart(ProjectSummary summary)
     {
-        if (summary.TotalNodes == 0)
-        {
-            StatusSeries = Array.Empty<ISeries>();
-            return;
-        }
-
         int notStarted = Math.Max(0, summary.TotalNodes - summary.CompleteCount - summary.InProgressCount - summary.BlockedCount);
-        StatusSeries =
+        StatusSlices = summary.TotalNodes == 0 ? [] :
         [
-            Slice(WbsStatus.NotStarted, notStarted),
-            Slice(WbsStatus.InProgress, summary.InProgressCount),
-            Slice(WbsStatus.Complete,   summary.CompleteCount),
-            Slice(WbsStatus.Blocked,    summary.BlockedCount),
+            new(WbsStatus.NotStarted, notStarted),
+            new(WbsStatus.InProgress, summary.InProgressCount),
+            new(WbsStatus.Complete,   summary.CompleteCount),
+            new(WbsStatus.Blocked,    summary.BlockedCount),
         ];
-
-        static ISeries Slice(WbsStatus status, int count) => new PieSeries<int>
-        {
-            Name = status.ToDisplayString(),
-            Values = [count],
-            Fill = new SolidColorPaint(StatusPalette.SkColor(status)),
-            InnerRadius = 60
-        };
     }
 
     private void BuildDeliverableRows(List<WbsNode> filteredNodes)
@@ -201,4 +184,12 @@ public sealed partial class DashboardViewModel : ObservableObject
         }
         await Launcher.LaunchFileAsync(file);
     }
+}
+
+// Get-only properties: the XAML type metadata generator emits setters for init-only ones, which don't compile.
+public sealed class StatusSlice(WbsStatus status, int count)
+{
+    public WbsStatus Status { get; } = status;
+    public int Count { get; } = count;
+    public string Label => $"{Status.ToDisplayString()} ({Count})";
 }

@@ -1,88 +1,41 @@
 # iscWBS
 
-A Windows desktop application for project management centred on a Work Breakdown Structure editor.
+[![CI](https://github.com/iiisc/iscWBS/actions/workflows/ci.yml/badge.svg)](https://github.com/iiisc/iscWBS/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/iiisc/iscWBS)](https://github.com/iiisc/iscWBS/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-Built with **WinUI 3** and **.NET 10**, distributed as a self-contained ZIP — no installation required. Project data lives in a portable `.iscwbs` file (SQLite) that you place wherever you like. The UI is available in English and Swedish, in light and dark mode.
+Work Breakdown Structure planning for Windows. Break a project down, track status, hours and dependencies, and report progress.
 
 ![The WBS Tree with a node's details open](docs/screenshot.png)
 
----
-
 ## Features
 
-- **WBS Tree** — hierarchical diagram editor with auto-generated codes, status tracking, hour estimates and dependencies (FS/SS/FF/SF)
-- **WBS Outline** — flat list of all nodes; select a row to open it in the tree
-- **Gantt Chart** (beta) — timeline view with dependency arrows and milestone markers
-- **Milestones** — milestone tracker linked to WBS nodes
-- **Dashboard** (beta) — progress KPIs, status chart and deliverables, filterable by assignee, status and date
-- **Reports** (beta) — export a project status report to PDF
+- **WBS Tree and Outline**: diagram and list views with automatic codes, status, hour estimates and dependencies
+- **Gantt**, **Dashboard** and **PDF reports** (beta): timeline, KPIs and status reports
+- **Milestones** linked to WBS nodes
+- English and Swedish, light and dark mode, keyboard shortcuts
 
-### Keyboard shortcuts
+## Install
 
-| Keys | Where | Action |
-|---|---|---|
-| Ctrl+Shift+N | WBS Tree | Add a root node |
-| Ctrl+N | WBS Tree | Add a child to the selected node |
-| Delete | WBS Tree, diagram focused | Delete the selected node |
-| Arrow keys | WBS Tree, diagram focused | Move to the parent, first child or a sibling |
-| Esc | WBS Tree | Close the detail panel |
-| Ctrl+E | Reports | Generate the PDF report |
+Download `iscWBS-v<version>-win-x64.zip` from [Releases](https://github.com/iiisc/iscWBS/releases/latest), extract it to a folder you can write to (not `Program Files`) and run `iscWBS\iscWBS.exe`.
 
----
+- Windows 10 1809 or later, x64. No installer, admin rights or .NET runtime needed.
+- Updates install from **Settings → Software Updates**, after the download is checked against the SHA-256 checksum GitHub publishes.
+- The executable isn't code-signed yet, so SmartScreen may warn on first launch.
 
-## Requirements
+## Data and privacy
 
-| | |
-|---|---|
-| OS | Windows 10 version 1809 (build 17763) or later |
-| Architecture | x64 |
-| Runtime | Self-contained — no separate .NET install needed |
+Each project is a single `.iscwbs` file (SQLite) saved wherever you choose. Settings and logs stay in `%LOCALAPPDATA%\ISC\iscWBS`, and logs are deleted after 30 days. The app connects to the internet only when you check for updates, and then only to GitHub.
 
----
-
-## Getting Started
-
-1. Download the latest `iscWBS-v<version>-win-x64.zip` from [Releases](../../releases).
-2. Extract it somewhere you can write to; it unpacks into an `iscWBS` folder. The in-app updater replaces files in that folder, so avoid `Program Files`.
-3. Run `iscWBS\iscWBS.exe` — no installer, no admin rights required. Later versions install from **Settings → Software Updates**, after checking the download against the SHA-256 GitHub publishes for it.
-4. Choose **New Project** to create a `.iscwbs` project file, or **Open Project** to load an existing one.
-
-Settings and logs are stored under `%LOCALAPPDATA%\ISC\iscWBS\`.
-
-> Windows SmartScreen may warn on first launch while the executable is unsigned. Click **More info → Run anyway** to proceed.
-
----
-
-## Building from Source
+## Development
 
 ```powershell
-git clone https://github.com/iiisc/iscWBS.git
-cd iscWBS
 dotnet build iscWBS.csproj
 dotnet test tests/iscWBS.Tests
-dotnet publish iscWBS.csproj -c Release -o publish/iscWBS
 ```
 
-**Prerequisites:** the .NET 10 SDK. The Windows App SDK comes from NuGet and is bundled into the app. Publishing compiles to native code (Native AOT), which also needs the MSVC build tools (Visual Studio's "Desktop development with C++" workload).
-
-## Releasing
-
-Run **Actions → Release → Run workflow**. Leave the version empty for the next patch, or enter one such as `1.2.0`. The workflow runs the CI checks, publishes, tags the commit and creates a **draft** release whose notes list the commits since the last release. Rewrite the notes for users and publish the draft; the app only offers published releases.
-
----
-
-## Tech Stack
-
-| | |
-|---|---|
-| UI framework | WinUI 3 (Windows App SDK) |
-| Language | C# 14 / .NET 10, compiled with Native AOT |
-| Architecture | MVVM — CommunityToolkit.Mvvm |
-| Database | SQLite via Microsoft.Data.Sqlite |
-| PDF export | QuestPDF |
-
----
+Requires the .NET 10 SDK. Publishing compiles with Native AOT, which also needs Visual Studio's C++ build tools. To release, run **Actions → Release**; it creates a draft release to review and publish.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Report security issues privately as described in [SECURITY.md](SECURITY.md).

@@ -12,7 +12,8 @@
                 <ResourceDictionary Source="Themes/Generic.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:StatusToStringConverter x:Key="StatusToStringConverter" />
+            <converters:StatusToBrushConverter x:Key="StatusToBrushConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

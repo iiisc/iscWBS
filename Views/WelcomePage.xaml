@@ -45,7 +45,7 @@
                 <StackPanel
                     Spacing="8"
                     Margin="0,16,0,0"
-                    Visibility="{x:Bind ViewModel.HasRecentProjects, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    Visibility="{x:Bind ViewModel.HasRecentProjects, Mode=OneWay}">
 
                     <TextBlock
                         x:Uid="WelcomePage_RecentProjectsLabel"
@@ -54,6 +54,8 @@
 
                     <ListView
                         x:Name="RecentProjectsList"
+                        x:Uid="WelcomePage_RecentProjectsList"
+                        AutomationProperties.Name="Recent projects"
                         ItemsSource="{x:Bind ViewModel.RecentProjects, Mode=OneWay}"
                         IsItemClickEnabled="True"
                         SelectionMode="None"

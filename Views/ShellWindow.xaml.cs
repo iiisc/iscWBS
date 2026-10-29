@@ -1,18 +1,18 @@
 using System.IO;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using iscWBS.Core.Services;
+using iscWBS.Helpers;
 using iscWBS.ViewModels;
 
 namespace iscWBS.Views;
 
 public sealed partial class ShellWindow : Window
 {
-    private readonly INavigationService _navigationService;
-    private readonly IDialogService _dialogService;
-    private readonly ISettingsService _settingsService;
-    private readonly IProjectStateService _projectStateService;
+    private readonly NavigationService _navigationService;
+    private readonly DialogService _dialogService;
+    private readonly SettingsService _settingsService;
+    private readonly ProjectStateService _projectStateService;
 
     public ShellViewModel ViewModel { get; }
 
@@ -20,11 +20,11 @@ public sealed partial class ShellWindow : Window
     {
         InitializeComponent();
 
-        ViewModel = App.Services.GetRequiredService<ShellViewModel>();
-        _navigationService = App.Services.GetRequiredService<INavigationService>();
-        _dialogService = App.Services.GetRequiredService<IDialogService>();
-        _settingsService = App.Services.GetRequiredService<ISettingsService>();
-        _projectStateService = App.Services.GetRequiredService<IProjectStateService>();
+        ViewModel = App.Services.CreateShellViewModel();
+        _navigationService = App.Services.Navigation;
+        _dialogService = App.Services.Dialog;
+        _settingsService = App.Services.Settings;
+        _projectStateService = App.Services.ProjectState;
 
         AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
@@ -39,6 +39,8 @@ public sealed partial class ShellWindow : Window
         AppWindow.Title = ViewModel.WindowTitle;
 
         RootGrid.Loaded += OnLoaded;
+        // Text in the WBS detail panel is saved on blur, which closing the window skips.
+        Closed += (_, _) => (ContentFrame.Content as WbsTreePage)?.ViewModel.SaveIfDirty();
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -59,8 +61,7 @@ public sealed partial class ShellWindow : Window
             catch (Exception ex)
             {
                 _settingsService.RemoveRecentProject(mostRecent);
-                Helpers.Logger.Write(ex);
-                await _dialogService.ShowErrorAsync("Cannot Open Project", ex.Message);
+                await _dialogService.ShowErrorAsync("ErrorTitle_OpenProject", ex);
             }
         }
         else if (mostRecent is not null)
@@ -82,10 +83,9 @@ public sealed partial class ShellWindow : Window
         }
         catch (Exception ex)
         {
-            Helpers.Logger.Write(ex);
             if (System.Diagnostics.Debugger.IsAttached)
                 System.Diagnostics.Debugger.Break();
-            _ = _dialogService.ShowErrorAsync("Navigation Error", ex.Message);
+            _ = _dialogService.ShowErrorAsync("ErrorTitle_Navigation", ex);
         }
     }
 }

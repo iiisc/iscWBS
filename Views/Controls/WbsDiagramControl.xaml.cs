@@ -6,13 +6,14 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.Foundation;
+using Windows.System;
 using iscWBS.Core.Models;
+using iscWBS.Helpers;
 
 namespace iscWBS.Views.Controls;
 
 public sealed partial class WbsDiagramControl : UserControl
 {
-    // ── Layout constants ────────────────────────────────────────────────────
     private const double _cardWidth    = 180;
     private const double _cardHeight   = 82;
     private const double _headerHeight = 22;
@@ -21,14 +22,12 @@ public sealed partial class WbsDiagramControl : UserControl
     private const double _vGap         = 52;   // gap between parent row and child row
     private const double _pad          = 24;   // canvas edge padding
 
-    // ── Dependency properties ────────────────────────────────────────────────
-
     public static readonly DependencyProperty AllNodesProperty =
         DependencyProperty.Register(
             nameof(AllNodes),
             typeof(IReadOnlyList<WbsNode>),
             typeof(WbsDiagramControl),
-            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).RebuildDiagram()));
+            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).ScheduleRebuild()));
 
     public static readonly DependencyProperty SelectedNodeIdProperty =
         DependencyProperty.Register(
@@ -42,35 +41,35 @@ public sealed partial class WbsDiagramControl : UserControl
             nameof(BlockedNodeIds),
             typeof(object),
             typeof(WbsDiagramControl),
-            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).RebuildDiagram()));
+            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).ScheduleRebuild()));
 
     public static readonly DependencyProperty CompletionBlockedNodeIdsProperty =
         DependencyProperty.Register(
             nameof(CompletionBlockedNodeIds),
             typeof(object),
             typeof(WbsDiagramControl),
-            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).RebuildDiagram()));
+            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).ScheduleRebuild()));
 
     public static readonly DependencyProperty ViolatedCompleteNodeIdsProperty =
         DependencyProperty.Register(
             nameof(ViolatedCompleteNodeIds),
             typeof(object),
             typeof(WbsDiagramControl),
-            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).RebuildDiagram()));
+            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).ScheduleRebuild()));
 
     public static readonly DependencyProperty ViolatedInProgressNodeIdsProperty =
         DependencyProperty.Register(
             nameof(ViolatedInProgressNodeIds),
             typeof(object),
             typeof(WbsDiagramControl),
-            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).RebuildDiagram()));
+            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).ScheduleRebuild()));
 
     public static readonly DependencyProperty DependenciesProperty =
         DependencyProperty.Register(
             nameof(Dependencies),
             typeof(object),
             typeof(WbsDiagramControl),
-            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).RebuildDiagram()));
+            new PropertyMetadata(null, static (d, _) => ((WbsDiagramControl)d).ScheduleRebuild()));
 
     public IReadOnlyList<WbsNode>? AllNodes
     {
@@ -84,33 +83,33 @@ public sealed partial class WbsDiagramControl : UserControl
         set => SetValue(SelectedNodeIdProperty, value);
     }
 
-    public object? BlockedNodeIds
+    public IReadOnlySet<Guid>? BlockedNodeIds
     {
-        get => GetValue(BlockedNodeIdsProperty);
+        get => (IReadOnlySet<Guid>?)GetValue(BlockedNodeIdsProperty);
         set => SetValue(BlockedNodeIdsProperty, value);
     }
 
-    public object? CompletionBlockedNodeIds
+    public IReadOnlySet<Guid>? CompletionBlockedNodeIds
     {
-        get => GetValue(CompletionBlockedNodeIdsProperty);
+        get => (IReadOnlySet<Guid>?)GetValue(CompletionBlockedNodeIdsProperty);
         set => SetValue(CompletionBlockedNodeIdsProperty, value);
     }
 
-    public object? ViolatedCompleteNodeIds
+    public IReadOnlySet<Guid>? ViolatedCompleteNodeIds
     {
-        get => GetValue(ViolatedCompleteNodeIdsProperty);
+        get => (IReadOnlySet<Guid>?)GetValue(ViolatedCompleteNodeIdsProperty);
         set => SetValue(ViolatedCompleteNodeIdsProperty, value);
     }
 
-    public object? ViolatedInProgressNodeIds
+    public IReadOnlySet<Guid>? ViolatedInProgressNodeIds
     {
-        get => GetValue(ViolatedInProgressNodeIdsProperty);
+        get => (IReadOnlySet<Guid>?)GetValue(ViolatedInProgressNodeIdsProperty);
         set => SetValue(ViolatedInProgressNodeIdsProperty, value);
     }
 
-    public object? Dependencies
+    public IReadOnlyList<NodeDependency>? Dependencies
     {
-        get => GetValue(DependenciesProperty);
+        get => (IReadOnlyList<NodeDependency>?)GetValue(DependenciesProperty);
         set => SetValue(DependenciesProperty, value);
     }
 
@@ -119,8 +118,6 @@ public sealed partial class WbsDiagramControl : UserControl
 
     /// <summary>Fired when the user right-taps a node card; position is relative to this control.</summary>
     public event EventHandler<(WbsNode Node, Point Position)>? NodeRightTapped;
-
-    // ── Internal layout model ────────────────────────────────────────────────
 
     private sealed class DiagramNode
     {
@@ -137,31 +134,42 @@ public sealed partial class WbsDiagramControl : UserControl
         public double[] RightContour { get; set; } = [];
     }
 
-    private readonly List<DiagramNode>        _roots          = new();
+    private static readonly Windows.UI.Color _badgeRed    = Windows.UI.Color.FromArgb(0xFF, 0xC5, 0x0F, 0x1F);
+    private static readonly Windows.UI.Color _badgeOrange = Windows.UI.Color.FromArgb(0xFF, 0xCA, 0x50, 0x10);
+
     private readonly Dictionary<Guid, Border> _cards          = new();
     private readonly List<UIElement>          _arrowElements  = new();
     private readonly HashSet<Guid>            _collapsedNodes = new();
+    private readonly Brush                    _white          = new SolidColorBrush(Colors.White);
+    private readonly FontFamily               _iconFont       = new("Segoe MDL2 Assets");
+
+    // Proxy brushes from the XAML resources; their colours follow the theme.
+    private readonly Dictionary<WbsStatus, Brush> _statusBrushes;
+    private readonly Brush _secondaryBrush;
+    private readonly Brush _selectionBrush;
+    private readonly Brush _connectorBrush;
+    private readonly Brush _cardBackground;
+    private Guid _highlightedId;
+    private WbsHierarchy? _hierarchy;
 
     public WbsDiagramControl()
     {
         InitializeComponent();
+        _statusBrushes  = Enum.GetValues<WbsStatus>().ToDictionary(s => s, s => (Brush)Resources[$"DiagramStatus{s}"]);
+        _secondaryBrush = (Brush)Resources["DiagramSecondaryText"];
+        _selectionBrush = (Brush)Resources["DiagramSelection"];
+        _connectorBrush = (Brush)Resources["DiagramConnector"];
+        _cardBackground = (Brush)Resources["DiagramCardBackground"];
+        // Cards are built in code with brushes resolved for the current theme, so rebuild on a theme switch.
+        ActualThemeChanged += (_, _) => RebuildDiagram();
     }
-
-    // ── Collapse / expand ────────────────────────────────────────────────────
 
     /// <summary>Collapses all non-leaf nodes so only root nodes remain visible.</summary>
     public void CollapseAll()
     {
         _collapsedNodes.Clear();
         if (AllNodes is not null)
-        {
-            HashSet<Guid> parents = AllNodes
-                .Where(n => n.ParentId.HasValue)
-                .Select(n => n.ParentId!.Value)
-                .ToHashSet();
-            foreach (Guid id in parents)
-                _collapsedNodes.Add(id);
-        }
+            _collapsedNodes.UnionWith(AllNodes.Where(n => n.ParentId.HasValue).Select(n => n.ParentId!.Value));
         RebuildDiagram();
     }
 
@@ -180,18 +188,24 @@ public sealed partial class WbsDiagramControl : UserControl
     }
 
     private static int CountDescendants(DiagramNode node)
-    {
-        int count = 0;
-        foreach (DiagramNode child in node.Children)
-            count += 1 + CountDescendants(child);
-        return count;
-    }
+        => node.Children.Sum(child => 1 + CountDescendants(child));
 
-    // ── Rebuild ──────────────────────────────────────────────────────────────
+    private bool _rebuildQueued;
+
+    // The view model updates several inputs back-to-back; rebuild once after the batch, not per property.
+    private void ScheduleRebuild()
+    {
+        if (_rebuildQueued) return;
+        _rebuildQueued = true;
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            _rebuildQueued = false;
+            RebuildDiagram();
+        });
+    }
 
     private void RebuildDiagram()
     {
-        _roots.Clear();
         _cards.Clear();
         _arrowElements.Clear();
         DiagramCanvas.Children.Clear();
@@ -200,64 +214,38 @@ public sealed partial class WbsDiagramControl : UserControl
 
         if (AllNodes is null || AllNodes.Count == 0) return;
 
-        // Build the hierarchy from the flat list using ParentId links
-        var diagramById = new Dictionary<Guid, DiagramNode>(AllNodes.Count);
-        foreach (WbsNode n in AllNodes)
-            diagramById[n.Id] = new DiagramNode { Data = n };
-
-        foreach (WbsNode n in AllNodes)
+        var hierarchy = _hierarchy = new WbsHierarchy(AllNodes);
+        DiagramNode Build(WbsNode n)
         {
-            DiagramNode dn = diagramById[n.Id];
-            if (n.ParentId.HasValue && diagramById.TryGetValue(n.ParentId.Value, out DiagramNode? parent))
-                parent.Children.Add(dn);
-            else
-                _roots.Add(dn);
+            var node = new DiagramNode { Data = n };
+            node.Children.AddRange(hierarchy.ChildrenOf(n.Id).Select(Build));
+            return node;
         }
+        List<DiagramNode> roots = AllNodes.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder).Select(Build).ToList();
 
-        if (_roots.Count == 0) return;
-
-        // Preserve tree ordering
-        SortChildren(_roots);
-
-        // Phase 1 (bottom-up): compute the width each subtree needs
-        foreach (DiagramNode root in _roots)
+        foreach (DiagramNode root in roots)
             MeasureSubtree(root);
 
-        // Phase 2 (top-down): assign absolute (X, Y) positions
         double curX = _pad;
-        foreach (DiagramNode root in _roots)
+        foreach (DiagramNode root in roots)
         {
             PlaceSubtree(root, curX, _pad);
             curX += root.SubtreeWidth + _hGap;
         }
 
-        // Size the canvas to fit all cards
         double maxX = 0, maxY = 0;
-        AccumulateBounds(_roots, ref maxX, ref maxY);
+        AccumulateBounds(roots, ref maxX, ref maxY);
         DiagramCanvas.Width  = maxX + _pad;
         DiagramCanvas.Height = maxY + _pad;
 
-        // Draw connectors first so they appear under the cards
-        Brush connectorBrush = ResolveBrush("DiagramConnector", Colors.Gray);
-        foreach (DiagramNode root in _roots)
-            DrawConnectors(root, connectorBrush);
+        // Connectors first so they sit under the cards.
+        foreach (DiagramNode root in roots)
+            DrawConnectors(root);
 
-        // Draw node cards on top
-        foreach (DiagramNode root in _roots)
+        foreach (DiagramNode root in roots)
             DrawCard(root);
 
         UpdateSelectionHighlight();
-    }
-
-    // ── Layout helpers ───────────────────────────────────────────────────────
-
-    private static void SortChildren(IEnumerable<DiagramNode> nodes)
-    {
-        foreach (DiagramNode n in nodes)
-        {
-            n.Children.Sort(static (a, b) => a.Data.SortOrder.CompareTo(b.Data.SortOrder));
-            SortChildren(n.Children);
-        }
     }
 
     private void MeasureSubtree(DiagramNode node)
@@ -365,9 +353,7 @@ public sealed partial class WbsDiagramControl : UserControl
         }
     }
 
-    // ── Rendering ────────────────────────────────────────────────────────────
-
-    private void DrawConnectors(DiagramNode node, Brush stroke)
+    private void DrawConnectors(DiagramNode node)
     {
         if (_collapsedNodes.Contains(node.Data.Id)) return;
 
@@ -379,10 +365,9 @@ public sealed partial class WbsDiagramControl : UserControl
             double childCx = child.X + _cardWidth / 2.0;
             double elbowY  = parentBottom + _vGap / 2.0;
 
-            // Elbow connector: parent-bottom → elbow → child-top
             var wire = new Polyline
             {
-                Stroke          = stroke,
+                Stroke          = _connectorBrush,
                 StrokeThickness = 1.5,
                 StrokeLineJoin  = PenLineJoin.Round,
             };
@@ -392,15 +377,14 @@ public sealed partial class WbsDiagramControl : UserControl
             wire.Points.Add(new Point(childCx,  child.Y));
             DiagramCanvas.Children.Add(wire);
 
-            DrawConnectors(child, stroke);
+            DrawConnectors(child);
         }
     }
 
     private void DrawCard(DiagramNode node)
     {
-        // Always use the stored status for colour — blocking state is shown via a badge overlay.
-        Brush statusBrush    = GetStatusBrush(node.Data.Status);
-        Brush secondaryBrush = ResolveBrush("TextFillColorSecondaryBrush", Colors.Gray);
+        // Always the stored status colour; blocking state is shown by the badge instead.
+        Brush statusBrush = _statusBrushes[node.Data.Status];
 
         var card = new Border
         {
@@ -409,11 +393,12 @@ public sealed partial class WbsDiagramControl : UserControl
             CornerRadius     = new CornerRadius(6),
             BorderThickness  = new Thickness(1.5),
             BorderBrush      = statusBrush,
-            Background       = ResolveBrush("DiagramCardBackground", Colors.White),
+            Background       = _cardBackground,
             Tag              = node.Data,
-            Child            = BuildCardContent(node.Data, statusBrush, secondaryBrush),
+            Child            = BuildCardContent(node.Data, statusBrush),
         };
         AutomationProperties.SetName(card, $"{node.Data.Code} — {node.Data.Title}");
+        card.PointerPressed += Card_PointerPressed;
         card.Tapped      += Card_Tapped;
         card.RightTapped += Card_RightTapped;
 
@@ -422,26 +407,17 @@ public sealed partial class WbsDiagramControl : UserControl
         DiagramCanvas.Children.Add(card);
         _cards[node.Data.Id] = card;
 
-        // Badge in the top-right corner signals blocking state without replacing the status colour.
-        bool isStartBlocked      = BlockedNodeIds           is IReadOnlySet<Guid> bids  && bids.Contains(node.Data.Id);
-        bool isCompletionBlocked = CompletionBlockedNodeIds is IReadOnlySet<Guid> cbids && cbids.Contains(node.Data.Id);
-
-        if (isStartBlocked)
-            AddBlockingBadge(node.X, node.Y, "\uE83D",
-                Windows.UI.Color.FromArgb(0xFF, 0xC5, 0x0F, 0x1F),
-                "Start blocked — predecessor constraints not met");
-        else if (isCompletionBlocked)
-            AddBlockingBadge(node.X, node.Y, "\uE7BA",
-                Windows.UI.Color.FromArgb(0xFF, 0xCA, 0x50, 0x10),
-                "Completion blocked — predecessor constraints not met");
-        else if (ViolatedCompleteNodeIds is IReadOnlySet<Guid> vids && vids.Contains(node.Data.Id))
-            AddBlockingBadge(node.X, node.Y, "\uE7BA",
-                Windows.UI.Color.FromArgb(0xFF, 0xCA, 0x50, 0x10),
-                "Constraint violated — this node is Complete but a predecessor no longer satisfies its dependency");
-        else if (ViolatedInProgressNodeIds is IReadOnlySet<Guid> vipids && vipids.Contains(node.Data.Id))
-            AddBlockingBadge(node.X, node.Y, "\uE7BA",
-                Windows.UI.Color.FromArgb(0xFF, 0xC5, 0x0F, 0x1F),
-                "Start constraint violated — this node is In Progress but a predecessor no longer satisfies its start dependency");
+        Guid id = node.Data.Id;
+        (string Glyph, Windows.UI.Color Color, string TipKey)? blocking = id switch
+        {
+            _ when BlockedNodeIds?.Contains(id) == true            => ("\uE83D", _badgeRed,    "Diagram_StartBlocked"),
+            _ when CompletionBlockedNodeIds?.Contains(id) == true  => ("\uE7BA", _badgeOrange, "Diagram_CompletionBlocked"),
+            _ when ViolatedCompleteNodeIds?.Contains(id) == true   => ("\uE7BA", _badgeOrange, "Diagram_CompleteViolated"),
+            _ when ViolatedInProgressNodeIds?.Contains(id) == true => ("\uE7BA", _badgeRed,    "Diagram_InProgressViolated"),
+            _ => null,
+        };
+        if (blocking is { } b)
+            AddBlockingBadge(node.X, node.Y, b.Glyph, b.Color, Strings.Get(b.TipKey));
 
         bool isCollapsed = _collapsedNodes.Contains(node.Data.Id);
         bool hasChildren = node.Children.Count > 0;
@@ -459,14 +435,14 @@ public sealed partial class WbsDiagramControl : UserControl
                 Content         = new TextBlock
                 {
                     Text                = isCollapsed ? "\uE76C" : "\uE70D",
-                    FontFamily          = new FontFamily("Segoe MDL2 Assets"),
+                    FontFamily          = _iconFont,
                     FontSize            = 9,
-                    Foreground          = new SolidColorBrush(Colors.White),
+                    Foreground          = _white,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment   = VerticalAlignment.Center,
                 },
             };
-            AutomationProperties.SetName(chevron, isCollapsed ? "Expand children" : "Collapse children");
+            AutomationProperties.SetName(chevron, Strings.Get(isCollapsed ? "Diagram_ExpandChildren" : "Diagram_CollapseChildren"));
             Guid capturedId = node.Data.Id;
             chevron.Click += (_, _) => ToggleCollapse(capturedId);
             Canvas.SetLeft(chevron, node.X + _cardWidth - btnSize - 4);
@@ -488,11 +464,11 @@ public sealed partial class WbsDiagramControl : UserControl
                 {
                     Text                = $"+{hidden}",
                     FontSize            = 10,
-                    Foreground          = secondaryBrush,
+                    Foreground          = _secondaryBrush,
                     HorizontalAlignment = HorizontalAlignment.Center,
                 },
             };
-            ToolTipService.SetToolTip(badge, $"{hidden} node{(hidden == 1 ? string.Empty : "s")} hidden");
+            ToolTipService.SetToolTip(badge, hidden == 1 ? Strings.Get("Diagram_OneNodeHidden") : Strings.Format("Diagram_NodesHidden", hidden));
             Canvas.SetLeft(badge, node.X);
             Canvas.SetTop(badge,  node.Y + _cardHeight + 8);
             DiagramCanvas.Children.Add(badge);
@@ -516,9 +492,9 @@ public sealed partial class WbsDiagramControl : UserControl
             Child        = new TextBlock
             {
                 Text                = icon,
-                FontFamily          = new FontFamily("Segoe MDL2 Assets"),
+                FontFamily          = _iconFont,
                 FontSize            = 9,
-                Foreground          = new SolidColorBrush(Colors.White),
+                Foreground          = _white,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment   = VerticalAlignment.Center,
             },
@@ -529,14 +505,13 @@ public sealed partial class WbsDiagramControl : UserControl
         DiagramCanvas.Children.Add(badge);
     }
 
-    private static UIElement BuildCardContent(WbsNode node, Brush headerBrush, Brush secondaryForeground)
+    private UIElement BuildCardContent(WbsNode node, Brush headerBrush)
     {
         var grid = new Grid();
         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(_headerHeight) });
         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(_footerHeight) });
 
-        // ── Header: coloured strip with the WBS code ──────────────────────
         var header = new Border
         {
             Background   = headerBrush,
@@ -548,14 +523,13 @@ public sealed partial class WbsDiagramControl : UserControl
             Text              = node.Code,
             FontWeight        = Microsoft.UI.Text.FontWeights.SemiBold,
             FontSize          = 11,
-            Foreground        = new SolidColorBrush(Colors.White),
+            Foreground        = _white,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming      = TextTrimming.CharacterEllipsis,
         };
         Grid.SetRow(header, 0);
         grid.Children.Add(header);
 
-        // ── Body: node title ──────────────────────────────────────────────
         var body = new Border { Padding = new Thickness(8, 3, 8, 2) };
         body.Child = new TextBlock
         {
@@ -569,7 +543,6 @@ public sealed partial class WbsDiagramControl : UserControl
         Grid.SetRow(body, 1);
         grid.Children.Add(body);
 
-        // ── Footer: assignee and/or due date ─────────────────────────────
         bool hasAssignee = !string.IsNullOrWhiteSpace(node.AssignedTo);
         bool hasDue      = node.DueDate.HasValue;
         if (hasAssignee || hasDue)
@@ -585,7 +558,7 @@ public sealed partial class WbsDiagramControl : UserControl
             {
                 Text              = metaText,
                 FontSize          = 10,
-                Foreground        = secondaryForeground,
+                Foreground        = _secondaryBrush,
                 TextTrimming      = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center,
             };
@@ -596,8 +569,6 @@ public sealed partial class WbsDiagramControl : UserControl
         return grid;
     }
 
-    // ── Selection ────────────────────────────────────────────────────────────
-
     private void ClearArrows()
     {
         foreach (UIElement el in _arrowElements)
@@ -606,20 +577,17 @@ public sealed partial class WbsDiagramControl : UserControl
     }
 
     /// <summary>
-    /// Draws dependency arrows for the currently selected node only.
-    /// Only one node’s relationships are shown at a time to avoid the routing
-    /// chaos that results from drawing all project dependencies simultaneously
-    /// across an org-chart layout.
+    /// Draws the selected node's dependency arrows only; drawing every dependency at once
+    /// across an org-chart layout turns into unreadable routing.
     /// </summary>
     private void DrawDependencyArrows()
     {
         ClearArrows();
 
-        if (Dependencies is not IReadOnlyList<NodeDependency> deps || deps.Count == 0) return;
+        if (Dependencies is not { Count: > 0 } deps) return;
         if (SelectedNodeId == Guid.Empty) return;
 
-        Brush startConstraintBrush  = ResolveBrush("DiagramConnector", Colors.Gray);
-        var   finishConstraintBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(0xA0, 0xCA, 0x50, 0x10));
+        var finishConstraintBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(0xA0, 0xCA, 0x50, 0x10));
 
         foreach (NodeDependency dep in deps)
         {
@@ -630,84 +598,40 @@ public sealed partial class WbsDiagramControl : UserControl
                 !_cards.TryGetValue(dep.SuccessorId,   out Border? succCard))
                 continue;
 
-            double predLeft    = Canvas.GetLeft(predCard);
-            double predTop     = Canvas.GetTop(predCard);
-            double predCenterX = predLeft + _cardWidth  / 2.0;
-            double predCenterY = predTop  + _cardHeight / 2.0;
+            double predLeft = Canvas.GetLeft(predCard);
+            double succLeft = Canvas.GetLeft(succCard);
+            double fromY    = Canvas.GetTop(predCard) + _cardHeight / 2.0;
+            double toY      = Canvas.GetTop(succCard) + _cardHeight / 2.0;
+            double dx       = succLeft - predLeft;
 
-            double succLeft    = Canvas.GetLeft(succCard);
-            double succTop     = Canvas.GetTop(succCard);
-            double succCenterX = succLeft + _cardWidth  / 2.0;
-            double succCenterY = succTop  + _cardHeight / 2.0;
-
-            // Vector between the two card centres in the 2-D canvas space.
-            double dx = succCenterX - predCenterX;
-            double dy = succCenterY - predCenterY;
-
-            // Always route dependency arrows through left / right card edges.
-            // Top / bottom edges are reserved exclusively for the parent-child
-            // structural connectors drawn by DrawConnectors, so using them here
-            // would cause the two kinds of relationship to visually merge.
-            double fromX, fromY, toX, toY;
-            double cp1X, cp1Y, cp2X, cp2Y;
-
-            bool sameColumn = Math.Abs(dx) < _cardWidth * 0.5;
-
-            if (sameColumn)
+            // Route through the left/right card edges only: top and bottom belong to the
+            // parent-child connectors, and sharing them would visually merge the two relationships.
+            double fromX, toX, cp1X, cp2X;
+            if (Math.Abs(dx) < _cardWidth * 0.5)
             {
-                // Nodes share the same horizontal band.  Loop through the right
-                // margin so the curve never crosses the parent-child tree lines.
+                // Same column: loop through the right margin so the curve never crosses the tree lines.
                 fromX = predLeft + _cardWidth;
-                fromY = predCenterY;
-                toX   = succLeft  + _cardWidth;
-                toY   = succCenterY;
-
-                double loopX = Math.Max(predLeft, succLeft) + _cardWidth + 80.0;
-                cp1X = loopX;  cp1Y = fromY;
-                cp2X = loopX;  cp2Y = toY;
-            }
-            else if (dx > 0)
-            {
-                // Successor is to the right → exit right, enter left.
-                fromX = predLeft + _cardWidth;
-                fromY = predCenterY;
-                toX   = succLeft;
-                toY   = succCenterY;
-
-                double off = Math.Max(dx * 0.4, 50.0);
-                cp1X = fromX + off;  cp1Y = fromY;
-                cp2X = toX   - off;  cp2Y = toY;
+                toX   = succLeft + _cardWidth;
+                cp1X  = cp2X = Math.Max(predLeft, succLeft) + _cardWidth + 80.0;
             }
             else
             {
-                // Successor is to the left → exit left, enter right.
-                fromX = predLeft;
-                fromY = predCenterY;
-                toX   = succLeft  + _cardWidth;
-                toY   = succCenterY;
-
-                double off = Math.Max(-dx * 0.4, 50.0);
-                cp1X = fromX - off;  cp1Y = fromY;
-                cp2X = toX   + off;  cp2Y = toY;
+                double dir = Math.Sign(dx);
+                fromX = dir > 0 ? predLeft + _cardWidth : predLeft;
+                toX   = dir > 0 ? succLeft : succLeft + _cardWidth;
+                double off = Math.Max(Math.Abs(dx) * 0.4, 50.0);
+                cp1X = fromX + dir * off;
+                cp2X = toX   - dir * off;
             }
 
             bool isFinishConstraint = DependencyConstraints.IsFinishConstraint(dep.Type);
-            string typeLabel = dep.Type switch
-            {
-                DependencyType.FinishToStart  => "Finish → Start",
-                DependencyType.StartToStart   => "Start → Start",
-                DependencyType.FinishToFinish => "Finish → Finish",
-                DependencyType.StartToFinish  => "Start → Finish",
-                _                             => dep.Type.ToString(),
-            };
-
-            Brush arrowBrush = isFinishConstraint ? finishConstraintBrush : startConstraintBrush;
+            Brush arrowBrush = isFinishConstraint ? finishConstraintBrush : _connectorBrush;
 
             var figure = new PathFigure { StartPoint = new Point(fromX, fromY), IsClosed = false };
             figure.Segments.Add(new BezierSegment
             {
-                Point1 = new Point(cp1X, cp1Y),
-                Point2 = new Point(cp2X, cp2Y),
+                Point1 = new Point(cp1X, fromY),
+                Point2 = new Point(cp2X, toY),
                 Point3 = new Point(toX,  toY),
             });
             var geometry = new PathGeometry();
@@ -721,7 +645,7 @@ public sealed partial class WbsDiagramControl : UserControl
                 Fill            = new SolidColorBrush(Windows.UI.Color.FromArgb(0, 0, 0, 0)),
                 StrokeDashArray = isFinishConstraint ? new DoubleCollection { 4, 2 } : null,
             };
-            ToolTipService.SetToolTip(curve, typeLabel);
+            ToolTipService.SetToolTip(curve, DisplayText.GetLabel(dep.Type));
             DiagramCanvas.Children.Add(curve);
             _arrowElements.Add(curve);
 
@@ -737,18 +661,23 @@ public sealed partial class WbsDiagramControl : UserControl
 
     private void UpdateSelectionHighlight()
     {
-        foreach ((Guid id, Border card) in _cards)
-        {
-            WbsNode node        = (WbsNode)card.Tag!;
-            bool    isSelected  = SelectedNodeId != Guid.Empty && id == SelectedNodeId;
-            card.BorderThickness = new Thickness(isSelected ? 2.5 : 1.5);
-            card.BorderBrush     = isSelected
-                ? ResolveBrush("DiagramSelection", Colors.Blue)
-                : GetStatusBrush(node.Status);
-        }
-
+        SetHighlight(_highlightedId, false);
+        SetHighlight(SelectedNodeId, true);
+        _highlightedId = SelectedNodeId;
         DrawDependencyArrows();
     }
+
+    private void SetHighlight(Guid id, bool selected)
+    {
+        if (!_cards.TryGetValue(id, out Border? card)) return;
+        card.BorderThickness = new Thickness(selected ? 2.5 : 1.5);
+        card.BorderBrush     = selected ? _selectionBrush : _statusBrushes[((WbsNode)card.Tag).Status];
+    }
+
+    // Taking focus on press, before Tapped selects, makes a focused detail-panel text box commit its
+    // edit (on LostFocus) to the node it belongs to.
+    private void Card_PointerPressed(object sender, PointerRoutedEventArgs e)
+        => DiagramScroller.Focus(FocusState.Pointer);
 
     private void Card_Tapped(object sender, TappedRoutedEventArgs e)
     {
@@ -762,32 +691,38 @@ public sealed partial class WbsDiagramControl : UserControl
             NodeRightTapped?.Invoke(this, (node, e.GetPosition(this)));
     }
 
-    // ── Resource helpers ─────────────────────────────────────────────────────
-
-    private Brush GetStatusBrush(WbsStatus status)
+    /// <summary>Arrow keys move the selection: Up to the parent, Down to the first visible child, Left/Right between siblings.</summary>
+    private void DiagramScroller_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        string key = status switch
+        if (_hierarchy is null || AllNodes is null) return;
+
+        WbsNode? current = AllNodes.FirstOrDefault(n => n.Id == SelectedNodeId);
+        WbsNode? target;
+        if (current is null)
         {
-            WbsStatus.InProgress => "WbsStatusInProgressBrush",
-            WbsStatus.Complete   => "WbsStatusCompleteBrush",
-            WbsStatus.Blocked    => "WbsStatusBlockedBrush",
-            _                    => "WbsStatusNotStartedBrush",
-        };
-        return ResolveBrush(key, Colors.Gray);
-    }
+            target = e.Key is VirtualKey.Up or VirtualKey.Down or VirtualKey.Left or VirtualKey.Right
+                ? _hierarchy.DepthFirst().Select(entry => entry.Node).FirstOrDefault()
+                : null;
+        }
+        else
+        {
+            IReadOnlyList<WbsNode> siblings = current.ParentId is { } parentId
+                ? _hierarchy.ChildrenOf(parentId)
+                : AllNodes.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder).ToList();
+            int index = siblings.Select(n => n.Id).ToList().IndexOf(current.Id);
+            target = e.Key switch
+            {
+                VirtualKey.Up    => AllNodes.FirstOrDefault(n => n.Id == current.ParentId),
+                VirtualKey.Down  => _collapsedNodes.Contains(current.Id) ? null : _hierarchy.ChildrenOf(current.Id).FirstOrDefault(),
+                VirtualKey.Left  => index > 0 ? siblings[index - 1] : null,
+                VirtualKey.Right => index < siblings.Count - 1 ? siblings[index + 1] : null,
+                _ => null
+            };
+        }
 
-    private Brush ResolveBrush(string key, Windows.UI.Color fallback)
-    {
-        if (Resources.ContainsKey(key))
-            return (Brush)Resources[key];
-        if (Application.Current.Resources.ContainsKey(key))
-            return (Brush)Application.Current.Resources[key];
-        // ContainsKey does not search ThemeDictionaries in WinUI 3 — look in the active theme directly
-        string themeKey = ActualTheme == ElementTheme.Dark ? "Dark" : "Light";
-        if (Application.Current.Resources.ThemeDictionaries.TryGetValue(themeKey, out object? themeObj)
-            && themeObj is ResourceDictionary themeDict
-            && themeDict.ContainsKey(key))
-            return (Brush)themeDict[key];
-        return new SolidColorBrush(fallback);
+        if (target is null || !_cards.TryGetValue(target.Id, out Border? card)) return;
+        e.Handled = true;
+        card.StartBringIntoView();
+        NodeSelected?.Invoke(this, target);
     }
 }

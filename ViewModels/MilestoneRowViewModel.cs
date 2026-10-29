@@ -1,24 +1,22 @@
 using iscWBS.Core.Models;
+using iscWBS.Helpers;
 
 namespace iscWBS.ViewModels;
 
-/// <summary>Display data for a single milestone row.</summary>
 public sealed class MilestoneRowViewModel
 {
     public Milestone Milestone { get; init; } = null!;
-    public string DueDateLabel { get; init; } = string.Empty;
+    public string DueDateLabel => Milestone.DueDate.ToString("d MMM yyyy");
     public int LinkedNodeCount { get; init; }
 
-    public bool IsOverdue => !Milestone.IsComplete &&
-        DateTime.SpecifyKind(Milestone.DueDate, DateTimeKind.Utc) < DateTime.UtcNow;
+    public bool IsOverdue => !Milestone.IsComplete && Milestone.DueDate.Date < DateTime.Today;
 
-    public bool IsUpcoming => !Milestone.IsComplete &&
-        DateTime.SpecifyKind(Milestone.DueDate, DateTimeKind.Utc) >= DateTime.UtcNow;
+    public bool IsUpcoming => !Milestone.IsComplete && !IsOverdue;
 
     public string LinkedNodeCountLabel => LinkedNodeCount switch
     {
-        0 => "No nodes",
-        1 => "1 node",
-        _ => $"{LinkedNodeCount} nodes"
+        0 => Strings.Get("Milestones_NoNodes"),
+        1 => Strings.Get("Milestones_OneNode"),
+        _ => Strings.Format("Milestones_NodeCount", LinkedNodeCount)
     };
 }

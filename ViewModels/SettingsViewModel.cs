@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using System.IO;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -12,56 +12,46 @@ namespace iscWBS.ViewModels;
 
 public sealed partial class SettingsViewModel : ObservableObject
 {
-    private readonly ISettingsService _settingsService;
-    private readonly IUpdateService _updateService;
-    private readonly IDialogService _dialogService;
-    private readonly IProjectStateService _projectStateService;
-    private readonly INavigationService _navigationService;
-    private readonly ILocalizationService _localizationService;
+    private readonly SettingsService _settingsService;
+    private readonly UpdateService _updateService;
+    private readonly DialogService _dialogService;
+    private readonly ProjectStateService _projectStateService;
+    private readonly NavigationService _navigationService;
+    private readonly LocalizationService _localizationService;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ActiveProjectName))]
-    [NotifyPropertyChangedFor(nameof(HasNoActiveProject))]
-    private bool _hasActiveProject;
+    public string CurrentVersion { get; }
 
-    [ObservableProperty]
-    private string _currentVersion = string.Empty;
+    public ObservableCollection<string> RecentProjects { get; } = new();
 
-    [ObservableProperty]
-    public partial ObservableCollection<string> RecentProjects { get; set; } = new();
-
+    public bool HasActiveProject => _projectStateService.HasActiveProject;
     public bool HasNoActiveProject => !HasActiveProject;
     public bool HasRecentProjects => RecentProjects.Count > 0;
 
     public string ActiveProjectName =>
         _projectStateService.ActiveProject?.Name ?? string.Empty;
 
-    public string DefaultProjectFolder =>
-        _settingsService.Get<string>(SettingsKeys.LastProjectFolder)
-        ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "iscWBS Projects");
-
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasStatusMessage))]
-    private string _updateStatusMessage = string.Empty;
+    public partial string UpdateStatusMessage { get; set; } = string.Empty;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasErrorMessage))]
-    private string _updateErrorMessage = string.Empty;
+    public partial string UpdateErrorMessage { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private bool _isCheckingForUpdate;
+    public partial bool IsCheckingForUpdate { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNotDownloadingUpdate))]
-    private bool _isDownloadingUpdate;
+    public partial bool IsDownloadingUpdate { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsUpdateAvailable))]
-    private UpdateInfo? _availableUpdate;
+    public partial UpdateInfo? AvailableUpdate { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DownloadProgressText))]
-    private int _downloadProgress;
+    public partial int DownloadProgress { get; set; }
 
     public bool IsUpdateAvailable => AvailableUpdate is not null;
     public bool HasStatusMessage => !string.IsNullOrEmpty(UpdateStatusMessage);
@@ -69,24 +59,24 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool IsNotDownloadingUpdate => !IsDownloadingUpdate;
     public string DownloadProgressText => $"{DownloadProgress}%";
 
-    public IReadOnlyList<LanguageOption> AvailableLanguages { get; } = [
+    public List<LanguageOption> AvailableLanguages { get; } = [
         new("en-US", "English"),
         new("sv-SE", "Svenska")
     ];
 
     [ObservableProperty]
-    private LanguageOption? _selectedLanguage;
+    public partial LanguageOption? SelectedLanguage { get; set; }
 
     [ObservableProperty]
-    private bool _restartRequired;
+    public partial bool RestartRequired { get; set; }
 
     public SettingsViewModel(
-        ISettingsService settingsService,
-        IUpdateService updateService,
-        IDialogService dialogService,
-        IProjectStateService projectStateService,
-        INavigationService navigationService,
-        ILocalizationService localizationService)
+        SettingsService settingsService,
+        UpdateService updateService,
+        DialogService dialogService,
+        ProjectStateService projectStateService,
+        NavigationService navigationService,
+        LocalizationService localizationService)
     {
         _settingsService = settingsService;
         _updateService = updateService;
@@ -94,19 +84,22 @@ public sealed partial class SettingsViewModel : ObservableObject
         _projectStateService = projectStateService;
         _navigationService = navigationService;
         _localizationService = localizationService;
-        _currentVersion = _updateService.CurrentVersion;
-        _hasActiveProject = _projectStateService.HasActiveProject;
-        _selectedLanguage = AvailableLanguages.FirstOrDefault(l => l.Code == localizationService.CurrentLanguage)
+        CurrentVersion = _updateService.CurrentVersion;
+        SelectedLanguage = AvailableLanguages.FirstOrDefault(l => l.Code == localizationService.CurrentLanguage)
             ?? AvailableLanguages[0];
 
-        _projectStateService.ActiveProjectChanged += OnActiveProjectChanged;
         RecentProjects.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasRecentProjects));
         LoadRecentProjects();
     }
 
+    // The project-state service is a singleton; unsubscribing on leave keeps it from holding every visited page alive.
+    public void OnNavigatedTo() => _projectStateService.ActiveProjectChanged += OnActiveProjectChanged;
+    public void OnNavigatedFrom() => _projectStateService.ActiveProjectChanged -= OnActiveProjectChanged;
+
     private void OnActiveProjectChanged(object? sender, Project? project)
     {
-        HasActiveProject = project is not null;
+        OnPropertyChanged(nameof(HasActiveProject));
+        OnPropertyChanged(nameof(HasNoActiveProject));
         OnPropertyChanged(nameof(ActiveProjectName));
         LoadRecentProjects();
     }
@@ -118,33 +111,27 @@ public sealed partial class SettingsViewModel : ObservableObject
             RecentProjects.Add(path);
     }
 
-    /// <summary>Called from SettingsPage code-behind after the New Project dialog is confirmed.</summary>
-    public async Task CreateProjectAsync(string name, string owner, string folderPath)
+    public async Task CreateProjectAsync(string name, string filePath, string owner)
     {
         try
         {
-            string filePath = Path.Combine(folderPath, $"{name}.iscwbs");
             await _projectStateService.CreateProjectAsync(name, filePath, owner);
-            _settingsService.AddRecentProject(filePath);
-            _settingsService.Set(SettingsKeys.LastProjectFolder, folderPath);
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Cannot Create Project", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_CreateProject", ex);
         }
     }
 
-    /// <summary>Called from SettingsPage code-behind after a successful file picker result.</summary>
     public async Task OpenProjectAsync(string filePath)
     {
         try
         {
             await _projectStateService.OpenProjectAsync(filePath);
-            _settingsService.AddRecentProject(filePath);
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Cannot Open Project", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_OpenProject", ex);
         }
     }
 
@@ -158,8 +145,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Cannot Close Project", ex.Message);
-            Logger.Write(ex);
+            await _dialogService.ShowErrorAsync("ErrorTitle_CloseProject", ex);
         }
     }
 
@@ -169,10 +155,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         _settingsService.RemoveRecentProject(filePath);
         RecentProjects.Remove(filePath);
     }
-
-    [RelayCommand]
-    private async Task OpenRecentProjectAsync(string filePath)
-        => await OpenProjectAsync(filePath);
 
     [RelayCommand]
     private async Task CheckForUpdateAsync()
@@ -186,7 +168,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             UpdateInfo? update = await _updateService.CheckForUpdateAsync();
             if (update is null)
             {
-                UpdateStatusMessage = "You are running the latest version.";
+                UpdateStatusMessage = Strings.Get("Settings_UpToDate");
             }
             else
             {
@@ -195,17 +177,17 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
-            UpdateErrorMessage = "The update repository could not be found. The project may have moved or been renamed.";
+            UpdateErrorMessage = Strings.Get("Settings_RepositoryNotFound");
             Logger.Write(ex);
         }
         catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
         {
-            UpdateErrorMessage = "GitHub API rate limit reached. Please wait a few minutes and try again.";
+            UpdateErrorMessage = Strings.Get("Settings_RateLimited");
             Logger.Write(ex);
         }
         catch (Exception ex)
         {
-            UpdateErrorMessage = "Could not check for updates. Please check your internet connection.";
+            UpdateErrorMessage = Strings.Get("Settings_CheckFailed");
             Logger.Write(ex);
         }
         finally
@@ -224,22 +206,23 @@ public sealed partial class SettingsViewModel : ObservableObject
         try
         {
             Progress<int> progress = new(p => DownloadProgress = p);
-            await _updateService.DownloadAndInstallAsync(AvailableUpdate, progress, cancellationToken);
+            if (!await _updateService.DownloadAndInstallAsync(AvailableUpdate, progress, cancellationToken))
+                return;
 
-            // Updater script is now running in the background waiting for this process to exit.
-            // Close any open project cleanly before the process terminates.
+            // The new version's files are in place; start it and let this one go.
             if (_projectStateService.HasActiveProject)
                 await _projectStateService.CloseProjectAsync();
 
+            Process.Start(new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false });
             Environment.Exit(0);
         }
         catch (OperationCanceledException)
         {
-            UpdateStatusMessage = "Download cancelled.";
+            UpdateStatusMessage = Strings.Get("Settings_DownloadCancelled");
         }
         catch (Exception ex)
         {
-            UpdateErrorMessage = "Download failed. Please try again or visit the release page.";
+            UpdateErrorMessage = Strings.Get("Settings_DownloadFailed");
             Logger.Write(ex);
         }
         finally
@@ -254,12 +237,12 @@ public sealed partial class SettingsViewModel : ObservableObject
         if (AvailableUpdate is null) return;
         try
         {
-            await _updateService.OpenReleasePageAsync(AvailableUpdate);
+            _updateService.OpenReleasePage(AvailableUpdate);
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Error", "Could not open the release page.");
             Logger.Write(ex);
+            await _dialogService.ShowErrorAsync(Strings.Get("ErrorTitle_Generic"), Strings.Get("Settings_OpenReleasePageFailed"));
         }
     }
 

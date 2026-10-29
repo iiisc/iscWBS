@@ -7,7 +7,6 @@ public sealed class WbsOutlineRowViewModel
 {
     public WbsNode Node { get; init; } = null!;
 
-    /// <summary>The effective status after applying auto-blocked derivation from the dependency graph.</summary>
     public WbsStatus EffectiveStatus { get; init; }
 
     // Forwarded for x:Bind — keeps the DataTemplate free of Node.* indirection
@@ -16,5 +15,5 @@ public sealed class WbsOutlineRowViewModel
     public string    AssignedTo     => Node.AssignedTo;
     public double    EstimatedHours => Node.EstimatedHours;
     public double    ActualHours    => Node.ActualHours;
-    public DateTime? DueDate        => Node.DueDate;
+    public string    DueDateText    => Node.DueDate?.ToString("d MMM yyyy") ?? string.Empty;
 }

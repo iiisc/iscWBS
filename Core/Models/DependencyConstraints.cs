@@ -46,30 +46,79 @@ public static class DependencyConstraints
     public static bool IsFinishConstraint(DependencyType type) =>
         type is DependencyType.FinishToFinish or DependencyType.StartToFinish;
 
+    /// <summary>Nodes that cannot start yet: not active or done, with an unmet FS or SS predecessor.</summary>
+    public static IReadOnlySet<Guid> BlockedNodeIds(
+        IReadOnlyList<WbsNode> nodes, IReadOnlyList<NodeDependency> dependencies)
+        => CollectSuccessors(nodes, dependencies, (succ, type, pred) =>
+            succ is not (WbsStatus.Complete or WbsStatus.InProgress) && IsStartViolated(type, pred));
+
     /// <summary>
-    /// Returns a human-readable explanation of why a constraint is blocking, or
-    /// <see cref="string.Empty"/> if the constraint is not currently violated.
+    /// Nodes that can start but not complete because of an unmet FF or SF predecessor.
+    /// Start-blocked nodes are left out; they already carry the more severe indicator.
     /// </summary>
-    public static string GetBlockingReason(DependencyType type, WbsStatus predecessorStatus)
+    public static IReadOnlySet<Guid> CompletionBlockedNodeIds(
+        IReadOnlyList<WbsNode> nodes, IReadOnlyList<NodeDependency> dependencies)
     {
-        if (!IsViolated(type, predecessorStatus)) return string.Empty;
-        string statusLabel = FormatStatus(predecessorStatus);
-        return type switch
-        {
-            DependencyType.FinishToStart  => $"Must finish before this can start \u2014 currently {statusLabel}",
-            DependencyType.StartToStart   => $"Must start before this can start \u2014 currently {statusLabel}",
-            DependencyType.FinishToFinish => $"Must finish before this can finish \u2014 currently {statusLabel}",
-            DependencyType.StartToFinish  => $"Must start before this can finish \u2014 currently {statusLabel}",
-            _                             => string.Empty,
-        };
+        HashSet<Guid> completionBlocked = CollectSuccessors(nodes, dependencies, (succ, type, pred) =>
+            succ != WbsStatus.Complete && IsFinishViolated(type, pred));
+        completionBlocked.ExceptWith(BlockedNodeIds(nodes, dependencies));
+        return completionBlocked;
     }
 
-    private static string FormatStatus(WbsStatus status) => status switch
+    /// <summary>The status to show for <paramref name="node"/>: Blocked when it is in <paramref name="blockedNodeIds"/>.</summary>
+    public static WbsStatus EffectiveStatus(WbsNode node, IReadOnlySet<Guid> blockedNodeIds)
+        => blockedNodeIds.Contains(node.Id) ? WbsStatus.Blocked : node.Status;
+
+    /// <summary>Complete nodes whose predecessor has since moved back into a state that violates the dependency.</summary>
+    public static IReadOnlySet<Guid> ViolatedCompleteNodeIds(
+        IReadOnlyList<WbsNode> nodes, IReadOnlyList<NodeDependency> dependencies)
+        => CollectSuccessors(nodes, dependencies, (succ, type, pred) =>
+            succ == WbsStatus.Complete && IsViolated(type, pred));
+
+    /// <summary>In-progress nodes whose FS or SS predecessor has since moved back into a state that would block starting.</summary>
+    public static IReadOnlySet<Guid> ViolatedInProgressNodeIds(
+        IReadOnlyList<WbsNode> nodes, IReadOnlyList<NodeDependency> dependencies)
+        => CollectSuccessors(nodes, dependencies, (succ, type, pred) =>
+            succ == WbsStatus.InProgress && IsStartViolated(type, pred));
+
+    /// <summary>The dependencies that stop a node moving to <paramref name="targetStatus"/>; only InProgress and Complete can be blocked.</summary>
+    public static IReadOnlyList<NodeDependency> TransitionBlockers(
+        WbsStatus targetStatus,
+        IEnumerable<NodeDependency> predecessorDependencies,
+        IReadOnlyDictionary<Guid, WbsStatus> statusById)
+        => predecessorDependencies
+            .Where(dep => statusById.TryGetValue(dep.PredecessorId, out WbsStatus pred) && targetStatus switch
+            {
+                WbsStatus.InProgress => IsStartViolated(dep.Type, pred),
+                WbsStatus.Complete   => IsViolated(dep.Type, pred),
+                _                    => false,
+            })
+            .ToList();
+
+    private static HashSet<Guid> CollectSuccessors(
+        IReadOnlyList<WbsNode> nodes,
+        IReadOnlyList<NodeDependency> dependencies,
+        Func<WbsStatus, DependencyType, WbsStatus, bool> isMatch)
     {
-        WbsStatus.NotStarted => "Not Started",
-        WbsStatus.InProgress => "In Progress",
-        WbsStatus.Complete   => "Complete",
-        WbsStatus.Blocked    => "Blocked",
-        _                    => status.ToString(),
+        var statusById = nodes.ToDictionary(n => n.Id, n => n.Status);
+        var result = new HashSet<Guid>();
+        foreach (NodeDependency dep in dependencies)
+        {
+            if (statusById.TryGetValue(dep.SuccessorId, out WbsStatus succ)
+                && statusById.TryGetValue(dep.PredecessorId, out WbsStatus pred)
+                && isMatch(succ, dep.Type, pred))
+                result.Add(dep.SuccessorId);
+        }
+        return result;
+    }
+
+    /// <summary>Short PDM code, e.g. "FS".</summary>
+    public static string GetAbbreviation(DependencyType type) => type switch
+    {
+        DependencyType.FinishToStart  => "FS",
+        DependencyType.StartToStart   => "SS",
+        DependencyType.FinishToFinish => "FF",
+        DependencyType.StartToFinish  => "SF",
+        _                             => type.ToString(),
     };
 }

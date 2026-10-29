@@ -4,13 +4,7 @@ namespace iscWBS.Core.Models;
 public sealed record ProjectStatusReportData(
     string ProjectName,
     DateTime GeneratedAt,
-    double OverallPercent,
-    int TotalNodes,
-    int CompleteCount,
-    int InProgressCount,
-    int AtRiskCount,
-    int OverdueCount,
-    int BlockedCount,
+    ProjectSummary Summary,
     IReadOnlyList<DeliverableRow> Deliverables,
     IReadOnlyList<(string Title, DateTime DueDate)> Milestones,
     IReadOnlyList<WbsTreeEntry> WbsTree);

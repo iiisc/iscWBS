@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using iscWBS.ViewModels;
@@ -12,19 +11,13 @@ public sealed partial class WbsOutlinePage : Page
     public WbsOutlinePage()
     {
         InitializeComponent();
-        ViewModel = App.Services.GetRequiredService<WbsOutlineViewModel>();
+        ViewModel = App.Services.CreateWbsOutlineViewModel();
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        ViewModel.OnNavigatedTo(e.Parameter);
-    }
-
-    protected override void OnNavigatedFrom(NavigationEventArgs e)
-    {
-        base.OnNavigatedFrom(e);
-        ViewModel.OnNavigatedFrom();
+        ViewModel.OnNavigatedTo();
     }
 
     private void OutlineListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

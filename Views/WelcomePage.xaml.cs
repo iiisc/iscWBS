@@ -1,9 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.Storage;
-using Windows.Storage.Pickers;
-using WinRT.Interop;
+using iscWBS.Helpers;
 using iscWBS.ViewModels;
 using iscWBS.Views.Controls;
 
@@ -16,42 +13,18 @@ public sealed partial class WelcomePage : Page
     public WelcomePage()
     {
         InitializeComponent();
-        ViewModel = App.Services.GetRequiredService<WelcomeViewModel>();
+        ViewModel = App.Services.CreateWelcomeViewModel();
     }
 
     private async void BtnNewProject_Click(object sender, RoutedEventArgs e)
     {
-        var control = new NewProjectControl();
-        control.DefaultFolderPath = ViewModel.DefaultProjectFolder;
-
-        var dialog = new ContentDialog
-        {
-            Title = "New Project",
-            Content = control,
-            PrimaryButtonText = "Create",
-            CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary,
-            XamlRoot = XamlRoot
-        };
-
-        ContentDialogResult result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.Primary
-            && !string.IsNullOrWhiteSpace(control.ProjectName)
-            && !string.IsNullOrWhiteSpace(control.FolderPath))
-        {
-            await ViewModel.CreateProjectAsync(
-                control.ProjectName, control.Owner, control.FolderPath);
-        }
+        if (await NewProjectControl.ShowAsync(XamlRoot) is { } project)
+            await ViewModel.CreateProjectAsync(project.ProjectName, project.FilePath, project.Owner);
     }
 
     private async void BtnOpenProject_Click(object sender, RoutedEventArgs e)
     {
-        var picker = new FileOpenPicker();
-        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(App.MainWindow));
-        picker.FileTypeFilter.Add(".iscwbs");
-
-        StorageFile? file = await picker.PickSingleFileAsync();
-        if (file is not null)
+        if (await FilePickers.PickProjectFileAsync() is { } file)
             await ViewModel.OpenProjectAsync(file.Path);
     }
 

@@ -3,16 +3,9 @@
     x:Class="iscWBS.Views.DashboardPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:lvc="using:LiveChartsCore.SkiaSharpView.WinUI"
+    xmlns:controls="using:iscWBS.Views.Controls"
     xmlns:vm="using:iscWBS.ViewModels"
-    xmlns:models="using:iscWBS.Core.Models"
-    xmlns:converters="using:iscWBS.Converters">
-
-    <Page.Resources>
-        <converters:StatusToStringConverter  x:Key="StatusToStringConverter" />
-        <converters:StatusToBrushConverter   x:Key="StatusToBrushConverter" />
-        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-    </Page.Resources>
+    xmlns:models="using:iscWBS.Core.Models">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -22,7 +15,6 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <StackPanel
             Grid.Row="0"
             Orientation="Horizontal" Spacing="8"
@@ -35,13 +27,13 @@
                 Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
                 CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
                 <TextBlock
+                    x:Uid="DashboardPage_BetaFeature"
                     Text="BETA" FontSize="11" FontWeight="SemiBold"
                     Foreground="{ThemeResource SystemFillColorCautionBrush}"
                     AutomationProperties.Name="Beta feature" />
             </Border>
         </StackPanel>
 
-        <!-- Filters + Export button -->
         <Grid Grid.Row="1" Margin="12,8" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -49,7 +41,6 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <CalendarDatePicker
@@ -86,22 +77,8 @@
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
-
-            <Button
-                Grid.Column="5"
-                x:Name="ExportPdfButton"
-                Style="{ThemeResource AccentButtonStyle}"
-                VerticalAlignment="Center"
-                AutomationProperties.Name="Export project status report to PDF"
-                Click="ExportPdfButton_Click">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <FontIcon Glyph="&#xE792;" FontSize="14" />
-                    <TextBlock x:Uid="DashboardPage_ExportPdfBtn" Text="Export to PDF" />
-                </StackPanel>
-            </Button>
         </Grid>
 
-        <!-- KPI strip -->
         <Grid Grid.Row="2" Margin="12,0,12,8" ColumnSpacing="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -116,7 +93,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                 <StackPanel Spacing="4">
-                    <TextBlock Text="{x:Bind ViewModel.OverallPercentText, Mode=OneWay}"
+                    <TextBlock x:Uid="DashboardPage_OverallPercentComplete" Text="{x:Bind ViewModel.OverallPercentText, Mode=OneWay}"
                                Style="{ThemeResource TitleTextBlockStyle}"
                                AutomationProperties.Name="Overall percent complete" />
                     <TextBlock x:Uid="DashboardPage_KpiCompletePercent" Text="% Complete" Style="{ThemeResource CaptionTextBlockStyle}" />
@@ -127,7 +104,7 @@
                     Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                 <StackPanel Spacing="4">
-                    <TextBlock Text="{x:Bind ViewModel.CompleteCount, Mode=OneWay}"
+                    <TextBlock x:Uid="DashboardPage_CompleteTaskCount" Text="{x:Bind ViewModel.Summary.CompleteCount, Mode=OneWay}"
                                Style="{ThemeResource TitleTextBlockStyle}"
                                Foreground="{ThemeResource SystemFillColorSuccessBrush}"
                                AutomationProperties.Name="Complete task count" />
@@ -139,7 +116,7 @@
                     Background="{ThemeResource SystemFillColorAttentionBackgroundBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                 <StackPanel Spacing="4">
-                    <TextBlock Text="{x:Bind ViewModel.InProgressCount, Mode=OneWay}"
+                    <TextBlock x:Uid="DashboardPage_InProgressTaskCount" Text="{x:Bind ViewModel.Summary.InProgressCount, Mode=OneWay}"
                                Style="{ThemeResource TitleTextBlockStyle}"
                                Foreground="{ThemeResource SystemFillColorAttentionBrush}"
                                AutomationProperties.Name="In progress task count" />
@@ -151,7 +128,7 @@
                     Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                 <StackPanel Spacing="4">
-                    <TextBlock Text="{x:Bind ViewModel.AtRiskCount, Mode=OneWay}"
+                    <TextBlock x:Uid="DashboardPage_AtRiskTaskCount" Text="{x:Bind ViewModel.Summary.AtRiskCount, Mode=OneWay}"
                                Style="{ThemeResource TitleTextBlockStyle}"
                                Foreground="{ThemeResource SystemFillColorCautionBrush}"
                                AutomationProperties.Name="At risk task count" />
@@ -163,7 +140,7 @@
                     Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                 <StackPanel Spacing="4">
-                    <TextBlock Text="{x:Bind ViewModel.OverdueCount, Mode=OneWay}"
+                    <TextBlock x:Uid="DashboardPage_OverdueTaskCount" Text="{x:Bind ViewModel.Summary.OverdueCount, Mode=OneWay}"
                                Style="{ThemeResource TitleTextBlockStyle}"
                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                                AutomationProperties.Name="Overdue task count" />
@@ -175,7 +152,7 @@
                     Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                 <StackPanel Spacing="4">
-                    <TextBlock Text="{x:Bind ViewModel.BlockedCount, Mode=OneWay}"
+                    <TextBlock x:Uid="DashboardPage_BlockedTaskCount" Text="{x:Bind ViewModel.Summary.BlockedCount, Mode=OneWay}"
                                Style="{ThemeResource TitleTextBlockStyle}"
                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                                AutomationProperties.Name="Blocked task count" />
@@ -184,7 +161,6 @@
             </Border>
         </Grid>
 
-        <!-- Main body: deliverables (left) + status chart and milestones (right) -->
         <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
             <Grid Margin="12,0,12,12" ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
@@ -192,10 +168,10 @@
                     <ColumnDefinition Width="2*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Deliverables table -->
                 <StackPanel Grid.Column="0" Spacing="8">
                     <TextBlock x:Uid="DashboardPage_DeliverablesTitle" Text="Deliverables" Style="{ThemeResource SubtitleTextBlockStyle}" />
                     <ListView
+                        x:Uid="DashboardPage_DeliverablesList"
                         ItemsSource="{x:Bind ViewModel.DeliverableRows, Mode=OneWay}"
                         SelectionMode="None"
                         AutomationProperties.Name="Deliverables list">
@@ -256,6 +232,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <ProgressBar
+                                                x:Uid="DashboardPage_DeliverableProgress"
                                                 Grid.Column="0"
                                                 Value="{x:Bind ProgressFraction}"
                                                 Minimum="0" Maximum="1"
@@ -275,20 +252,33 @@
                     </ListView>
                 </StackPanel>
 
-                <!-- Status donut + upcoming milestones -->
                 <StackPanel Grid.Column="1" Spacing="20">
 
                     <StackPanel Spacing="8">
                         <TextBlock x:Uid="DashboardPage_StatusBreakdownTitle" Text="Status Breakdown" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                        <lvc:PieChart
-                            Series="{x:Bind ViewModel.StatusSeries, Mode=OneWay}"
-                            Height="220"
-                            AutomationProperties.Name="Status breakdown chart" />
+                        <StackPanel Orientation="Horizontal" Spacing="24" HorizontalAlignment="Center" Margin="0,8">
+                            <controls:StatusDonut
+                                x:Uid="DashboardPage_StatusBreakdownChart"
+                                Slices="{x:Bind ViewModel.StatusSlices, Mode=OneWay}"
+                                AutomationProperties.Name="Status breakdown chart" />
+                            <ItemsControl ItemsSource="{x:Bind ViewModel.StatusSlices, Mode=OneWay}" VerticalAlignment="Center">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:StatusSlice">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4">
+                                            <Rectangle Width="12" Height="12" RadiusX="2" RadiusY="2"
+                                                       Fill="{x:Bind Status, Converter={StaticResource StatusToBrushConverter}}" />
+                                            <TextBlock Text="{x:Bind Label}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
                     </StackPanel>
 
                     <StackPanel Spacing="8">
                         <TextBlock x:Uid="DashboardPage_UpcomingMilestonesTitle" Text="Upcoming Milestones &#x2014; Next 60 Days" Style="{ThemeResource SubtitleTextBlockStyle}" />
                         <ListView
+                            x:Uid="DashboardPage_UpcomingMilestonesList"
                             ItemsSource="{x:Bind ViewModel.UpcomingMilestones, Mode=OneWay}"
                             SelectionMode="None"
                             AutomationProperties.Name="Upcoming milestones list">

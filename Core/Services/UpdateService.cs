@@ -2,18 +2,20 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using iscWBS.Core.Models;
 
 namespace iscWBS.Core.Services;
 
-/// <inheritdoc cref="IUpdateService"/>
-public sealed class UpdateService : IUpdateService
+/// <summary>Checks GitHub Releases for a newer version and installs its ZIP in place of the running app.</summary>
+public sealed partial class UpdateService
 {
-    private const string _gitHubApiUrl = "https://api.github.com/repos/iiisc/iscWBS/releases/latest";
+    /// <summary>Where the files an update replaced are moved, since they're in use until the app restarts.</summary>
+    internal const string OldVersionDir = "iscWBS-old";
 
-    /// <inheritdoc/>
-    public string RepositoryUrl { get; } = "https://github.com/iiisc/iscWBS";
+    private const string _gitHubApiUrl = "https://api.github.com/repos/iiisc/iscWBS/releases/latest";
+    private const string _exeName = "iscWBS.exe";
 
     private readonly HttpClient _httpClient;
 
@@ -24,7 +26,6 @@ public sealed class UpdateService : IUpdateService
         _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github+json");
     }
 
-    /// <inheritdoc/>
     public string CurrentVersion
     {
         get
@@ -36,126 +37,158 @@ public sealed class UpdateService : IUpdateService
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>The latest release, or <see langword="null"/> when this version is already current.</summary>
     public async Task<UpdateInfo?> CheckForUpdateAsync()
     {
-        GitHubRelease? release = await _httpClient.GetFromJsonAsync<GitHubRelease>(_gitHubApiUrl);
-
-        if (release is null)
+        GitHubRelease? release = await _httpClient.GetFromJsonAsync(_gitHubApiUrl, GitHubJsonContext.Default.GitHubRelease);
+        if (release is null
+            || !Version.TryParse(release.TagName.TrimStart('v'), out Version? latestVersion)
+            || !Version.TryParse(CurrentVersion, out Version? currentVersion)
+            || latestVersion <= currentVersion)
             return null;
 
-        string tag = release.TagName.TrimStart('v');
-        if (!Version.TryParse(tag, out Version? latestVersion))
-            return null;
-
-        if (!Version.TryParse(CurrentVersion, out Version? currentVersion))
-            return null;
-
-        if (latestVersion <= currentVersion)
-            return null;
-
-        string? exeUrl = FindZipAsset(release.Assets);
-
-        return new UpdateInfo(release.TagName, release.Name, release.HtmlUrl, exeUrl);
+        GitHubAsset? zip = FindZipAsset(release.Assets);
+        string? sha256 = zip?.Digest is { } digest && digest.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase) ? digest[7..] : null;
+        return new UpdateInfo(release.TagName, release.Name, release.HtmlUrl, zip?.BrowserDownloadUrl, sha256);
     }
 
-    /// <inheritdoc/>
-    public async Task DownloadAndInstallAsync(UpdateInfo info, IProgress<int> progress, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Downloads and verifies the release, then puts it in place of the running app. Returns <see langword="true"/>
+    /// when the caller must restart into the new version; <see langword="false"/> when the release has no verifiable
+    /// ZIP and its page was opened instead. If installing fails, the app is left as it was.
+    /// </summary>
+    public async Task<bool> DownloadAndInstallAsync(UpdateInfo info, IProgress<int> progress, CancellationToken cancellationToken = default)
     {
-        if (info.DownloadUrl is null)
+        if (info.DownloadUrl is null || info.Sha256 is null)
         {
-            await OpenReleasePageAsync(info);
-            return;
+            OpenReleasePage(info);
+            return false;
         }
 
-        string zipPath = Path.Combine(Path.GetTempPath(), $"iscWBS-update-{info.TagName}.zip");
-        string extractDir = Path.Combine(Path.GetTempPath(), $"iscWBS-update-{info.TagName}");
-
-        using HttpResponseMessage response = await _httpClient.GetAsync(
-            info.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        long? totalBytes = response.Content.Headers.ContentLength;
-        await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        await using FileStream fileStream = File.Create(zipPath);
-
-        byte[] buffer = new byte[81920];
-        long downloaded = 0;
-        int bytesRead;
-        while ((bytesRead = await stream.ReadAsync(buffer, cancellationToken)) > 0)
+        string tempDir = Path.Combine(Path.GetTempPath(), "iscWBSUpdate");
+        try
         {
-            await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
-            downloaded += bytesRead;
-            if (totalBytes > 0)
-                progress.Report((int)(downloaded * 100 / totalBytes.Value));
-        }
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+            Directory.CreateDirectory(tempDir);
+            string zipPath = Path.Combine(tempDir, "release.zip");
 
-        fileStream.Close();
-        cancellationToken.ThrowIfCancellationRequested();
+            using (HttpResponseMessage response = await _httpClient.GetAsync(
+                info.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
+            {
+                response.EnsureSuccessStatusCode();
+                long? totalBytes = response.Content.Headers.ContentLength;
+                await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                await using FileStream fileStream = File.Create(zipPath);
 
-        if (Directory.Exists(extractDir))
-            Directory.Delete(extractDir, recursive: true);
-
-        ZipFile.ExtractToDirectory(zipPath, extractDir);
-
-        // Write a PowerShell script that waits for this process to exit, copies the
-        // extracted files over the install directory, relaunches the exe, then cleans up.
-        // The caller (SettingsViewModel) calls Environment.Exit(0) after this returns.
-        string processPath = Environment.ProcessPath ?? string.Empty;
-        string installDir  = Path.GetDirectoryName(processPath) ?? string.Empty;
-        string scriptPath  = Path.Combine(Path.GetTempPath(), $"iscWBS-updater-{info.TagName}.ps1");
-
-        string script = $$"""
-            $targetPid = {{Environment.ProcessId}}
-            $src = '{{EscapePs(extractDir)}}'
-            $dst = '{{EscapePs(installDir)}}'
-            $exe = '{{EscapePs(processPath)}}'
-            $zip = '{{EscapePs(zipPath)}}'
-
-            while (Get-Process -Id $targetPid -ErrorAction SilentlyContinue) {
-                Start-Sleep -Milliseconds 300
+                byte[] buffer = new byte[81920];
+                long downloaded = 0;
+                int bytesRead;
+                while ((bytesRead = await stream.ReadAsync(buffer, cancellationToken)) > 0)
+                {
+                    await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+                    downloaded += bytesRead;
+                    if (totalBytes > 0)
+                        progress.Report((int)(downloaded * 100 / totalBytes.Value));
+                }
             }
 
-            Copy-Item -Path "$src\*" -Destination $dst -Recurse -Force
-            Start-Process -FilePath $exe
-            Remove-Item -Path $src -Recurse -Force -ErrorAction SilentlyContinue
-            Remove-Item -Path $zip -Force -ErrorAction SilentlyContinue
-            Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
-            """;
+            if (!Sha256Matches(zipPath, info.Sha256))
+                throw new InvalidDataException("The downloaded update does not match the SHA-256 digest GitHub published for it.");
 
-        await File.WriteAllTextAsync(scriptPath, script, cancellationToken);
-
-        Process.Start(new ProcessStartInfo
+            string releaseDir = Path.Combine(tempDir, "release");
+            ZipFile.ExtractToDirectory(zipPath, releaseDir);
+            // The release zip holds the app in an iscWBS folder, so unzipping it by hand can't spill files elsewhere.
+            SwapIn(Path.Combine(releaseDir, "iscWBS"), Environment.ProcessPath ?? throw new InvalidOperationException("The app could not find its own exe."));
+            return true;
+        }
+        finally
         {
-            FileName = "powershell.exe",
-            Arguments = $"-ExecutionPolicy Bypass -NonInteractive -WindowStyle Hidden -File \"{scriptPath}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true
-        });
+            try { Directory.Delete(tempDir, recursive: true); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        }
     }
 
-    /// <summary>Escapes a path for use inside a PowerShell single-quoted string.</summary>
-    private static string EscapePs(string path) => path.Replace("'", "''");
-
-    /// <inheritdoc/>
-    public Task OpenReleasePageAsync(UpdateInfo info)
+    /// <summary>Deletes the files the last update replaced; that version isn't running any more. Best effort, on start.</summary>
+    public static void DeleteOldVersion()
     {
-        Process.Start(new ProcessStartInfo(info.ReleasePageUrl) { UseShellExecute = true });
-        return Task.CompletedTask;
+        try { Directory.Delete(Path.Combine(AppContext.BaseDirectory, OldVersionDir), recursive: true); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
-    private static string? FindZipAsset(List<GitHubAsset> assets)
+    /// <summary>
+    /// Moves the release's files into the app's folder. Windows won't let a running program's files be overwritten, but
+    /// it does let them be moved, so each one being replaced goes into <see cref="OldVersionDir"/> first, for the next
+    /// start to delete. Files the release doesn't contain are left alone. If anything fails, every file is put back.
+    /// </summary>
+    internal static void SwapIn(string releaseDir, string currentExe)
     {
-        // Prefer the x64 ZIP; fall back to any ZIP if no arch-specific one is found.
-        return assets
-            .FirstOrDefault(a =>
-                a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
-                a.Name.Contains("x64", StringComparison.OrdinalIgnoreCase))
-            ?.BrowserDownloadUrl
-            ?? assets
-                .FirstOrDefault(a => a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-                ?.BrowserDownloadUrl;
+        if (!File.Exists(Path.Combine(releaseDir, _exeName)))
+            throw new InvalidDataException($"The update package does not contain {_exeName}.");
+        string appDir = Path.GetDirectoryName(currentExe)!;
+        string oldDir = Path.Combine(appDir, OldVersionDir);
+        if (Directory.Exists(oldDir))
+            Directory.Delete(oldDir, recursive: true);
+
+        var replaced = new List<(string File, string MovedTo)>();
+        var added = new List<string>();
+        try
+        {
+            foreach (string file in Directory.EnumerateFiles(releaseDir, "*", SearchOption.AllDirectories))
+            {
+                string name = Path.GetRelativePath(releaseDir, file);
+                // A copy of the app the user renamed keeps its name.
+                string target = name == _exeName ? currentExe : Path.Combine(appDir, name);
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                if (File.Exists(target))
+                {
+                    string movedTo = Path.Combine(oldDir, Path.GetRelativePath(appDir, target));
+                    Directory.CreateDirectory(Path.GetDirectoryName(movedTo)!);
+                    File.Move(target, movedTo);
+                    replaced.Add((target, movedTo));
+                }
+                else
+                {
+                    added.Add(target);
+                }
+                File.Move(file, target);
+            }
+        }
+        catch
+        {
+            foreach (string file in added)
+                try { File.Delete(file); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            foreach ((string file, string movedTo) in replaced)
+            {
+                try
+                {
+                    File.Delete(file);
+                    File.Move(movedTo, file);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            }
+            throw;
+        }
     }
+
+    internal static bool Sha256Matches(string filePath, string expectedHex)
+    {
+        using FileStream stream = File.OpenRead(filePath);
+        return string.Equals(Convert.ToHexString(SHA256.HashData(stream)), expectedHex, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void OpenReleasePage(UpdateInfo info)
+        => Process.Start(new ProcessStartInfo(info.ReleasePageUrl) { UseShellExecute = true });
+
+    /// <summary>The x64 ZIP if there is one, otherwise any ZIP.</summary>
+    private static GitHubAsset? FindZipAsset(List<GitHubAsset> assets)
+        => assets
+            .Where(a => a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(a => a.Name.Contains("x64", StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault();
+
+    [JsonSerializable(typeof(GitHubRelease))]
+    private sealed partial class GitHubJsonContext : JsonSerializerContext;
 
     private sealed class GitHubRelease
     {
@@ -179,5 +212,9 @@ public sealed class UpdateService : IUpdateService
 
         [JsonPropertyName("browser_download_url")]
         public string BrowserDownloadUrl { get; init; } = string.Empty;
+
+        /// <summary>"sha256:&lt;hex&gt;"; GitHub computes it on upload.</summary>
+        [JsonPropertyName("digest")]
+        public string? Digest { get; init; }
     }
 }

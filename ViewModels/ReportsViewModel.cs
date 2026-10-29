@@ -1,20 +1,18 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Windows.Storage;
+using Windows.System;
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
 using iscWBS.Helpers;
 
 namespace iscWBS.ViewModels;
 
-public sealed partial class ReportsViewModel : ObservableObject, INavigationAware
+public sealed partial class ReportsViewModel : ObservableObject
 {
-    private readonly IReportExportService _reportExportService;
-    private readonly IDialogService _dialogService;
-    private readonly ISettingsService _settingsService;
-
-    // â”€â”€â”€ Export state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-    [ObservableProperty]
-    public partial bool IsExporting { get; set; }
+    private readonly ReportExportService _reportExportService;
+    private readonly DialogService _dialogService;
+    private readonly SettingsService _settingsService;
 
     [ObservableProperty]
     public partial string? LastExportPath { get; set; }
@@ -22,8 +20,6 @@ public sealed partial class ReportsViewModel : ObservableObject, INavigationAwar
     public bool HasLastExportPath => !string.IsNullOrEmpty(LastExportPath);
 
     partial void OnLastExportPathChanged(string? value) => OnPropertyChanged(nameof(HasLastExportPath));
-
-    // â”€â”€â”€ Section options â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [ObservableProperty]
     public partial bool IncludeSummary { get; set; }
@@ -43,17 +39,17 @@ public sealed partial class ReportsViewModel : ObservableObject, INavigationAwar
     [ObservableProperty]
     public partial bool IncludeWbsTree { get; set; }
 
-    partial void OnIncludeSummaryChanged(bool v)           => _settingsService.Set(SettingsKeys.ReportIncludeSummary,           v);
-    partial void OnIncludeAttentionRequiredChanged(bool v) => _settingsService.Set(SettingsKeys.ReportIncludeAttentionRequired, v);
-    partial void OnIncludeDeliverablesChanged(bool v)      => _settingsService.Set(SettingsKeys.ReportIncludeDeliverables,      v);
-    partial void OnIncludeEffortSummaryChanged(bool v)     => _settingsService.Set(SettingsKeys.ReportIncludeEffortSummary,     v);
-    partial void OnIncludeMilestonesChanged(bool v)        => _settingsService.Set(SettingsKeys.ReportIncludeMilestones,        v);
-    partial void OnIncludeWbsTreeChanged(bool v)           => _settingsService.Set(SettingsKeys.ReportIncludeWbsTree,           v);
+    partial void OnIncludeSummaryChanged(bool value)           => _settingsService.Set(SettingsKeys.ReportIncludeSummary,           value);
+    partial void OnIncludeAttentionRequiredChanged(bool value) => _settingsService.Set(SettingsKeys.ReportIncludeAttentionRequired, value);
+    partial void OnIncludeDeliverablesChanged(bool value)      => _settingsService.Set(SettingsKeys.ReportIncludeDeliverables,      value);
+    partial void OnIncludeEffortSummaryChanged(bool value)     => _settingsService.Set(SettingsKeys.ReportIncludeEffortSummary,     value);
+    partial void OnIncludeMilestonesChanged(bool value)        => _settingsService.Set(SettingsKeys.ReportIncludeMilestones,        value);
+    partial void OnIncludeWbsTreeChanged(bool value)           => _settingsService.Set(SettingsKeys.ReportIncludeWbsTree,           value);
 
     public ReportsViewModel(
-        IReportExportService reportExportService,
-        IDialogService dialogService,
-        ISettingsService settingsService)
+        ReportExportService reportExportService,
+        DialogService dialogService,
+        SettingsService settingsService)
     {
         _reportExportService = reportExportService;
         _dialogService       = dialogService;
@@ -67,17 +63,11 @@ public sealed partial class ReportsViewModel : ObservableObject, INavigationAwar
         IncludeWbsTree           = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeWbsTree)           ?? true;
     }
 
-    public void OnNavigatedTo(object? parameter) { }
-    public void OnNavigatedFrom() { }
-
-    /// <summary>
-    /// Generates a PDF report with the user-selected sections and saves it to <paramref name="filePath"/>.
-    /// Returns <see langword="true"/> on success; errors are surfaced via <see cref="IDialogService"/>.
-    /// </summary>
-    public async Task<bool> ExportPdfAsync(string filePath)
+    [RelayCommand]
+    private async Task ExportPdfAsync()
     {
-        if (IsExporting) return false;
-        IsExporting = true;
+        StorageFile? file = await FilePickers.PickStatusReportSaveFileAsync();
+        if (file is null) return;
         try
         {
             var options = new ReportOptions
@@ -89,19 +79,14 @@ public sealed partial class ReportsViewModel : ObservableObject, INavigationAwar
                 IncludeMilestones        = IncludeMilestones,
                 IncludeWbsTree           = IncludeWbsTree,
             };
-            await _reportExportService.ExportAsync(filePath, options);
-            LastExportPath = filePath;
-            return true;
+            await _reportExportService.ExportAsync(file.Path, options);
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Export Failed", ex.Message);
-            return false;
+            await _dialogService.ShowErrorAsync("ErrorTitle_Export", ex);
+            return;
         }
-        finally
-        {
-            IsExporting = false;
-        }
+        LastExportPath = file.Path;
+        await Launcher.LaunchFileAsync(file);
     }
 }
-

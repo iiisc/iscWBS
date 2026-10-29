@@ -1,19 +1,10 @@
-using SQLite;
-
 namespace iscWBS.Core.Models;
 
-[Table("WbsNodes")]
 public class WbsNode
 {
-    [PrimaryKey]
     public Guid Id { get; set; } = Guid.NewGuid();
-
-    [Indexed]
     public Guid ProjectId { get; set; }
-
-    [Indexed]
     public Guid? ParentId { get; set; }
-
     public string Code { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;

@@ -7,12 +7,14 @@
     <StackPanel Spacing="12" MinWidth="380" Padding="0,4,0,4">
 
         <TextBox
+            x:Uid="NewProject_TxtName"
             x:Name="TxtName"
             Header="Project Name *"
             PlaceholderText="Enter project name"
             AutomationProperties.Name="Project name" />
 
         <TextBox
+            x:Uid="NewProject_TxtOwner"
             x:Name="TxtOwner"
             Header="Owner"
             PlaceholderText="Enter owner name"
@@ -20,14 +22,17 @@
 
         <StackPanel Spacing="4">
             <TextBlock
+                x:Uid="NewProject_SaveLocation"
                 Text="Save Location *"
                 Style="{ThemeResource CaptionTextBlockStyle}" />
             <TextBlock
+                x:Uid="NewProject_TxtSavePath"
                 x:Name="TxtSavePath"
                 Text="No folder selected"
                 Style="{ThemeResource BodyTextBlockStyle}"
                 TextWrapping="Wrap" />
             <Button
+                x:Uid="NewProject_BtnPickFolder"
                 x:Name="BtnPickFolder"
                 Content="Choose Folder..."
                 AutomationProperties.Name="Choose save folder"

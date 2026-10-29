@@ -4,20 +4,38 @@ namespace iscWBS.Core.Models;
 public sealed record DeliverableRow(
     string Code,
     string Title,
-    int TotalNodes,
-    int CompleteNodes,
     double ProgressFraction,
     WbsStatus Status,
-    DateTime? DueDate,
-    bool IsOverdue,
-    bool IsAtRisk)
+    DateTime? DueDate)
 {
-    /// <summary>Progress expressed as a whole-number percentage (0–100).</summary>
     public int ProgressPercent => (int)(ProgressFraction * 100);
 
-    /// <summary>Formatted due date, or an em-dash when no due date is set.</summary>
-    public string DueDateText => DueDate.HasValue ? DueDate.Value.ToString("d MMM yyyy") : "\u2014";
+    public string DueDateText => DueDate.HasValue ? DueDate.Value.ToString("d MMM yyyy") : "—";
 
-    /// <summary>Progress percentage as a display string, e.g. "42%".</summary>
     public string ProgressPercentText => $"{ProgressPercent}%";
+
+    /// <summary>
+    /// One row per deliverable node. Progress is the share of complete nodes in its subtree, restricted to
+    /// <paramref name="countedIds"/> when given; the due date is always the latest in the full subtree.
+    /// </summary>
+    public static IReadOnlyList<DeliverableRow> Build(
+        IReadOnlyList<WbsNode> allNodes,
+        IReadOnlySet<Guid> blockedIds,
+        IReadOnlySet<Guid>? countedIds = null)
+    {
+        WbsHierarchy hierarchy = new(allNodes);
+        var rows = new List<DeliverableRow>();
+        foreach (WbsNode root in allNodes.Where(n => n.IsDeliverable).OrderBy(n => n.SortOrder))
+        {
+            List<WbsNode> subtree = hierarchy.CollectSubtree(root);
+            List<WbsNode> counted = countedIds is null ? subtree : subtree.Where(n => countedIds.Contains(n.Id)).ToList();
+            int complete = counted.Count(n => n.Status == WbsStatus.Complete);
+            double fraction = counted.Count > 0 ? (double)complete / counted.Count : 0;
+            DateTime? latestDue = subtree.Max(n => n.DueDate);
+
+            rows.Add(new DeliverableRow(
+                root.Code, root.Title, fraction, DependencyConstraints.EffectiveStatus(root, blockedIds), latestDue));
+        }
+        return rows;
+    }
 }

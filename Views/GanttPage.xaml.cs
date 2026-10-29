@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -7,68 +6,52 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
 using iscWBS.Core.Models;
+using iscWBS.Helpers;
 using iscWBS.ViewModels;
+using Color = Windows.UI.Color;
 
 namespace iscWBS.Views;
 
 public sealed partial class GanttPage : Page
 {
-    // ─── Status colours ───────────────────────────────────────────────────────
-    private static readonly Windows.UI.Color _colorNotStarted = Windows.UI.Color.FromArgb(0xFF, 0x8A, 0x8A, 0x8A);
-    private static readonly Windows.UI.Color _colorInProgress  = Windows.UI.Color.FromArgb(0xFF, 0x00, 0x78, 0xD4);
-    private static readonly Windows.UI.Color _colorComplete    = Windows.UI.Color.FromArgb(0xFF, 0x10, 0x7C, 0x10);
-    private static readonly Windows.UI.Color _colorBlocked     = Windows.UI.Color.FromArgb(0xFF, 0xC5, 0x0F, 0x1F);
+    private const double _rowHeight    = GanttLayout.RowHeight;
+    private const double _barHeight    = GanttLayout.BarHeight;
+    private const double _barOffsetY   = (_rowHeight - _barHeight) / 2.0;
+    private const double _headerHeight = GanttLayout.HeaderHeight;
+    private const double _headerTierH  = _headerHeight / 2.0;
+    private const double _labelWidth   = 220.0; // matches the label column width in GanttPage.xaml
 
-    // ─── Grid line colours ─────────────────────────────────────────────────────
-    private static readonly Windows.UI.Color _colorGridLine  = Windows.UI.Color.FromArgb(0x20, 0x80, 0x80, 0x80);
-    private static readonly Windows.UI.Color _colorMajorLine = Windows.UI.Color.FromArgb(0x40, 0x80, 0x80, 0x80);
-
-    // ─── Layout constants ──────────────────────────────────────────────────────
-    private const double _rowHeight      = GanttViewModel.RowHeight;
-    private const double _barHeight      = 24.0;
-    private const double _barOffsetY     = (_rowHeight - _barHeight) / 2.0;
-    private const double _headerHeight   = GanttViewModel.HeaderHeight;
-    private const double _headerTopH     = _headerHeight / 2.0;
-    private const double _headerBottomH  = _headerHeight / 2.0;
+    private readonly SolidColorBrush _gridLineBrush    = new(Color.FromArgb(0x20, 0x80, 0x80, 0x80));
+    private readonly SolidColorBrush _majorLineBrush   = new(Color.FromArgb(0x40, 0x80, 0x80, 0x80));
+    private readonly SolidColorBrush _progressBrush    = new(Color.FromArgb(0x45, 0xFF, 0xFF, 0xFF));
+    private readonly SolidColorBrush _barTextBrush     = new(Colors.White);
+    private readonly SolidColorBrush _assigneeBrush    = new(Color.FromArgb(0xA0, 0x80, 0x80, 0x80));
+    private readonly SolidColorBrush _noBarDotBrush    = new(Color.FromArgb(0x60, 0x80, 0x80, 0x80));
+    private readonly SolidColorBrush _parentAccentBrush = new(Color.FromArgb(0x90, 0x00, 0x78, 0xD4));
+    private readonly Dictionary<WbsStatus, SolidColorBrush> _statusBrushes =
+        Enum.GetValues<WbsStatus>().ToDictionary(s => s, s => new SolidColorBrush(StatusPalette.Color(s)));
 
     public GanttViewModel ViewModel { get; }
 
-    private bool _handlersRegistered;
-
     public GanttPage()
     {
-        ViewModel = App.Services.GetRequiredService<GanttViewModel>();
+        ViewModel = App.Services.CreateGanttViewModel();
         InitializeComponent();
+        ViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(GanttViewModel.Layout))
+                DrawGantt();
+        };
+        // Canvas content is drawn with theme-dependent colours, so it must be redrawn on a theme switch.
+        ActualThemeChanged += (_, _) => DrawGantt();
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        ViewModel.OnNavigatedTo(e.Parameter);
-
-        if (!_handlersRegistered)
-        {
-            ViewModel.Rows.CollectionChanged += (_, _) => DrawGantt();
-            ViewModel.PropertyChanged += (_, pe) =>
-            {
-                if (pe.PropertyName is
-                        nameof(GanttViewModel.TotalWidth) or
-                        nameof(GanttViewModel.TotalHeight) or
-                        nameof(GanttViewModel.HeaderTicks))
-                    DrawGantt();
-            };
-            _handlersRegistered = true;
-        }
+        ViewModel.OnNavigatedTo();
+        DrawGantt();
     }
-
-    protected override void OnNavigatedFrom(NavigationEventArgs e)
-    {
-        base.OnNavigatedFrom(e);
-        ViewModel.OnNavigatedFrom();
-    }
-
-    private void ZoomCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        => ViewModel.SelectedZoomIndex = ZoomCombo.SelectedIndex;
 
     private void GanttScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
     {
@@ -76,14 +59,12 @@ public sealed partial class GanttPage : Page
         HeaderScrollViewer.ChangeView(GanttScrollViewer.HorizontalOffset, null, null, true);
     }
 
-    // ─── Main draw entry point ─────────────────────────────────────────────────
-
     private void DrawGantt()
     {
-        double chartW = ViewModel.TotalWidth;
-        double rowsH  = Math.Max(0, ViewModel.TotalHeight - _headerHeight);
+        double chartW = ViewModel.Layout.TotalWidth;
+        double rowsH  = ViewModel.Layout.TotalHeight;
 
-        LabelHeaderCanvas.Width  = GanttViewModel.LabelWidth;
+        LabelHeaderCanvas.Width  = _labelWidth;
         LabelHeaderCanvas.Height = _headerHeight;
         LabelHeaderCanvas.Children.Clear();
 
@@ -91,7 +72,7 @@ public sealed partial class GanttPage : Page
         HeaderCanvas.Height = _headerHeight;
         HeaderCanvas.Children.Clear();
 
-        LabelCanvas.Width  = GanttViewModel.LabelWidth;
+        LabelCanvas.Width  = _labelWidth;
         LabelCanvas.Height = rowsH;
         LabelCanvas.Children.Clear();
 
@@ -99,117 +80,54 @@ public sealed partial class GanttPage : Page
         ChartCanvas.Height = rowsH;
         ChartCanvas.Children.Clear();
 
-        bool isDark  = ActualTheme == ElementTheme.Dark;
-        var  labelFg = new SolidColorBrush(isDark ? Colors.White : Colors.Black);
+        var labelFg     = (Brush)Resources["GanttLabelForeground"];
+        var headerBrush = (Brush)Resources["GanttHeaderBackground"];
 
-        DrawLabelHeader(isDark, labelFg);
-        DrawChartHeader(chartW, isDark, labelFg);
-        DrawRowBands(chartW, isDark);
+        DrawLabelHeader(headerBrush, labelFg);
+        DrawChartHeader(chartW, headerBrush, labelFg);
+        DrawRowBands(chartW);
         DrawVerticalGridLines(rowsH);
-        DrawLabels(labelFg, isDark);
+        DrawLabels(labelFg);
         DrawBars();
         DrawMilestones(rowsH);
         DrawDependencies();
         DrawTodayLine(rowsH);
     }
 
-    // ─── Label column header ───────────────────────────────────────────────────
-
-    private void DrawLabelHeader(bool isDark, SolidColorBrush labelFg)
+    private void DrawLabelHeader(Brush headerBrush, Brush labelFg)
     {
-        var bg = new Rectangle
-        {
-            Width  = GanttViewModel.LabelWidth,
-            Height = _headerHeight,
-            Fill   = new SolidColorBrush(isDark
-                ? Windows.UI.Color.FromArgb(0x28, 0xFF, 0xFF, 0xFF)
-                : Windows.UI.Color.FromArgb(0x14, 0x00, 0x00, 0x00))
-        };
-        Canvas.SetLeft(bg, 0);
-        Canvas.SetTop(bg, 0);
-        LabelHeaderCanvas.Children.Add(bg);
-
-        AddHLine(LabelHeaderCanvas, 0, GanttViewModel.LabelWidth, _headerHeight,
-            new SolidColorBrush(_colorMajorLine), 1);
+        Place(LabelHeaderCanvas, new Rectangle { Width = _labelWidth, Height = _headerHeight, Fill = headerBrush }, 0, 0);
+        AddHLine(LabelHeaderCanvas, 0, _labelWidth, _headerHeight, _majorLineBrush, 1);
 
         var title = new TextBlock
         {
-            Text       = "Task",
+            Text       = Strings.Get("Gantt_TaskHeader"),
             FontSize   = 12,
             FontWeight = FontWeights.SemiBold,
             Foreground = labelFg
         };
-        Canvas.SetLeft(title, 12);
-        Canvas.SetTop(title, (_headerHeight - 16) / 2.0);
-        LabelHeaderCanvas.Children.Add(title);
+        Place(LabelHeaderCanvas, title, 12, (_headerHeight - 16) / 2.0);
     }
 
-    // ─── Chart header (two-tier: major period + minor ticks) ──────────────────
-
-    private void DrawChartHeader(double chartW, bool isDark, SolidColorBrush labelFg)
+    private void DrawChartHeader(double chartW, Brush headerBrush, Brush labelFg)
     {
-        var topBg = new Rectangle
+        var bottomBrush = (Brush)Resources["GanttHeaderBottomBackground"];
+        Place(HeaderCanvas, new Rectangle { Width = chartW, Height = _headerTierH, Fill = headerBrush }, 0, 0);
+        Place(HeaderCanvas, new Rectangle { Width = chartW, Height = _headerTierH, Fill = bottomBrush }, 0, _headerTierH);
+
+        AddHLine(HeaderCanvas, 0, chartW, _headerTierH, _gridLineBrush, 0.5);
+        AddHLine(HeaderCanvas, 0, chartW, _headerHeight, _majorLineBrush, 1);
+
+        foreach (GanttHeaderTick tick in ViewModel.Layout.HeaderTicks)
         {
-            Width  = chartW,
-            Height = _headerTopH,
-            Fill   = new SolidColorBrush(isDark
-                ? Windows.UI.Color.FromArgb(0x28, 0xFF, 0xFF, 0xFF)
-                : Windows.UI.Color.FromArgb(0x14, 0x00, 0x00, 0x00))
-        };
-        Canvas.SetLeft(topBg, 0);
-        Canvas.SetTop(topBg, 0);
-        HeaderCanvas.Children.Add(topBg);
+            bool isMajor = tick.MajorLabel is not null && tick.X > 0;
+            AddVLine(HeaderCanvas, tick.X, _headerTierH, _headerHeight, isMajor ? _majorLineBrush : _gridLineBrush, 0.5);
+            if (isMajor)
+                AddVLine(HeaderCanvas, tick.X, 0, _headerTierH, _majorLineBrush, 1);
 
-        var bottomBg = new Rectangle
-        {
-            Width  = chartW,
-            Height = _headerBottomH,
-            Fill   = new SolidColorBrush(isDark
-                ? Windows.UI.Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF)
-                : Windows.UI.Color.FromArgb(0x0A, 0x00, 0x00, 0x00))
-        };
-        Canvas.SetLeft(bottomBg, 0);
-        Canvas.SetTop(bottomBg, _headerTopH);
-        HeaderCanvas.Children.Add(bottomBg);
+            var tickLabel = new TextBlock { Text = tick.Label, FontSize = 10, Foreground = labelFg };
+            Place(HeaderCanvas, tickLabel, tick.X + 2, _headerTierH + (_headerTierH - 14) / 2.0);
 
-        AddHLine(HeaderCanvas, 0, chartW, _headerTopH, new SolidColorBrush(_colorGridLine), 0.5);
-        AddHLine(HeaderCanvas, 0, chartW, _headerHeight, new SolidColorBrush(_colorMajorLine), 1);
-
-        DrawHeaderTicks(chartW, labelFg);
-    }
-
-    private void DrawHeaderTicks(double chartW, SolidColorBrush labelFg)
-    {
-        IReadOnlyList<GanttHeaderTick>? ticks = ViewModel.HeaderTicks;
-        if (ticks is null or { Count: 0 }) return;
-
-        var gridLine  = new SolidColorBrush(_colorGridLine);
-        var majorLine = new SolidColorBrush(_colorMajorLine);
-
-        foreach (GanttHeaderTick tick in ticks)
-        {
-            if (tick.X < 0) continue;
-
-            // Minor tick line in bottom tier
-            AddVLine(HeaderCanvas, tick.X, _headerTopH, _headerHeight,
-                tick.IsMajorBoundary && tick.X > 0 ? majorLine : gridLine, 0.5);
-
-            // Major boundary divider through full header
-            if (tick.IsMajorBoundary && tick.X > 0)
-                AddVLine(HeaderCanvas, tick.X, 0, _headerTopH, majorLine, 1);
-
-            // Minor tick label (bottom tier)
-            var tickLabel = new TextBlock
-            {
-                Text       = tick.Label,
-                FontSize   = 10,
-                Foreground = labelFg
-            };
-            Canvas.SetLeft(tickLabel, tick.X + 2);
-            Canvas.SetTop(tickLabel, _headerTopH + (_headerBottomH - 14) / 2.0);
-            HeaderCanvas.Children.Add(tickLabel);
-
-            // Major period label (top tier)
             if (tick.MajorLabel is not null)
             {
                 var majorLabel = new TextBlock
@@ -219,78 +137,38 @@ public sealed partial class GanttPage : Page
                     FontWeight = FontWeights.SemiBold,
                     Foreground = labelFg
                 };
-                Canvas.SetLeft(majorLabel, tick.X + 4);
-                Canvas.SetTop(majorLabel, (_headerTopH - 14) / 2.0);
-                HeaderCanvas.Children.Add(majorLabel);
+                Place(HeaderCanvas, majorLabel, tick.X + 4, (_headerTierH - 14) / 2.0);
             }
         }
     }
 
-    // ─── Row bands ────────────────────────────────────────────────────────────
-
-    private void DrawRowBands(double chartW, bool isDark)
+    /// <summary>Zebra bands and row separators, drawn on both the label and the chart canvas so they line up.</summary>
+    private void DrawRowBands(double chartW)
     {
-        var bandBrush = new SolidColorBrush(isDark
-            ? Windows.UI.Color.FromArgb(0x0F, 0xFF, 0xFF, 0xFF)
-            : Windows.UI.Color.FromArgb(0x0A, 0x00, 0x00, 0x00));
-        var lineBrush = new SolidColorBrush(_colorGridLine);
-        int i = 0;
-        foreach (GanttRow row in ViewModel.Rows)
+        var bandBrush = (Brush)Resources["GanttRowBand"];
+        IReadOnlyList<GanttRow> rows = ViewModel.Layout.Rows;
+        for (int i = 0; i < rows.Count; i++)
         {
-            double top = row.RowTop - _headerHeight;
-            if (i % 2 == 0)
+            double top = rows[i].RowTop;
+            foreach ((Canvas canvas, double width) in new[] { (ChartCanvas, chartW), (LabelCanvas, _labelWidth) })
             {
-                var band = new Rectangle
-                {
-                    Width  = chartW,
-                    Height = _rowHeight,
-                    Fill   = bandBrush
-                };
-                Canvas.SetLeft(band, 0);
-                Canvas.SetTop(band, top);
-                ChartCanvas.Children.Add(band);
+                if (i % 2 == 0)
+                    Place(canvas, new Rectangle { Width = width, Height = _rowHeight, Fill = bandBrush }, 0, top);
+                AddHLine(canvas, 0, width, top + _rowHeight, _gridLineBrush, 0.5);
             }
-            AddHLine(ChartCanvas, 0, chartW, top + _rowHeight, lineBrush, 0.5);
-            i++;
         }
     }
-
-    // ─── Vertical grid lines ──────────────────────────────────────────────────
 
     private void DrawVerticalGridLines(double rowsH)
     {
-        var gridBrush = new SolidColorBrush(_colorGridLine);
-        foreach (GanttHeaderTick tick in ViewModel.HeaderTicks ?? [])
-            AddVLine(ChartCanvas, tick.X, 0, rowsH, gridBrush, 0.5);
+        foreach (GanttHeaderTick tick in ViewModel.Layout.HeaderTicks)
+            AddVLine(ChartCanvas, tick.X, 0, rowsH, _gridLineBrush, 0.5);
     }
 
-    // ─── Labels (drawn on LabelCanvas) ────────────────────────────────────────
-
-    private void DrawLabels(SolidColorBrush labelFg, bool isDark)
+    private void DrawLabels(Brush labelFg)
     {
-        var bandBrush = new SolidColorBrush(isDark
-            ? Windows.UI.Color.FromArgb(0x0F, 0xFF, 0xFF, 0xFF)
-            : Windows.UI.Color.FromArgb(0x0A, 0x00, 0x00, 0x00));
-        var lineBrush = new SolidColorBrush(_colorGridLine);
-        int i = 0;
-        foreach (GanttRow row in ViewModel.Rows)
+        foreach (GanttRow row in ViewModel.Layout.Rows)
         {
-            double top = row.RowTop - _headerHeight;
-
-            if (i % 2 == 0)
-            {
-                var band = new Rectangle
-                {
-                    Width  = GanttViewModel.LabelWidth,
-                    Height = _rowHeight,
-                    Fill   = bandBrush
-                };
-                Canvas.SetLeft(band, 0);
-                Canvas.SetTop(band, top);
-                LabelCanvas.Children.Add(band);
-            }
-            AddHLine(LabelCanvas, 0, GanttViewModel.LabelWidth, top + _rowHeight, lineBrush, 0.5);
-
             double indent = 12.0 + row.Depth * 14.0;
 
             if (row.IsParent)
@@ -299,177 +177,121 @@ public sealed partial class GanttPage : Page
                 {
                     Width   = 3,
                     Height  = _rowHeight * 0.5,
-                    Fill    = new SolidColorBrush(Windows.UI.Color.FromArgb(0x90, 0x00, 0x78, 0xD4)),
+                    Fill    = _parentAccentBrush,
                     RadiusX = 1.5,
                     RadiusY = 1.5
                 };
-                Canvas.SetLeft(accent, indent - 7);
-                Canvas.SetTop(accent, top + _rowHeight * 0.25);
-                LabelCanvas.Children.Add(accent);
+                Place(LabelCanvas, accent, indent - 7, row.RowTop + _rowHeight * 0.25);
             }
 
             var label = new TextBlock
             {
                 Text              = row.Label,
-                Width             = GanttViewModel.LabelWidth - indent - 8,
+                Width             = _labelWidth - indent - 8,
                 TextTrimming      = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground        = labelFg,
                 FontSize          = 12,
                 FontWeight        = row.IsParent ? FontWeights.SemiBold : FontWeights.Normal
             };
-            Canvas.SetLeft(label, indent);
-            Canvas.SetTop(label, top + (_rowHeight - 16) / 2.0);
-            LabelCanvas.Children.Add(label);
-
-            i++;
+            Place(LabelCanvas, label, indent, row.RowTop + (_rowHeight - 16) / 2.0);
         }
     }
-
-    // ─── Task bars ────────────────────────────────────────────────────────────
 
     private void DrawBars()
     {
-        foreach (GanttRow row in ViewModel.Rows)
+        foreach (GanttRow row in ViewModel.Layout.Rows)
         {
-            double top = row.RowTop - _headerHeight;
+            double barTop = row.RowTop + _barOffsetY;
 
-            if (row.HasBar)
+            if (!row.HasBar)
             {
-                Windows.UI.Color barColor = row.Status switch
-                {
-                    WbsStatus.InProgress => _colorInProgress,
-                    WbsStatus.Complete   => _colorComplete,
-                    WbsStatus.Blocked    => _colorBlocked,
-                    _                    => _colorNotStarted
-                };
+                Place(ChartCanvas, new Ellipse { Width = 5, Height = 5, Fill = _noBarDotBrush }, 6, row.RowTop + (_rowHeight - 5) / 2.0);
+                continue;
+            }
 
-                var bar = new Rectangle
+            var bar = new Rectangle
+            {
+                Width   = row.BarWidth,
+                Height  = _barHeight,
+                Fill    = _statusBrushes[row.Status],
+                RadiusX = 3,
+                RadiusY = 3
+            };
+            Place(ChartCanvas, bar, row.BarLeft, barTop);
+
+            if (row.PercentComplete > 0 && row.BarWidth > 0)
+            {
+                var progress = new Rectangle
                 {
-                    Width   = row.BarWidth,
+                    Width   = Math.Clamp(row.BarWidth * row.PercentComplete, 4, row.BarWidth),
                     Height  = _barHeight,
-                    Fill    = new SolidColorBrush(barColor),
+                    Fill    = _progressBrush,
                     RadiusX = 3,
                     RadiusY = 3
                 };
-                Canvas.SetLeft(bar, row.BarLeft);
-                Canvas.SetTop(bar, top + _barOffsetY);
-                ChartCanvas.Children.Add(bar);
+                Place(ChartCanvas, progress, row.BarLeft, barTop);
 
-                if (row.PercentComplete > 0 && row.BarWidth > 0)
+                if (row.BarWidth > 36)
                 {
-                    double fillW = Math.Clamp(row.BarWidth * row.PercentComplete, 4, row.BarWidth);
-                    var progress = new Rectangle
+                    var percent = new TextBlock
                     {
-                        Width   = fillW,
-                        Height  = _barHeight,
-                        Fill    = new SolidColorBrush(Windows.UI.Color.FromArgb(0x45, 0xFF, 0xFF, 0xFF)),
-                        RadiusX = 3,
-                        RadiusY = 3
-                    };
-                    Canvas.SetLeft(progress, row.BarLeft);
-                    Canvas.SetTop(progress, top + _barOffsetY);
-                    ChartCanvas.Children.Add(progress);
-
-                    if (row.BarWidth > 36)
-                    {
-                        var pctTb = new TextBlock
-                        {
-                            Text       = $"{(int)(row.PercentComplete * 100)}%",
-                            FontSize   = 9,
-                            Foreground = new SolidColorBrush(Colors.White)
-                        };
-                        Canvas.SetLeft(pctTb, row.BarLeft + 4);
-                        Canvas.SetTop(pctTb, top + _barOffsetY + (_barHeight - 12) / 2.0);
-                        ChartCanvas.Children.Add(pctTb);
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(row.AssignedTo) && row.BarWidth > 30)
-                {
-                    var assignedTb = new TextBlock
-                    {
-                        Text       = row.AssignedTo,
+                        Text       = $"{(int)(row.PercentComplete * 100)}%",
                         FontSize   = 9,
-                        Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(0xA0, 0x80, 0x80, 0x80))
+                        Foreground = _barTextBrush
                     };
-                    Canvas.SetLeft(assignedTb, row.BarLeft);
-                    Canvas.SetTop(assignedTb, top + _barOffsetY + _barHeight + 1);
-                    ChartCanvas.Children.Add(assignedTb);
+                    Place(ChartCanvas, percent, row.BarLeft + 4, barTop + (_barHeight - 12) / 2.0);
                 }
             }
-            else
+
+            if (!string.IsNullOrEmpty(row.AssignedTo) && row.BarWidth > 30)
             {
-                var dot = new Ellipse
-                {
-                    Width  = 5,
-                    Height = 5,
-                    Fill   = new SolidColorBrush(Windows.UI.Color.FromArgb(0x60, 0x80, 0x80, 0x80))
-                };
-                Canvas.SetLeft(dot, 6);
-                Canvas.SetTop(dot, top + (_rowHeight - 5) / 2.0);
-                ChartCanvas.Children.Add(dot);
+                var assignee = new TextBlock { Text = row.AssignedTo, FontSize = 9, Foreground = _assigneeBrush };
+                Place(ChartCanvas, assignee, row.BarLeft, barTop + _barHeight + 1);
             }
         }
     }
 
-    // ─── Milestones ───────────────────────────────────────────────────────────
-
     private void DrawMilestones(double rowsH)
     {
-        const double size      = 12.0;
-        var          lineBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(0x1A, 0xFF, 0xB9, 0x00));
-        foreach (GanttMilestoneMarker marker in ViewModel.MilestoneMarkers ?? [])
+        const double size = 12.0;
+        var lineBrush     = new SolidColorBrush(Color.FromArgb(0x1A, 0xFF, 0xB9, 0x00));
+        var openBrush     = new SolidColorBrush(Color.FromArgb(0xFF, 0xFF, 0xB9, 0x00));
+        var strokeBrush   = new SolidColorBrush(Color.FromArgb(0x80, 0x00, 0x00, 0x00));
+        foreach (GanttMilestoneMarker marker in ViewModel.Layout.MilestoneMarkers)
         {
-            // Column highlight runs through the content rows
             AddVLine(ChartCanvas, marker.X, 0, rowsH, lineBrush, 1.5);
 
-            // Diamond sits in the sticky header
+            // In the sticky header so it stays visible while the rows scroll, and in the top tier, clear of the day numbers.
             var diamond = new Rectangle
             {
                 Width           = size,
                 Height          = size,
-                Fill            = new SolidColorBrush(marker.IsComplete
-                    ? Windows.UI.Color.FromArgb(0xFF, 0x10, 0x7C, 0x10)
-                    : Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xB9, 0x00)),
-                Stroke          = new SolidColorBrush(Windows.UI.Color.FromArgb(0x80, 0x00, 0x00, 0x00)),
+                Fill            = marker.IsComplete ? _statusBrushes[WbsStatus.Complete] : openBrush,
+                Stroke          = strokeBrush,
                 StrokeThickness = 1,
                 RenderTransform = new RotateTransform { Angle = 45, CenterX = size / 2, CenterY = size / 2 }
             };
-            Canvas.SetLeft(diamond, marker.X - size / 2.0);
-            Canvas.SetTop(diamond, _headerTopH + (_headerBottomH - size) / 2.0);
-            HeaderCanvas.Children.Add(diamond);
+            Place(HeaderCanvas, diamond, marker.X - size / 2.0, (_headerTierH - size) / 2.0);
             ToolTipService.SetToolTip(diamond, marker.Title);
         }
     }
 
-    // ─── Dependency arrows ────────────────────────────────────────────────────
-
     private void DrawDependencies()
     {
-        var startBrush  = new SolidColorBrush(Windows.UI.Color.FromArgb(0x80, 0x80, 0x80, 0x80));
-        var finishBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(0xC0, 0xCA, 0x50, 0x10));
+        var startBrush  = new SolidColorBrush(Color.FromArgb(0x80, 0x80, 0x80, 0x80));
+        var finishBrush = new SolidColorBrush(Color.FromArgb(0xC0, 0xCA, 0x50, 0x10));
         const double exitGap   = 8.0;
         const double arrowSize = 5.0;
 
-        foreach (GanttDependencyArrow arrow in ViewModel.DependencyArrows ?? [])
+        foreach (GanttDependencyArrow arrow in ViewModel.Layout.DependencyArrows)
         {
-            bool isFinish = DependencyConstraints.IsFinishConstraint(arrow.Type);
-            var  brush    = isFinish ? finishBrush : startBrush;
-
-            string typeLabel = arrow.Type switch
-            {
-                DependencyType.FinishToStart  => "Finish → Start",
-                DependencyType.StartToStart   => "Start → Start",
-                DependencyType.FinishToFinish => "Finish → Finish",
-                DependencyType.StartToFinish  => "Start → Finish",
-                _                             => string.Empty
-            };
+            bool   isFinish  = DependencyConstraints.IsFinishConstraint(arrow.Type);
+            var    brush     = isFinish ? finishBrush : startBrush;
+            string typeLabel = DisplayText.GetLabel(arrow.Type);
 
             bool   isFromFinish = arrow.Type is DependencyType.FinishToStart or DependencyType.FinishToFinish;
             double exitX        = isFromFinish ? arrow.FromX + exitGap : arrow.FromX - exitGap;
-            double fromY        = arrow.FromY - _headerHeight;
-            double toY          = arrow.ToY   - _headerHeight;
 
             var connector = new Polyline
             {
@@ -478,32 +300,25 @@ public sealed partial class GanttPage : Page
                 StrokeDashArray = isFinish ? new DoubleCollection { 4, 2 } : null,
                 Points          = new PointCollection
                 {
-                    new(arrow.FromX, fromY),
-                    new(exitX,       fromY),
-                    new(exitX,       toY),
-                    new(arrow.ToX,   toY)
+                    new(arrow.FromX, arrow.FromY),
+                    new(exitX,       arrow.FromY),
+                    new(exitX,       arrow.ToY),
+                    new(arrow.ToX,   arrow.ToY)
                 }
             };
             ToolTipService.SetToolTip(connector, typeLabel);
             ChartCanvas.Children.Add(connector);
 
-            bool pointsRight = arrow.ToX >= exitX;
+            double backX = arrow.ToX >= exitX ? arrow.ToX - arrowSize : arrow.ToX + arrowSize;
             var arrowHead = new Polygon
             {
                 Fill   = brush,
-                Points = pointsRight
-                    ? new PointCollection
-                      {
-                          new(arrow.ToX,             toY),
-                          new(arrow.ToX - arrowSize, toY - arrowSize / 2.0),
-                          new(arrow.ToX - arrowSize, toY + arrowSize / 2.0)
-                      }
-                    : new PointCollection
-                      {
-                          new(arrow.ToX,             toY),
-                          new(arrow.ToX + arrowSize, toY - arrowSize / 2.0),
-                          new(arrow.ToX + arrowSize, toY + arrowSize / 2.0)
-                      }
+                Points = new PointCollection
+                {
+                    new(arrow.ToX, arrow.ToY),
+                    new(backX,     arrow.ToY - arrowSize / 2.0),
+                    new(backX,     arrow.ToY + arrowSize / 2.0)
+                }
             };
             ChartCanvas.Children.Add(arrowHead);
             if (!string.IsNullOrEmpty(typeLabel))
@@ -511,33 +326,33 @@ public sealed partial class GanttPage : Page
         }
     }
 
-    // ─── Today line ───────────────────────────────────────────────────────────
-
     private void DrawTodayLine(double rowsH)
     {
-        if (ViewModel.TodayX < 0) return;
+        double todayX = ViewModel.Layout.TodayX;
+        if (todayX < 0) return;
 
-        var todayBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(0xEE, 0xC5, 0x0F, 0x1F));
-
-        // Runs through the sticky header
-        AddVLine(HeaderCanvas, ViewModel.TodayX, 0, _headerHeight, todayBrush, 2);
+        var todayBrush = new SolidColorBrush(Color.FromArgb(0xEE, 0xC5, 0x0F, 0x1F));
+        AddVLine(HeaderCanvas, todayX, 0, _headerHeight, todayBrush, 2);
 
         var todayLabel = new TextBlock
         {
-            Text       = "Today",
+            Text       = Strings.Get("Gantt_Today"),
             FontSize   = 9,
             FontWeight = FontWeights.SemiBold,
             Foreground = todayBrush
         };
-        Canvas.SetLeft(todayLabel, ViewModel.TodayX + 3);
-        Canvas.SetTop(todayLabel, _headerTopH + 4);
-        HeaderCanvas.Children.Add(todayLabel);
+        // In the top tier, which only holds the month names; the bottom tier's day numbers would collide.
+        Place(HeaderCanvas, todayLabel, todayX + 3, 4);
 
-        // Continues through the scrollable content rows
-        AddVLine(ChartCanvas, ViewModel.TodayX, 0, rowsH, todayBrush, 2);
+        AddVLine(ChartCanvas, todayX, 0, rowsH, todayBrush, 2);
     }
 
-    // ─── Drawing helpers ──────────────────────────────────────────────────────
+    private static void Place(Canvas canvas, UIElement element, double x, double y)
+    {
+        Canvas.SetLeft(element, x);
+        Canvas.SetTop(element, y);
+        canvas.Children.Add(element);
+    }
 
     private static void AddHLine(Canvas canvas, double x1, double x2, double y,
         SolidColorBrush brush, double thickness)

@@ -20,7 +20,13 @@
   <data name="Shell_NavWbsTree.Content" xml:space="preserve">
     <value>WBS Tree</value>
   </data>
+  <data name="Shell_NavWbsTree.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>WBS Tree</value>
+  </data>
   <data name="Shell_NavWbsOutline.Content" xml:space="preserve">
+    <value>WBS Outline</value>
+  </data>
+  <data name="Shell_NavWbsOutline.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>WBS Outline</value>
   </data>
   <data name="Shell_NavGantt.Text" xml:space="preserve">
@@ -32,8 +38,23 @@
   <data name="Shell_NavMilestones.Content" xml:space="preserve">
     <value>Milestones</value>
   </data>
+  <data name="Shell_NavMilestones.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Milestones</value>
+  </data>
   <data name="Shell_NavSettings.Content" xml:space="preserve">
     <value>Settings</value>
+  </data>
+  <data name="Shell_NavSettings.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Shell_NavDashboardItem.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Dashboard (Beta)</value>
+  </data>
+  <data name="Shell_NavGanttItem.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Gantt (Beta)</value>
+  </data>
+  <data name="Shell_NavReportsItem.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Reports (Beta)</value>
   </data>
 
   <!-- ─── Welcome page ────────────────────────────────────────────────────── -->
@@ -43,8 +64,14 @@
   <data name="WelcomePage_NewProjectBtn.Content" xml:space="preserve">
     <value>New Project</value>
   </data>
+  <data name="WelcomePage_NewProjectBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Create a new project</value>
+  </data>
   <data name="WelcomePage_OpenProjectBtn.Content" xml:space="preserve">
     <value>Open Project</value>
+  </data>
+  <data name="WelcomePage_OpenProjectBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Open an existing project file</value>
   </data>
   <data name="WelcomePage_RecentProjectsLabel.Text" xml:space="preserve">
     <value>Recent Projects</value>
@@ -54,20 +81,29 @@
   <data name="DashboardPage_Title.Text" xml:space="preserve">
     <value>Dashboard</value>
   </data>
-  <data name="DashboardPage_ExportPdfBtn.Text" xml:space="preserve">
-    <value>Export to PDF</value>
-  </data>
   <data name="DashboardPage_FilterStartDate.PlaceholderText" xml:space="preserve">
     <value>Start date</value>
+  </data>
+  <data name="DashboardPage_FilterStartDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Filter start date</value>
   </data>
   <data name="DashboardPage_FilterEndDate.PlaceholderText" xml:space="preserve">
     <value>End date</value>
   </data>
+  <data name="DashboardPage_FilterEndDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Filter end date</value>
+  </data>
   <data name="DashboardPage_FilterAssignee.PlaceholderText" xml:space="preserve">
     <value>Assignee</value>
   </data>
+  <data name="DashboardPage_FilterAssignee.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Filter by assignee</value>
+  </data>
   <data name="DashboardPage_FilterStatus.PlaceholderText" xml:space="preserve">
     <value>Status</value>
+  </data>
+  <data name="DashboardPage_FilterStatus.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Filter by status</value>
   </data>
   <data name="DashboardPage_KpiCompletePercent.Text" xml:space="preserve">
     <value>% Complete</value>
@@ -96,31 +132,88 @@
   <data name="DashboardPage_UpcomingMilestonesTitle.Text" xml:space="preserve">
     <value>Upcoming Milestones — Next 60 Days</value>
   </data>
+  <data name="DashboardPage_BetaFeature.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Beta feature</value>
+  </data>
+  <data name="DashboardPage_OverallPercentComplete.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Overall percent complete</value>
+  </data>
+  <data name="DashboardPage_CompleteTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Complete task count</value>
+  </data>
+  <data name="DashboardPage_InProgressTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>In progress task count</value>
+  </data>
+  <data name="DashboardPage_AtRiskTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>At risk task count</value>
+  </data>
+  <data name="DashboardPage_OverdueTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Overdue task count</value>
+  </data>
+  <data name="DashboardPage_BlockedTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Blocked task count</value>
+  </data>
+  <data name="DashboardPage_DeliverablesList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Deliverables list</value>
+  </data>
+  <data name="DashboardPage_DeliverableProgress.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Deliverable progress</value>
+  </data>
+  <data name="DashboardPage_StatusBreakdownChart.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Status breakdown chart</value>
+  </data>
+  <data name="DashboardPage_UpcomingMilestonesList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Upcoming milestones list</value>
+  </data>
 
   <!-- ─── WBS Tree page ───────────────────────────────────────────────────── -->
   <data name="WbsTreePage_AddRootNodeBtn.Content" xml:space="preserve">
     <value>Add Root Node</value>
   </data>
+  <data name="WbsTreePage_AddRootNodeBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Add root node</value>
+  </data>
   <data name="WbsTreePage_AddChildBtn.Content" xml:space="preserve">
     <value>Add Child</value>
+  </data>
+  <data name="WbsTreePage_AddChildBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Add child node</value>
   </data>
   <data name="WbsTreePage_DeleteNodeBtn.Content" xml:space="preserve">
     <value>Delete Node</value>
   </data>
+  <data name="WbsTreePage_DeleteNodeBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Delete selected node</value>
+  </data>
   <data name="WbsTreePage_CollapseAllBtn.Content" xml:space="preserve">
     <value>Collapse All</value>
+  </data>
+  <data name="WbsTreePage_CollapseAllBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Collapse all nodes</value>
   </data>
   <data name="WbsTreePage_ExpandAllBtn.Content" xml:space="preserve">
     <value>Expand All</value>
   </data>
+  <data name="WbsTreePage_ExpandAllBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Expand all nodes</value>
+  </data>
   <data name="WbsTreePage_ContextAddChild.Text" xml:space="preserve">
     <value>Add Child</value>
+  </data>
+  <data name="WbsTreePage_ContextAddChild.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Add child node</value>
   </data>
   <data name="WbsTreePage_ContextAddSibling.Text" xml:space="preserve">
     <value>Add Sibling</value>
   </data>
+  <data name="WbsTreePage_ContextAddSibling.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Add sibling node</value>
+  </data>
   <data name="WbsTreePage_ContextDelete.Text" xml:space="preserve">
     <value>Delete</value>
+  </data>
+  <data name="WbsTreePage_ContextDelete.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Delete node</value>
   </data>
   <data name="WbsTreePage_EmptyTitle.Text" xml:space="preserve">
     <value>No nodes yet</value>
@@ -154,6 +247,9 @@
   <data name="WbsOutlinePage_ColDueDate.Text" xml:space="preserve">
     <value>Due Date</value>
   </data>
+  <data name="WbsOutlinePage_OutlineListView.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>WBS outline</value>
+  </data>
 
   <!-- ─── Gantt page ──────────────────────────────────────────────────────── -->
   <data name="GanttPage_Title.Text" xml:space="preserve">
@@ -170,6 +266,12 @@
   </data>
   <data name="GanttPage_ZoomMonth.Content" xml:space="preserve">
     <value>Month</value>
+  </data>
+  <data name="GanttPage_BetaFeature.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Beta feature</value>
+  </data>
+  <data name="GanttPage_ZoomCombo.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Zoom level</value>
   </data>
 
   <!-- ─── Reports page ────────────────────────────────────────────────────── -->
@@ -191,6 +293,9 @@
   <data name="ReportsPage_ToggleSummary.OffContent" xml:space="preserve">
     <value>Excluded</value>
   </data>
+  <data name="ReportsPage_ToggleSummary.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Include summary section</value>
+  </data>
   <data name="ReportsPage_ToggleAttention.Header" xml:space="preserve">
     <value>Attention Required</value>
   </data>
@@ -199,6 +304,9 @@
   </data>
   <data name="ReportsPage_ToggleAttention.OffContent" xml:space="preserve">
     <value>Excluded</value>
+  </data>
+  <data name="ReportsPage_ToggleAttention.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Include attention required section</value>
   </data>
   <data name="ReportsPage_ToggleDeliverables.Header" xml:space="preserve">
     <value>Deliverables</value>
@@ -209,6 +317,9 @@
   <data name="ReportsPage_ToggleDeliverables.OffContent" xml:space="preserve">
     <value>Excluded</value>
   </data>
+  <data name="ReportsPage_ToggleDeliverables.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Include deliverables section</value>
+  </data>
   <data name="ReportsPage_ToggleEffort.Header" xml:space="preserve">
     <value>Effort Summary</value>
   </data>
@@ -217,6 +328,9 @@
   </data>
   <data name="ReportsPage_ToggleEffort.OffContent" xml:space="preserve">
     <value>Excluded</value>
+  </data>
+  <data name="ReportsPage_ToggleEffort.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Include effort summary section</value>
   </data>
   <data name="ReportsPage_ToggleMilestones.Header" xml:space="preserve">
     <value>Upcoming Milestones</value>
@@ -227,6 +341,9 @@
   <data name="ReportsPage_ToggleMilestones.OffContent" xml:space="preserve">
     <value>Excluded</value>
   </data>
+  <data name="ReportsPage_ToggleMilestones.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Include upcoming milestones section</value>
+  </data>
   <data name="ReportsPage_ToggleWbsTree.Header" xml:space="preserve">
     <value>WBS Tree Outline</value>
   </data>
@@ -236,16 +353,31 @@
   <data name="ReportsPage_ToggleWbsTree.OffContent" xml:space="preserve">
     <value>Excluded</value>
   </data>
+  <data name="ReportsPage_ToggleWbsTree.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Include WBS tree outline section</value>
+  </data>
   <data name="ReportsPage_GeneratePdfBtn.Text" xml:space="preserve">
     <value>Generate PDF Report</value>
+  </data>
+  <data name="ReportsPage_BetaFeature.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Beta feature</value>
+  </data>
+  <data name="ReportsPage_ExportPdfButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Generate PDF report</value>
   </data>
 
   <!-- ─── Milestones page ──────────────────────────────────────────────────── -->
   <data name="MilestonesPage_NewTitleInput.PlaceholderText" xml:space="preserve">
     <value>Milestone title</value>
   </data>
+  <data name="MilestonesPage_NewTitleInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>New milestone title</value>
+  </data>
   <data name="MilestonesPage_AddMilestoneBtn.Content" xml:space="preserve">
     <value>Add Milestone</value>
+  </data>
+  <data name="MilestonesPage_AddMilestoneBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Add milestone</value>
   </data>
   <data name="MilestonesPage_StatusComplete.Text" xml:space="preserve">
     <value>✓ Complete</value>
@@ -268,8 +400,14 @@
   <data name="MilestonesPage_SaveBtn.Content" xml:space="preserve">
     <value>Save</value>
   </data>
+  <data name="MilestonesPage_SaveBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Save milestone</value>
+  </data>
   <data name="MilestonesPage_MarkCompleteBtn.Content" xml:space="preserve">
     <value>Mark Complete</value>
+  </data>
+  <data name="MilestonesPage_MarkCompleteBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Mark milestone complete</value>
   </data>
   <data name="MilestonesPage_LinkedNodesTitle.Text" xml:space="preserve">
     <value>Linked WBS Nodes</value>
@@ -280,16 +418,34 @@
   <data name="MilestonesPage_LinkNodeInput.PlaceholderText" xml:space="preserve">
     <value>Select node to link</value>
   </data>
+  <data name="MilestonesPage_LinkNodeInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Node to link</value>
+  </data>
   <data name="MilestonesPage_LinkNodeBtn.Content" xml:space="preserve">
     <value>Link Node</value>
+  </data>
+  <data name="MilestonesPage_LinkNodeBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Link selected node</value>
+  </data>
+  <data name="MilestonesPage_NewMilestoneDueDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>New milestone due date</value>
+  </data>
+  <data name="MilestonesPage_DeleteMilestone.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Delete milestone</value>
+  </data>
+  <data name="MilestonesPage_MilestoneTitle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Milestone title</value>
+  </data>
+  <data name="MilestonesPage_MilestoneDueDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Milestone due date</value>
+  </data>
+  <data name="MilestonesPage_RemoveLinkedNode.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Remove linked node</value>
   </data>
 
   <!-- ─── WBS Detail control ───────────────────────────────────────────────── -->
   <data name="WbsDetail_Title.Text" xml:space="preserve">
     <value>Node Details</value>
-  </data>
-  <data name="WbsDetail_SavingText.Text" xml:space="preserve">
-    <value>Saving…</value>
   </data>
   <data name="WbsDetail_CodeLabel.Text" xml:space="preserve">
     <value>Code</value>
@@ -321,6 +477,9 @@
   <data name="WbsDetail_TitleInput.PlaceholderText" xml:space="preserve">
     <value>Node title…</value>
   </data>
+  <data name="WbsDetail_TitleInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Title</value>
+  </data>
   <data name="WbsDetail_DeliverableToggle.Header" xml:space="preserve">
     <value>Include in report</value>
   </data>
@@ -329,6 +488,9 @@
   </data>
   <data name="WbsDetail_DeliverableToggle.OffContent" xml:space="preserve">
     <value>Not a deliverable</value>
+  </data>
+  <data name="WbsDetail_DeliverableToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Mark node as a deliverable</value>
   </data>
   <data name="WbsDetail_PredecessorsTitle.Text" xml:space="preserve">
     <value>Predecessors</value>
@@ -339,11 +501,50 @@
   <data name="WbsDetail_PredecessorInput.PlaceholderText" xml:space="preserve">
     <value>Select predecessor node</value>
   </data>
+  <data name="WbsDetail_PredecessorInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Predecessor node</value>
+  </data>
   <data name="WbsDetail_AddPredecessorBtn.Content" xml:space="preserve">
     <value>Add Predecessor</value>
   </data>
+  <data name="WbsDetail_AddPredecessorBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Add predecessor dependency</value>
+  </data>
   <data name="WbsDetail_LinkedMilestonesTitle.Text" xml:space="preserve">
     <value>Linked Milestones</value>
+  </data>
+  <data name="WbsDetail_CloseDetailPanel.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Close detail panel</value>
+  </data>
+  <data name="WbsDetail_NodeCode.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Node code</value>
+  </data>
+  <data name="WbsDetail_Description.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="WbsDetail_AssignedTo.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Assigned to</value>
+  </data>
+  <data name="WbsDetail_Status.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="WbsDetail_EstimatedHours.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Estimated hours</value>
+  </data>
+  <data name="WbsDetail_ActualHours.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Actual hours</value>
+  </data>
+  <data name="WbsDetail_StartDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Start date</value>
+  </data>
+  <data name="WbsDetail_DueDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Due date</value>
+  </data>
+  <data name="WbsDetail_RemoveDependency.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Remove dependency</value>
+  </data>
+  <data name="WbsDetail_DependencyType.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Dependency type</value>
   </data>
 
   <!-- ─── Settings page ───────────────────────────────────────────────────── -->
@@ -362,17 +563,29 @@
   <data name="SettingsPage_NewProjectBtn.Content" xml:space="preserve">
     <value>New Project</value>
   </data>
+  <data name="SettingsPage_NewProjectBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Create new project</value>
+  </data>
   <data name="SettingsPage_OpenProjectBtn.Content" xml:space="preserve">
     <value>Open Project</value>
   </data>
+  <data name="SettingsPage_OpenProjectBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Open existing project</value>
+  </data>
   <data name="SettingsPage_CloseProjectBtn.Content" xml:space="preserve">
     <value>Close Project</value>
+  </data>
+  <data name="SettingsPage_CloseProjectBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Close current project</value>
   </data>
   <data name="SettingsPage_RecentProjectsLabel.Text" xml:space="preserve">
     <value>Recent Projects</value>
   </data>
   <data name="SettingsPage_RemoveBtn.Content" xml:space="preserve">
     <value>Remove</value>
+  </data>
+  <data name="SettingsPage_RemoveBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Remove from recent projects</value>
   </data>
   <data name="SettingsPage_UpdatesSection.Text" xml:space="preserve">
     <value>Software Updates</value>
@@ -383,17 +596,29 @@
   <data name="SettingsPage_CheckUpdatesBtn.Content" xml:space="preserve">
     <value>Check for Updates</value>
   </data>
+  <data name="SettingsPage_CheckUpdatesBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
   <data name="SettingsPage_CheckingText.Text" xml:space="preserve">
     <value>Checking for updates…</value>
   </data>
   <data name="SettingsPage_DownloadInstallBtn.Content" xml:space="preserve">
     <value>Download &amp; Install</value>
   </data>
+  <data name="SettingsPage_DownloadInstallBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Download and install update</value>
+  </data>
   <data name="SettingsPage_ReleaseNotesBtn.Content" xml:space="preserve">
     <value>View Release Notes</value>
   </data>
+  <data name="SettingsPage_ReleaseNotesBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Open release notes in browser</value>
+  </data>
   <data name="SettingsPage_CancelBtn.Content" xml:space="preserve">
     <value>Cancel</value>
+  </data>
+  <data name="SettingsPage_CancelBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Cancel download</value>
   </data>
   <data name="SettingsPage_LanguageSection.Text" xml:space="preserve">
     <value>Language</value>
@@ -404,8 +629,492 @@
   <data name="SettingsPage_ApplyLanguageBtn.Content" xml:space="preserve">
     <value>Apply</value>
   </data>
+  <data name="SettingsPage_ApplyLanguageBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Apply language change</value>
+  </data>
   <data name="SettingsPage_RestartNote.Message" xml:space="preserve">
     <value>Language changes take effect after restarting the application.</value>
   </data>
+  <data name="SettingsPage_ActiveProjectName.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Active project name</value>
+  </data>
+  <data name="SettingsPage_RecentProjectsList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Recent projects list</value>
+  </data>
+  <data name="SettingsPage_CurrentApplicationVersion.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Current application version</value>
+  </data>
+  <data name="SettingsPage_AvailableUpdateName.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Available update name</value>
+  </data>
+  <data name="SettingsPage_DownloadProgress.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Download progress</value>
+  </data>
+  <data name="SettingsPage_ApplicationLanguage.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Application language</value>
+  </data>
 
+  <data name="NewProject_TxtName.Header" xml:space="preserve">
+    <value>Project Name *</value>
+  </data>
+  <data name="NewProject_TxtName.PlaceholderText" xml:space="preserve">
+    <value>Enter project name</value>
+  </data>
+  <data name="NewProject_TxtName.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Project name</value>
+  </data>
+  <data name="NewProject_TxtOwner.Header" xml:space="preserve">
+    <value>Owner</value>
+  </data>
+  <data name="NewProject_TxtOwner.PlaceholderText" xml:space="preserve">
+    <value>Enter owner name</value>
+  </data>
+  <data name="NewProject_TxtOwner.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Project owner</value>
+  </data>
+  <data name="NewProject_SaveLocation.Text" xml:space="preserve">
+    <value>Save Location *</value>
+  </data>
+  <data name="NewProject_TxtSavePath.Text" xml:space="preserve">
+    <value>No folder selected</value>
+  </data>
+  <data name="NewProject_BtnPickFolder.Content" xml:space="preserve">
+    <value>Choose Folder...</value>
+  </data>
+  <data name="NewProject_BtnPickFolder.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Choose save folder</value>
+  </data>
+
+  <!-- ─── Dialogs ─────────────────────────────────────────────────────────────── -->
+  <data name="Dialog_Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Dialog_Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="Dialog_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Dialog_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+
+  <!-- ─── Error dialog titles ─────────────────────────────────────────────────── -->
+  <data name="ErrorTitle_Generic" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="ErrorTitle_Dashboard" xml:space="preserve">
+    <value>Dashboard Error</value>
+  </data>
+  <data name="ErrorTitle_Export" xml:space="preserve">
+    <value>Export Failed</value>
+  </data>
+  <data name="ErrorTitle_Gantt" xml:space="preserve">
+    <value>Gantt Error</value>
+  </data>
+  <data name="ErrorTitle_Load" xml:space="preserve">
+    <value>Load Error</value>
+  </data>
+  <data name="ErrorTitle_Save" xml:space="preserve">
+    <value>Save Error</value>
+  </data>
+  <data name="ErrorTitle_Delete" xml:space="preserve">
+    <value>Delete Error</value>
+  </data>
+  <data name="ErrorTitle_AddMilestone" xml:space="preserve">
+    <value>Add Milestone Error</value>
+  </data>
+  <data name="ErrorTitle_MarkComplete" xml:space="preserve">
+    <value>Mark Complete Error</value>
+  </data>
+  <data name="ErrorTitle_Link" xml:space="preserve">
+    <value>Link Error</value>
+  </data>
+  <data name="ErrorTitle_Unlink" xml:space="preserve">
+    <value>Unlink Error</value>
+  </data>
+  <data name="ErrorTitle_CreateProject" xml:space="preserve">
+    <value>Cannot Create Project</value>
+  </data>
+  <data name="ErrorTitle_OpenProject" xml:space="preserve">
+    <value>Cannot Open Project</value>
+  </data>
+  <data name="ErrorTitle_CloseProject" xml:space="preserve">
+    <value>Cannot Close Project</value>
+  </data>
+  <data name="ErrorTitle_AddNode" xml:space="preserve">
+    <value>Add Node Error</value>
+  </data>
+  <data name="ErrorTitle_AddChild" xml:space="preserve">
+    <value>Add Child Error</value>
+  </data>
+  <data name="ErrorTitle_AddSibling" xml:space="preserve">
+    <value>Add Sibling Error</value>
+  </data>
+  <data name="ErrorTitle_AddDependency" xml:space="preserve">
+    <value>Add Dependency Error</value>
+  </data>
+  <data name="ErrorTitle_RemoveDependency" xml:space="preserve">
+    <value>Remove Dependency Error</value>
+  </data>
+  <data name="ErrorTitle_Navigation" xml:space="preserve">
+    <value>Navigation Error</value>
+  </data>
+
+  <!-- ─── Error messages raised by Core (keys attached via LocalizedMessage) ──── -->
+  <data name="Error_NoProjectOpen" xml:space="preserve">
+    <value>No project is currently open.</value>
+  </data>
+  <data name="Error_ProjectNotFound" xml:space="preserve">
+    <value>Project file '{0}' was not found or could not be opened.</value>
+  </data>
+  <data name="Error_InvalidProjectData" xml:space="preserve">
+    <value>'{0}' does not contain valid project data.</value>
+  </data>
+  <data name="Error_NotAProjectFile" xml:space="preserve">
+    <value>This file was not created by iscWBS and cannot be opened as a project.</value>
+  </data>
+  <data name="Error_IntegrityCheckFailed" xml:space="preserve">
+    <value>The project file failed integrity check and may be corrupted: {0}</value>
+  </data>
+  <data name="Error_MilestoneNotFound" xml:space="preserve">
+    <value>Milestone '{0}' was not found.</value>
+  </data>
+  <data name="Error_NodeNotFound" xml:space="preserve">
+    <value>WBS node '{0}' was not found.</value>
+  </data>
+  <data name="Error_MilestoneTitleRequired" xml:space="preserve">
+    <value>Milestone title is required.</value>
+  </data>
+  <data name="Error_SelfDependency" xml:space="preserve">
+    <value>A node cannot depend on itself.</value>
+  </data>
+  <data name="Error_DuplicateDependency" xml:space="preserve">
+    <value>This dependency already exists.</value>
+  </data>
+  <data name="Error_CircularDependency" xml:space="preserve">
+    <value>Adding this dependency would create a circular dependency.</value>
+  </data>
+
+  <!-- ─── Status and dependency labels ────────────────────────────────────────── -->
+  <data name="Status_NotStarted" xml:space="preserve">
+    <value>Not Started</value>
+  </data>
+  <data name="Status_InProgress" xml:space="preserve">
+    <value>In Progress</value>
+  </data>
+  <data name="Status_Complete" xml:space="preserve">
+    <value>Complete</value>
+  </data>
+  <data name="Status_Blocked" xml:space="preserve">
+    <value>Blocked</value>
+  </data>
+  <data name="DependencyLabel_FinishToStart" xml:space="preserve">
+    <value>Finish → Start</value>
+  </data>
+  <data name="DependencyLabel_StartToStart" xml:space="preserve">
+    <value>Start → Start</value>
+  </data>
+  <data name="DependencyLabel_FinishToFinish" xml:space="preserve">
+    <value>Finish → Finish</value>
+  </data>
+  <data name="DependencyLabel_StartToFinish" xml:space="preserve">
+    <value>Start → Finish</value>
+  </data>
+  <data name="DependencyDescription_FinishToStart" xml:space="preserve">
+    <value>Predecessor must finish before this node can start</value>
+  </data>
+  <data name="DependencyDescription_StartToStart" xml:space="preserve">
+    <value>Predecessor must start before this node can start</value>
+  </data>
+  <data name="DependencyDescription_FinishToFinish" xml:space="preserve">
+    <value>Predecessor must finish before this node can finish</value>
+  </data>
+  <data name="DependencyDescription_StartToFinish" xml:space="preserve">
+    <value>Predecessor must start before this node can finish</value>
+  </data>
+  <data name="DependencyBlocking_FinishToStart" xml:space="preserve">
+    <value>Must finish before this can start — currently {0}</value>
+  </data>
+  <data name="DependencyBlocking_StartToStart" xml:space="preserve">
+    <value>Must start before this can start — currently {0}</value>
+  </data>
+  <data name="DependencyBlocking_FinishToFinish" xml:space="preserve">
+    <value>Must finish before this can finish — currently {0}</value>
+  </data>
+  <data name="DependencyBlocking_StartToFinish" xml:space="preserve">
+    <value>Must start before this can finish — currently {0}</value>
+  </data>
+
+  <!-- ─── WBS tree (code) ─────────────────────────────────────────────────────── -->
+  <data name="Wbs_NewNodeTitle" xml:space="preserve">
+    <value>New Node</value>
+  </data>
+  <data name="Wbs_DeleteNodeTitle" xml:space="preserve">
+    <value>Delete Node</value>
+  </data>
+  <data name="Wbs_DeleteNodeConfirm" xml:space="preserve">
+    <value>Delete "{0}" and all its children?</value>
+  </data>
+  <data name="Wbs_RemoveDependencyTitle" xml:space="preserve">
+    <value>Remove Dependency</value>
+  </data>
+  <data name="Wbs_RemoveDependencyConfirm" xml:space="preserve">
+    <value>Remove dependency from "{0}"?</value>
+  </data>
+  <data name="Wbs_CannotStartTitle" xml:space="preserve">
+    <value>Cannot Mark as In Progress</value>
+  </data>
+  <data name="Wbs_CannotCompleteTitle" xml:space="preserve">
+    <value>Cannot Mark as Complete</value>
+  </data>
+  <data name="Wbs_CannotStartIntro" xml:space="preserve">
+    <value>This node cannot be started until the following predecessor constraints are met:</value>
+  </data>
+  <data name="Wbs_CannotCompleteIntro" xml:space="preserve">
+    <value>This node cannot be completed until the following predecessor constraints are met:</value>
+  </data>
+  <data name="Wbs_CompleteViolatedTitle" xml:space="preserve">
+    <value>Completed Node Affected</value>
+  </data>
+  <data name="Wbs_CompleteViolatedIntro" xml:space="preserve">
+    <value>This change has created dependency violations for the following completed nodes:</value>
+  </data>
+  <data name="Wbs_CompleteViolatedOutro" xml:space="preserve">
+    <value>These nodes remain marked as Complete but their predecessor constraints are no longer satisfied. Review their status if needed.</value>
+  </data>
+  <data name="Wbs_InProgressViolatedTitle" xml:space="preserve">
+    <value>In Progress Node Affected</value>
+  </data>
+  <data name="Wbs_InProgressViolatedIntro" xml:space="preserve">
+    <value>This change has created start constraint violations for the following in-progress nodes:</value>
+  </data>
+  <data name="Wbs_InProgressViolatedOutro" xml:space="preserve">
+    <value>These nodes are already in progress but their start dependencies are no longer satisfied. Review their status if needed.</value>
+  </data>
+  <data name="Diagram_StartBlocked" xml:space="preserve">
+    <value>Start blocked — predecessor constraints not met</value>
+  </data>
+  <data name="Diagram_CompletionBlocked" xml:space="preserve">
+    <value>Completion blocked — predecessor constraints not met</value>
+  </data>
+  <data name="Diagram_CompleteViolated" xml:space="preserve">
+    <value>Constraint violated — this node is Complete but a predecessor no longer satisfies its dependency</value>
+  </data>
+  <data name="Diagram_InProgressViolated" xml:space="preserve">
+    <value>Start constraint violated — this node is In Progress but a predecessor no longer satisfies its start dependency</value>
+  </data>
+  <data name="Diagram_ExpandChildren" xml:space="preserve">
+    <value>Expand children</value>
+  </data>
+  <data name="Diagram_CollapseChildren" xml:space="preserve">
+    <value>Collapse children</value>
+  </data>
+  <data name="Diagram_OneNodeHidden" xml:space="preserve">
+    <value>1 node hidden</value>
+  </data>
+  <data name="Diagram_NodesHidden" xml:space="preserve">
+    <value>{0} nodes hidden</value>
+  </data>
+
+  <!-- ─── Milestones, dashboard, Gantt (code) ─────────────────────────────────── -->
+  <data name="Milestones_MarkCompleteTitle" xml:space="preserve">
+    <value>Mark Complete</value>
+  </data>
+  <data name="Milestones_MarkCompleteConfirm" xml:space="preserve">
+    <value>Mark "{0}" as complete?</value>
+  </data>
+  <data name="Milestones_DeleteTitle" xml:space="preserve">
+    <value>Delete Milestone</value>
+  </data>
+  <data name="Milestones_DeleteConfirm" xml:space="preserve">
+    <value>Delete "{0}"?</value>
+  </data>
+  <data name="Milestones_NoNodes" xml:space="preserve">
+    <value>No nodes</value>
+  </data>
+  <data name="Milestones_OneNode" xml:space="preserve">
+    <value>1 node</value>
+  </data>
+  <data name="Milestones_NodeCount" xml:space="preserve">
+    <value>{0} nodes</value>
+  </data>
+  <data name="Dashboard_AllAssignees" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="Gantt_TaskHeader" xml:space="preserve">
+    <value>Task</value>
+  </data>
+  <data name="Gantt_Today" xml:space="preserve">
+    <value>Today</value>
+  </data>
+
+  <!-- ─── New project, pickers, settings (code) ───────────────────────────────── -->
+  <data name="NewProject_DialogTitle" xml:space="preserve">
+    <value>New Project</value>
+  </data>
+  <data name="NewProject_Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="Picker_StatusReportFileName" xml:space="preserve">
+    <value>Status Report {0}</value>
+  </data>
+  <data name="Picker_PdfDocument" xml:space="preserve">
+    <value>PDF Document</value>
+  </data>
+  <data name="Settings_UpToDate" xml:space="preserve">
+    <value>You are running the latest version.</value>
+  </data>
+  <data name="Settings_RepositoryNotFound" xml:space="preserve">
+    <value>The update repository could not be found. The project may have moved or been renamed.</value>
+  </data>
+  <data name="Settings_RateLimited" xml:space="preserve">
+    <value>GitHub API rate limit reached. Please wait a few minutes and try again.</value>
+  </data>
+  <data name="Settings_CheckFailed" xml:space="preserve">
+    <value>Could not check for updates. Please check your internet connection.</value>
+  </data>
+  <data name="Settings_DownloadCancelled" xml:space="preserve">
+    <value>Download cancelled.</value>
+  </data>
+  <data name="Settings_DownloadFailed" xml:space="preserve">
+    <value>Download failed. Please try again or visit the release page.</value>
+  </data>
+  <data name="Settings_OpenReleasePageFailed" xml:space="preserve">
+    <value>Could not open the release page.</value>
+  </data>
+
+  <!-- ─── PDF status report ───────────────────────────────────────────────────── -->
+  <data name="Report_Title" xml:space="preserve">
+    <value>Project Status Report</value>
+  </data>
+  <data name="Report_MetadataTitle" xml:space="preserve">
+    <value>{0} — Status Report</value>
+  </data>
+  <data name="Report_GeneratedAt" xml:space="preserve">
+    <value>Generated  {0}</value>
+  </data>
+  <data name="Report_HealthAtRisk" xml:space="preserve">
+    <value>● AT RISK</value>
+  </data>
+  <data name="Report_HealthCaution" xml:space="preserve">
+    <value>● CAUTION</value>
+  </data>
+  <data name="Report_HealthOnTrack" xml:space="preserve">
+    <value>● ON TRACK</value>
+  </data>
+  <data name="Report_Summary" xml:space="preserve">
+    <value>SUMMARY</value>
+  </data>
+  <data name="Report_AttentionRequired" xml:space="preserve">
+    <value>ATTENTION REQUIRED</value>
+  </data>
+  <data name="Report_Deliverables" xml:space="preserve">
+    <value>DELIVERABLES</value>
+  </data>
+  <data name="Report_EffortSummary" xml:space="preserve">
+    <value>EFFORT SUMMARY</value>
+  </data>
+  <data name="Report_UpcomingMilestones" xml:space="preserve">
+    <value>UPCOMING MILESTONES</value>
+  </data>
+  <data name="Report_WbsTree" xml:space="preserve">
+    <value>WORK BREAKDOWN STRUCTURE</value>
+  </data>
+  <data name="Report_NoDeliverables" xml:space="preserve">
+    <value>No deliverables found. Open a node in the WBS editor and enable “Include in report” to add it here.</value>
+  </data>
+  <data name="Report_ColCode" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="Report_ColTitle" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="Report_ColAssignee" xml:space="preserve">
+    <value>Assignee</value>
+  </data>
+  <data name="Report_ColDueDate" xml:space="preserve">
+    <value>Due Date</value>
+  </data>
+  <data name="Report_ColStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Report_ColProgress" xml:space="preserve">
+    <value>Progress</value>
+  </data>
+  <data name="Report_ColMilestone" xml:space="preserve">
+    <value>Milestone</value>
+  </data>
+  <data name="Report_ColEstimated" xml:space="preserve">
+    <value>Estimated</value>
+  </data>
+  <data name="Report_ColActual" xml:space="preserve">
+    <value>Actual</value>
+  </data>
+  <data name="Report_ColRemaining" xml:space="preserve">
+    <value>Remaining</value>
+  </data>
+  <data name="Report_ColBurnRate" xml:space="preserve">
+    <value>Burn Rate</value>
+  </data>
+  <data name="Report_ColTasks" xml:space="preserve">
+    <value>Tasks</value>
+  </data>
+  <data name="Report_ColEstHours" xml:space="preserve">
+    <value>Est. Hours</value>
+  </data>
+  <data name="Report_ColActHours" xml:space="preserve">
+    <value>Act. Hours</value>
+  </data>
+  <data name="Report_ColPercentComplete" xml:space="preserve">
+    <value>% Complete</value>
+  </data>
+  <data name="Report_ColComplete" xml:space="preserve">
+    <value>Complete</value>
+  </data>
+  <data name="Report_ColInProgress" xml:space="preserve">
+    <value>In Progress</value>
+  </data>
+  <data name="Report_ColAtRisk" xml:space="preserve">
+    <value>At Risk</value>
+  </data>
+  <data name="Report_ColOverdue" xml:space="preserve">
+    <value>Overdue</value>
+  </data>
+  <data name="Report_ColBlocked" xml:space="preserve">
+    <value>Blocked</value>
+  </data>
+  <data name="Report_DaysOverdue" xml:space="preserve">
+    <value>{0}d overdue</value>
+  </data>
+  <data name="Report_DueInDays" xml:space="preserve">
+    <value>due in {0}d</value>
+  </data>
+  <data name="Report_GeneratedBy" xml:space="preserve">
+    <value>Generated by iscWBS</value>
+  </data>
+  <data name="Report_Page" xml:space="preserve">
+    <value>Page</value>
+  </data>
+  <data name="Report_PageOf" xml:space="preserve">
+    <value>of</value>
+  </data>
+  <data name="MilestonesPage_MilestoneList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Milestones</value>
+  </data>
+  <data name="WelcomePage_RecentProjectsList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Recent projects</value>
+  </data>
+  <data name="WbsDetail_StartDate.PlaceholderText" xml:space="preserve">
+    <value>Pick a date</value>
+  </data>
+  <data name="WbsDetail_DueDate.PlaceholderText" xml:space="preserve">
+    <value>Pick a date</value>
+  </data>
+  <data name="MilestonesPage_NewMilestoneDueDate.PlaceholderText" xml:space="preserve">
+    <value>Pick a date</value>
+  </data>
+  <data name="MilestonesPage_MilestoneDueDate.PlaceholderText" xml:space="preserve">
+    <value>Pick a date</value>
+  </data>
 </root>

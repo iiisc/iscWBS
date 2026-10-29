@@ -1,136 +1,119 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# iscWBS — Release workflow
-#
-# Triggers
-#   • Manual  : Actions → Run workflow  (enter version + optional pre-release flag)
-#   • Automatic: push a tag matching v#.#.#  (e.g. git tag v1.2.0 && git push --tags)
-#
-# Outputs a self-contained folder publish (ZIP) for x64, then publishes a GitHub Release.
-# Users update the app by extracting the ZIP to a folder of their choice; project data
-# lives in the location chosen at project-creation time (default: Documents\iscWBS Projects\)
-# and is never stored alongside the application files.
-#
-# ── Code-signing (optional) ──────────────────────────────────────────────────
-# Without secrets the executable is unsigned and Windows SmartScreen may warn
-# on first launch.
-#
-# To sign with a real certificate add two repository secrets
-# (Settings → Secrets → Actions):
-#
-#   SIGNING_CERTIFICATE          Base-64–encoded PFX file
-#                                PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes('cert.pfx'))
-#
-#   SIGNING_CERTIFICATE_PASSWORD PFX password
-#
-# ─────────────────────────────────────────────────────────────────────────────
-
 name: Release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g. 1.2.3 — no v prefix)'
-        required: true
-        type: string
-      prerelease:
-        description: 'Mark as pre-release'
+        description: 'Version, such as 1.2.0. Leave empty for the next patch version.'
         required: false
-        type: boolean
-        default: false
 
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+permissions: {}
 
-permissions:
-  contents: write
-
-env:
-  DOTNET_VERSION: '10.0.x'
-  PROJECT: 'iscWBS.csproj'
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  release:
+  checks:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+
+  build-and-release:
+    needs: checks
     runs-on: windows-latest
-
+    timeout-minutes: 30
+    permissions:
+      contents: write
     steps:
-      # ── 1. Source ───────────────────────────────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # The release notes list the commits since the previous release, so the history and tags are needed
           fetch-depth: 0
+          # The build runs code from NuGet packages, so the write token isn't left in the git config; only the tag push gets it
+          persist-credentials: false
 
-      # ── 2. Resolve version ──────────────────────────────────────────────────
-      - name: Resolve version
-        id: ver
+      - name: Determine version
+        id: version
         shell: pwsh
-        run: |
-          $v = if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
-                   '${{ inputs.version }}'
-               } else {
-                   '${{ github.ref_name }}'.TrimStart('v')
-               }
-          Write-Host "Building version $v"
-          "VERSION=$v" >> $env:GITHUB_OUTPUT
-          "TAG=v$v"    >> $env:GITHUB_OUTPUT
-
-      # ── 3. Toolchain ────────────────────────────────────────────────────────
-      - name: Setup .NET ${{ env.DOTNET_VERSION }}
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      # ── 4. Publish ──────────────────────────────────────────────────────────
-      - name: Publish
-        shell: pwsh
-        run: |
-          dotnet publish ${{ env.PROJECT }} `
-            -c Release `
-            -r win-x64 `
-            -p:Platform=x64 `
-            --self-contained `
-            -p:PublishTrimmed=false `
-            -p:SatelliteResourceLanguages=en%3Ben-US%3Bsv%3Bsv-SE `
-            -p:DebugType=None `
-            -p:DebugSymbols=false `
-            -p:Version=${{ steps.ver.outputs.VERSION }} `
-            "-p:PublishDir=${{ github.workspace }}\bin\Release\publish\"
-
-      # ── 5. Remove unwanted language folders ────────────────────────────────
-      - name: Remove unwanted language folders
-        shell: pwsh
-        run: |
-          $keep = @('en-US', 'sv-SE')
-          $publishDir = "${{ github.workspace }}\bin\Release\publish"
-          Get-ChildItem -Path $publishDir -Directory |
-            Where-Object { $_.Name -match '^[a-z]{2,3}(-[A-Za-z0-9]+)*$' -and $_.Name -notin $keep } |
-            ForEach-Object {
-              Write-Host "Removing language folder: $($_.Name)"
-              Remove-Item $_.FullName -Recurse -Force
-            }
-
-      # ── 7. Zip publish folder ───────────────────────────────────────────────
-      - name: Zip publish folder
-        id: zip
-        shell: pwsh
-        run: |
-          $src = "${{ github.workspace }}\bin\Release\publish"
-          $dst = "${{ github.workspace }}\iscWBS-${{ steps.ver.outputs.VERSION }}-x64.zip"
-          Compress-Archive -Path "$src\*" -DestinationPath $dst
-          Write-Host "Created ZIP at: $dst"
-          "ZIP=$dst" >> $env:GITHUB_OUTPUT
-
-      # ── 8. Publish release ──────────────────────────────────────────────────
-      - name: Publish GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.ver.outputs.TAG }}
-          name: 'iscWBS ${{ steps.ver.outputs.VERSION }}'
-          prerelease: ${{ inputs.prerelease || false }}
-          generate_release_notes: true
-          make_latest: true
-          files: ${{ steps.zip.outputs.ZIP }}
+        # From the environment, so whatever is typed into the box can't become part of the script
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          $ver = "$env:REQUESTED".Trim().TrimStart('v')
+          if (-not $ver) {
+            $latest = git tag -l 'v*' |
+              Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } |
+              ForEach-Object { [version]($_ -replace '^v', '') } |
+              Sort-Object -Descending |
+              Select-Object -First 1
+            if (-not $latest) { $latest = [version]'0.0.0' }
+            $ver = "$($latest.Major).$($latest.Minor).$($latest.Build + 1)"
+          }
+          if ($ver -notmatch '^\d+\.\d+\.\d+$') { Write-Error "'$ver' isn't a version like 1.2.0."; exit 1 }
+          echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+          echo "COMMIT=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
+          echo "TAG=v$ver" >> $env:GITHUB_OUTPUT
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      # Everything else about the build is in the project file. Native AOT links with the MSVC tools the runner image has.
+      - name: Publish
+        run: dotnet publish iscWBS.csproj -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o publish/iscWBS
+
+      # The app sits in an iscWBS folder inside the zip, so unzipping it anywhere can't spill its files into a folder
+      # that holds other things. The in-app updater expects this layout.
+      - name: Create release zip
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.version.outputs.TAG }}"
+          Compress-Archive -Path publish\iscWBS -DestinationPath "iscWBS-$tag-win-x64.zip"
+
+      # Changes here go straight to master, so the draft lists the commits since the previous release, to be rewritten
+      # for users before publishing.
+      - name: Write release notes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The latest published release, not the newest tag: an older failed run may have left a tag without a release
+          $previous = gh release view --json tagName --jq .tagName 2>$null
+          $range = if ($previous) { "$previous..HEAD" } else { "HEAD" }
+          git log $range --no-merges --format='- %s' | Out-File -Encoding utf8 notes.md
+
+      # Tagged only now, after the build succeeded, so a failed run doesn't use up a version number. Pushed with git
+      # because the release API can't create the tag with this token.
+      - name: Push tag
+        shell: pwsh
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git tag ${{ steps.version.outputs.TAG }} ${{ steps.version.outputs.COMMIT }}
+          git push "https://x-access-token:$env:TOKEN@github.com/${{ github.repository }}.git" ${{ steps.version.outputs.TAG }}
+
+      # A draft, because commit messages aren't written for users. The app's update check only sees published releases,
+      # so nobody is offered it until it's published. GitHub records each file's SHA-256, which the updater checks.
+      # gh comes with the runner, so the one step that can write to the repo runs no third-party code.
+      - name: Create draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create ${{ steps.version.outputs.TAG }}
+          "iscWBS-${{ steps.version.outputs.TAG }}-win-x64.zip"
+          --repo ${{ github.repository }}
+          --title ${{ steps.version.outputs.TAG }}
+          --notes-file notes.md
+          --verify-tag
+          --draft

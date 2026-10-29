@@ -1,27 +1,39 @@
+using Microsoft.Data.Sqlite;
+using iscWBS.Core.Data;
 using iscWBS.Core.Exceptions;
 using iscWBS.Core.Models;
-using iscWBS.Core.Repositories;
 
 namespace iscWBS.Core.Services;
 
-public sealed class MilestoneService : IMilestoneService
+/// <summary>Reads and edits the open project's milestones and their links to WBS nodes.</summary>
+public sealed class MilestoneService
 {
-    private readonly MilestoneRepository _repository;
-    private readonly MilestoneNodeLinkRepository _linkRepository;
+    private const string Columns = "m.Id, m.ProjectId, m.Title, m.DueDate, m.IsComplete";
 
-    public MilestoneService(MilestoneRepository repository, MilestoneNodeLinkRepository linkRepository)
+    private readonly ProjectStateService _projectStateService;
+
+    public MilestoneService(ProjectStateService projectStateService)
     {
-        _repository = repository;
-        _linkRepository = linkRepository;
+        _projectStateService = projectStateService;
     }
 
-    public Task<IReadOnlyList<Milestone>> GetByProjectAsync(Guid projectId)
-        => _repository.GetByProjectAsync(projectId);
+    private SqliteConnection Db => _projectStateService.Connection;
+
+    public async Task<IReadOnlyList<Milestone>> GetByProjectAsync(Guid projectId)
+        => await Db.QueryAsync(
+            $"SELECT {Columns} FROM Milestones m WHERE m.ProjectId = $1 ORDER BY m.DueDate",
+            Read, projectId);
+
+    /// <summary>Incomplete milestones due within 60 days from today, overdue ones included.</summary>
+    public async Task<IReadOnlyList<Milestone>> GetUpcomingAsync(Guid projectId)
+        => await Db.QueryAsync(
+            $"SELECT {Columns} FROM Milestones m WHERE m.ProjectId = $1 AND m.IsComplete = 0 AND m.DueDate <= $2 ORDER BY m.DueDate",
+            Read, projectId, DateTime.Today.AddDays(60));
 
     public async Task<Milestone> CreateAsync(Guid projectId, string title, DateTime dueDate)
     {
         if (string.IsNullOrWhiteSpace(title))
-            throw new WbsValidationException("Milestone title is required.");
+            throw new WbsException("Milestone title is required.").WithMessageKey("Error_MilestoneTitleRequired");
 
         var milestone = new Milestone
         {
@@ -29,61 +41,66 @@ public sealed class MilestoneService : IMilestoneService
             Title = title.Trim(),
             DueDate = dueDate
         };
-        await _repository.InsertAsync(milestone);
+        await Db.ExecuteAsync(
+            "INSERT INTO Milestones (Id, ProjectId, Title, DueDate, IsComplete) VALUES ($1, $2, $3, $4, $5)",
+            milestone.Id, milestone.ProjectId, milestone.Title, milestone.DueDate, milestone.IsComplete);
         return milestone;
     }
 
-    public Task UpdateAsync(Milestone milestone)
-        => _repository.UpdateAsync(milestone);
+    public async Task UpdateAsync(Milestone milestone)
+        => await Db.ExecuteAsync(
+            "UPDATE Milestones SET Title = $1, DueDate = $2, IsComplete = $3 WHERE Id = $4",
+            milestone.Title, milestone.DueDate, milestone.IsComplete, milestone.Id);
 
     public async Task DeleteAsync(Guid id)
     {
-        await _linkRepository.DeleteByMilestoneAsync(id);
-        await _repository.DeleteAsync(id);
+        await Db.ExecuteAsync("DELETE FROM MilestoneNodeLinks WHERE MilestoneId = $1", id);
+        await Db.ExecuteAsync("DELETE FROM Milestones WHERE Id = $1", id);
     }
 
     public async Task MarkCompleteAsync(Guid id)
     {
-        Milestone? milestone = await _repository.GetByIdAsync(id)
-            ?? throw new WbsNotFoundException(id);
-        milestone.IsComplete = true;
-        await _repository.UpdateAsync(milestone);
+        if (await Db.ExecuteAsync("UPDATE Milestones SET IsComplete = 1 WHERE Id = $1", id) == 0)
+            throw WbsException.MilestoneNotFound(id);
     }
-
-    public Task<IReadOnlyList<Milestone>> GetUpcomingAsync(Guid projectId, int days = 30)
-        => _repository.GetUpcomingAsync(projectId, days);
 
     public async Task<IReadOnlyList<Guid>> GetLinkedNodeIdsAsync(Guid milestoneId)
-    {
-        IReadOnlyList<MilestoneNodeLink> links = await _linkRepository.GetByMilestoneAsync(milestoneId);
-        return links.Select(l => l.NodeId).ToList();
-    }
+        => await Db.QueryAsync(
+            "SELECT NodeId FROM MilestoneNodeLinks WHERE MilestoneId = $1 ORDER BY Id",
+            r => r.GetGuidText(0), milestoneId);
 
-    public Task<IReadOnlyDictionary<Guid, int>> GetLinkedCountsByProjectAsync(Guid projectId)
-        => _linkRepository.GetCountsByProjectAsync(projectId);
+    public async Task<IReadOnlyList<Milestone>> GetByNodeAsync(Guid nodeId)
+        => await Db.QueryAsync(
+            $"SELECT {Columns} FROM Milestones m INNER JOIN MilestoneNodeLinks l ON l.MilestoneId = m.Id " +
+            "WHERE l.NodeId = $1 ORDER BY m.DueDate",
+            Read, nodeId);
 
+    /// <summary>Linked-node count per milestone; milestones without links are absent.</summary>
+    public async Task<IReadOnlyDictionary<Guid, int>> GetLinkedCountsByProjectAsync(Guid projectId)
+        => (await Db.QueryAsync(
+                "SELECT l.MilestoneId, COUNT(l.Id) FROM MilestoneNodeLinks l " +
+                "INNER JOIN Milestones m ON l.MilestoneId = m.Id WHERE m.ProjectId = $1 GROUP BY l.MilestoneId",
+                r => (MilestoneId: r.GetGuidText(0), Count: r.GetInt32(1)), projectId))
+            .ToDictionary(r => r.MilestoneId, r => r.Count);
+
+    /// <summary>Links a node to a milestone; linking it twice is a no-op.</summary>
     public async Task LinkNodeAsync(Guid milestoneId, Guid nodeId)
     {
-        IReadOnlyList<MilestoneNodeLink> existing = await _linkRepository.GetByMilestoneAsync(milestoneId);
-        if (existing.Any(l => l.NodeId == nodeId))
+        if ((await GetLinkedNodeIdsAsync(milestoneId)).Contains(nodeId))
             return;
 
-        await _linkRepository.InsertAsync(new MilestoneNodeLink
-        {
-            MilestoneId = milestoneId,
-            NodeId = nodeId
-        });
+        await Db.ExecuteAsync("INSERT INTO MilestoneNodeLinks (MilestoneId, NodeId) VALUES ($1, $2)", milestoneId, nodeId);
     }
 
     public async Task UnlinkNodeAsync(Guid milestoneId, Guid nodeId)
+        => await Db.ExecuteAsync("DELETE FROM MilestoneNodeLinks WHERE MilestoneId = $1 AND NodeId = $2", milestoneId, nodeId);
+
+    private static Milestone Read(SqliteDataReader r) => new()
     {
-        IReadOnlyList<MilestoneNodeLink> links = await _linkRepository.GetByMilestoneAsync(milestoneId);
-        MilestoneNodeLink? link = links.FirstOrDefault(l => l.NodeId == nodeId);
-        if (link is not null)
-            await _linkRepository.DeleteAsync(link.Id);
-    }
-
-    public Task<IReadOnlyList<Guid>> GetMilestoneIdsForNodeAsync(Guid nodeId)
-        => _linkRepository.GetMilestoneIdsByNodeAsync(nodeId);
+        Id = r.GetGuidText(0),
+        ProjectId = r.GetGuidText(1),
+        Title = r.GetText(2),
+        DueDate = r.GetNullableDateTime(3) ?? default,
+        IsComplete = r.GetBoolean(4)
+    };
 }
-

@@ -15,12 +15,18 @@
 
   <!-- ─── Shell / Navigation ─────────────────────────────────────────────── -->
   <data name="Shell_NavDashboard.Text" xml:space="preserve">
-    <value>Dashboard</value>
+    <value>Instrumentpanel</value>
   </data>
   <data name="Shell_NavWbsTree.Content" xml:space="preserve">
     <value>WBS-träd</value>
   </data>
+  <data name="Shell_NavWbsTree.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>WBS-träd</value>
+  </data>
   <data name="Shell_NavWbsOutline.Content" xml:space="preserve">
+    <value>WBS-översikt</value>
+  </data>
+  <data name="Shell_NavWbsOutline.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>WBS-översikt</value>
   </data>
   <data name="Shell_NavGantt.Text" xml:space="preserve">
@@ -32,19 +38,40 @@
   <data name="Shell_NavMilestones.Content" xml:space="preserve">
     <value>Milstolpar</value>
   </data>
+  <data name="Shell_NavMilestones.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Milstolpar</value>
+  </data>
   <data name="Shell_NavSettings.Content" xml:space="preserve">
     <value>Inställningar</value>
+  </data>
+  <data name="Shell_NavSettings.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Inställningar</value>
+  </data>
+  <data name="Shell_NavDashboardItem.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Instrumentpanel (beta)</value>
+  </data>
+  <data name="Shell_NavGanttItem.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Gantt (beta)</value>
+  </data>
+  <data name="Shell_NavReportsItem.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Rapporter (beta)</value>
   </data>
 
   <!-- ─── Welcome page ────────────────────────────────────────────────────── -->
   <data name="WelcomePage_Subtitle.Text" xml:space="preserve">
-    <value>Projektledning och arbetsstruktur</value>
+    <value>Projektledning och arbetsnedbrytningsstruktur</value>
   </data>
   <data name="WelcomePage_NewProjectBtn.Content" xml:space="preserve">
     <value>Nytt projekt</value>
   </data>
+  <data name="WelcomePage_NewProjectBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Skapa ett nytt projekt</value>
+  </data>
   <data name="WelcomePage_OpenProjectBtn.Content" xml:space="preserve">
     <value>Öppna projekt</value>
+  </data>
+  <data name="WelcomePage_OpenProjectBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Öppna en befintlig projektfil</value>
   </data>
   <data name="WelcomePage_RecentProjectsLabel.Text" xml:space="preserve">
     <value>Senaste projekt</value>
@@ -52,28 +79,37 @@
 
   <!-- ─── Dashboard page ──────────────────────────────────────────────────── -->
   <data name="DashboardPage_Title.Text" xml:space="preserve">
-    <value>Dashboard</value>
-  </data>
-  <data name="DashboardPage_ExportPdfBtn.Text" xml:space="preserve">
-    <value>Exportera till PDF</value>
+    <value>Instrumentpanel</value>
   </data>
   <data name="DashboardPage_FilterStartDate.PlaceholderText" xml:space="preserve">
     <value>Startdatum</value>
   </data>
+  <data name="DashboardPage_FilterStartDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Filtrera på startdatum</value>
+  </data>
   <data name="DashboardPage_FilterEndDate.PlaceholderText" xml:space="preserve">
     <value>Slutdatum</value>
+  </data>
+  <data name="DashboardPage_FilterEndDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Filtrera på slutdatum</value>
   </data>
   <data name="DashboardPage_FilterAssignee.PlaceholderText" xml:space="preserve">
     <value>Ansvarig</value>
   </data>
+  <data name="DashboardPage_FilterAssignee.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Filtrera på ansvarig</value>
+  </data>
   <data name="DashboardPage_FilterStatus.PlaceholderText" xml:space="preserve">
     <value>Status</value>
   </data>
+  <data name="DashboardPage_FilterStatus.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Filtrera på status</value>
+  </data>
   <data name="DashboardPage_KpiCompletePercent.Text" xml:space="preserve">
-    <value>% Klart</value>
+    <value>% klart</value>
   </data>
   <data name="DashboardPage_KpiComplete.Text" xml:space="preserve">
-    <value>Klart</value>
+    <value>Klara</value>
   </data>
   <data name="DashboardPage_KpiInProgress.Text" xml:space="preserve">
     <value>Pågående</value>
@@ -82,10 +118,10 @@
     <value>I riskzonen</value>
   </data>
   <data name="DashboardPage_KpiOverdue.Text" xml:space="preserve">
-    <value>Försenat</value>
+    <value>Försenade</value>
   </data>
   <data name="DashboardPage_KpiBlocked.Text" xml:space="preserve">
-    <value>Blockerat</value>
+    <value>Blockerade</value>
   </data>
   <data name="DashboardPage_DeliverablesTitle.Text" xml:space="preserve">
     <value>Leverabler</value>
@@ -94,39 +130,96 @@
     <value>Statusuppdelning</value>
   </data>
   <data name="DashboardPage_UpcomingMilestonesTitle.Text" xml:space="preserve">
-    <value>Kommande milstolpar — Nästa 60 dagar</value>
+    <value>Kommande milstolpar — nästa 60 dagar</value>
+  </data>
+  <data name="DashboardPage_BetaFeature.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Betafunktion</value>
+  </data>
+  <data name="DashboardPage_OverallPercentComplete.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Total andel klart</value>
+  </data>
+  <data name="DashboardPage_CompleteTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Antal klara aktiviteter</value>
+  </data>
+  <data name="DashboardPage_InProgressTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Antal pågående aktiviteter</value>
+  </data>
+  <data name="DashboardPage_AtRiskTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Antal aktiviteter i riskzonen</value>
+  </data>
+  <data name="DashboardPage_OverdueTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Antal försenade aktiviteter</value>
+  </data>
+  <data name="DashboardPage_BlockedTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Antal blockerade aktiviteter</value>
+  </data>
+  <data name="DashboardPage_DeliverablesList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Lista över leverabler</value>
+  </data>
+  <data name="DashboardPage_DeliverableProgress.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Leverabelns förlopp</value>
+  </data>
+  <data name="DashboardPage_StatusBreakdownChart.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Diagram över statusuppdelning</value>
+  </data>
+  <data name="DashboardPage_UpcomingMilestonesList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Lista över kommande milstolpar</value>
   </data>
 
   <!-- ─── WBS Tree page ───────────────────────────────────────────────────── -->
   <data name="WbsTreePage_AddRootNodeBtn.Content" xml:space="preserve">
     <value>Lägg till rotnod</value>
   </data>
+  <data name="WbsTreePage_AddRootNodeBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Lägg till rotnod</value>
+  </data>
   <data name="WbsTreePage_AddChildBtn.Content" xml:space="preserve">
+    <value>Lägg till undernod</value>
+  </data>
+  <data name="WbsTreePage_AddChildBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Lägg till undernod</value>
   </data>
   <data name="WbsTreePage_DeleteNodeBtn.Content" xml:space="preserve">
     <value>Ta bort nod</value>
   </data>
+  <data name="WbsTreePage_DeleteNodeBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ta bort vald nod</value>
+  </data>
   <data name="WbsTreePage_CollapseAllBtn.Content" xml:space="preserve">
     <value>Fäll ihop alla</value>
   </data>
+  <data name="WbsTreePage_CollapseAllBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Fäll ihop alla noder</value>
+  </data>
   <data name="WbsTreePage_ExpandAllBtn.Content" xml:space="preserve">
-    <value>Expandera alla</value>
+    <value>Fäll ut alla</value>
+  </data>
+  <data name="WbsTreePage_ExpandAllBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Fäll ut alla noder</value>
   </data>
   <data name="WbsTreePage_ContextAddChild.Text" xml:space="preserve">
     <value>Lägg till undernod</value>
   </data>
+  <data name="WbsTreePage_ContextAddChild.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Lägg till undernod</value>
+  </data>
   <data name="WbsTreePage_ContextAddSibling.Text" xml:space="preserve">
-    <value>Lägg till systernod</value>
+    <value>Lägg till syskonnod</value>
+  </data>
+  <data name="WbsTreePage_ContextAddSibling.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Lägg till syskonnod</value>
   </data>
   <data name="WbsTreePage_ContextDelete.Text" xml:space="preserve">
     <value>Ta bort</value>
+  </data>
+  <data name="WbsTreePage_ContextDelete.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ta bort nod</value>
   </data>
   <data name="WbsTreePage_EmptyTitle.Text" xml:space="preserve">
     <value>Inga noder ännu</value>
   </data>
   <data name="WbsTreePage_EmptyHint.Text" xml:space="preserve">
-    <value>Klicka på 'Lägg till rotnod' för att börja</value>
+    <value>Klicka på ”Lägg till rotnod” för att komma igång</value>
   </data>
 
   <!-- ─── WBS Outline page ────────────────────────────────────────────────── -->
@@ -140,19 +233,22 @@
     <value>Titel</value>
   </data>
   <data name="WbsOutlinePage_ColAssignedTo.Text" xml:space="preserve">
-    <value>Tilldelad</value>
+    <value>Ansvarig</value>
   </data>
   <data name="WbsOutlinePage_ColStatus.Text" xml:space="preserve">
     <value>Status</value>
   </data>
   <data name="WbsOutlinePage_ColEstHours.Text" xml:space="preserve">
-    <value>Beräknade tim.</value>
+    <value>Uppskattade tim.</value>
   </data>
   <data name="WbsOutlinePage_ColActHours.Text" xml:space="preserve">
     <value>Faktiska tim.</value>
   </data>
   <data name="WbsOutlinePage_ColDueDate.Text" xml:space="preserve">
-    <value>Förfallodat.</value>
+    <value>Förfallodatum</value>
+  </data>
+  <data name="WbsOutlinePage_OutlineListView.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>WBS-översikt</value>
   </data>
 
   <!-- ─── Gantt page ──────────────────────────────────────────────────────── -->
@@ -171,80 +267,116 @@
   <data name="GanttPage_ZoomMonth.Content" xml:space="preserve">
     <value>Månad</value>
   </data>
+  <data name="GanttPage_BetaFeature.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Betafunktion</value>
+  </data>
+  <data name="GanttPage_ZoomCombo.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Zoomnivå</value>
+  </data>
 
   <!-- ─── Reports page ────────────────────────────────────────────────────── -->
   <data name="ReportsPage_Title.Text" xml:space="preserve">
     <value>Rapporter</value>
   </data>
   <data name="ReportsPage_Subtitle.Text" xml:space="preserve">
-    <value>Anpassa och generera en PDF-ögonblicksbild av aktuell projektstatus.</value>
+    <value>Välj vad som ska ingå och skapa en PDF-rapport över projektets aktuella status.</value>
   </data>
   <data name="ReportsPage_SectionsTitle.Text" xml:space="preserve">
-    <value>Avsnitt att inkludera</value>
+    <value>Avsnitt som ska ingå</value>
   </data>
   <data name="ReportsPage_ToggleSummary.Header" xml:space="preserve">
     <value>Sammanfattning (KPI-totaler)</value>
   </data>
   <data name="ReportsPage_ToggleSummary.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleSummary.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
+  </data>
+  <data name="ReportsPage_ToggleSummary.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Inkludera avsnittet Sammanfattning</value>
   </data>
   <data name="ReportsPage_ToggleAttention.Header" xml:space="preserve">
     <value>Kräver uppmärksamhet</value>
   </data>
   <data name="ReportsPage_ToggleAttention.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleAttention.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
+  </data>
+  <data name="ReportsPage_ToggleAttention.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Inkludera avsnittet Kräver uppmärksamhet</value>
   </data>
   <data name="ReportsPage_ToggleDeliverables.Header" xml:space="preserve">
     <value>Leverabler</value>
   </data>
   <data name="ReportsPage_ToggleDeliverables.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleDeliverables.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
+  </data>
+  <data name="ReportsPage_ToggleDeliverables.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Inkludera avsnittet Leverabler</value>
   </data>
   <data name="ReportsPage_ToggleEffort.Header" xml:space="preserve">
-    <value>Insatssammanfattning</value>
+    <value>Tidsåtgång</value>
   </data>
   <data name="ReportsPage_ToggleEffort.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleEffort.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
+  </data>
+  <data name="ReportsPage_ToggleEffort.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Inkludera avsnittet Tidsåtgång</value>
   </data>
   <data name="ReportsPage_ToggleMilestones.Header" xml:space="preserve">
     <value>Kommande milstolpar</value>
   </data>
   <data name="ReportsPage_ToggleMilestones.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleMilestones.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
+  </data>
+  <data name="ReportsPage_ToggleMilestones.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Inkludera avsnittet Kommande milstolpar</value>
   </data>
   <data name="ReportsPage_ToggleWbsTree.Header" xml:space="preserve">
-    <value>WBS-träd översikt</value>
+    <value>WBS-trädöversikt</value>
   </data>
   <data name="ReportsPage_ToggleWbsTree.OnContent" xml:space="preserve">
-    <value>Inkluderad</value>
+    <value>Ingår</value>
   </data>
   <data name="ReportsPage_ToggleWbsTree.OffContent" xml:space="preserve">
-    <value>Exkluderad</value>
+    <value>Ingår inte</value>
+  </data>
+  <data name="ReportsPage_ToggleWbsTree.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Inkludera avsnittet WBS-trädöversikt</value>
   </data>
   <data name="ReportsPage_GeneratePdfBtn.Text" xml:space="preserve">
-    <value>Generera PDF-rapport</value>
+    <value>Skapa PDF-rapport</value>
+  </data>
+  <data name="ReportsPage_BetaFeature.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Betafunktion</value>
+  </data>
+  <data name="ReportsPage_ExportPdfButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Skapa PDF-rapport</value>
   </data>
 
   <!-- ─── Milestones page ──────────────────────────────────────────────────── -->
   <data name="MilestonesPage_NewTitleInput.PlaceholderText" xml:space="preserve">
     <value>Milstolpens titel</value>
   </data>
+  <data name="MilestonesPage_NewTitleInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Titel för ny milstolpe</value>
+  </data>
   <data name="MilestonesPage_AddMilestoneBtn.Content" xml:space="preserve">
+    <value>Lägg till milstolpe</value>
+  </data>
+  <data name="MilestonesPage_AddMilestoneBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Lägg till milstolpe</value>
   </data>
   <data name="MilestonesPage_StatusComplete.Text" xml:space="preserve">
@@ -268,8 +400,14 @@
   <data name="MilestonesPage_SaveBtn.Content" xml:space="preserve">
     <value>Spara</value>
   </data>
+  <data name="MilestonesPage_SaveBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Spara milstolpe</value>
+  </data>
   <data name="MilestonesPage_MarkCompleteBtn.Content" xml:space="preserve">
     <value>Markera som klar</value>
+  </data>
+  <data name="MilestonesPage_MarkCompleteBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Markera milstolpen som klar</value>
   </data>
   <data name="MilestonesPage_LinkedNodesTitle.Text" xml:space="preserve">
     <value>Länkade WBS-noder</value>
@@ -280,16 +418,34 @@
   <data name="MilestonesPage_LinkNodeInput.PlaceholderText" xml:space="preserve">
     <value>Välj nod att länka</value>
   </data>
+  <data name="MilestonesPage_LinkNodeInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Nod att länka</value>
+  </data>
   <data name="MilestonesPage_LinkNodeBtn.Content" xml:space="preserve">
     <value>Länka nod</value>
+  </data>
+  <data name="MilestonesPage_LinkNodeBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Länka vald nod</value>
+  </data>
+  <data name="MilestonesPage_NewMilestoneDueDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Förfallodatum för ny milstolpe</value>
+  </data>
+  <data name="MilestonesPage_DeleteMilestone.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ta bort milstolpe</value>
+  </data>
+  <data name="MilestonesPage_MilestoneTitle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Milstolpens titel</value>
+  </data>
+  <data name="MilestonesPage_MilestoneDueDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Milstolpens förfallodatum</value>
+  </data>
+  <data name="MilestonesPage_RemoveLinkedNode.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ta bort länkad nod</value>
   </data>
 
   <!-- ─── WBS Detail control ───────────────────────────────────────────────── -->
   <data name="WbsDetail_Title.Text" xml:space="preserve">
     <value>Nodinformation</value>
-  </data>
-  <data name="WbsDetail_SavingText.Text" xml:space="preserve">
-    <value>Sparar…</value>
   </data>
   <data name="WbsDetail_CodeLabel.Text" xml:space="preserve">
     <value>Kod</value>
@@ -301,13 +457,13 @@
     <value>Beskrivning</value>
   </data>
   <data name="WbsDetail_AssignedToLabel.Text" xml:space="preserve">
-    <value>Tilldelad</value>
+    <value>Ansvarig</value>
   </data>
   <data name="WbsDetail_StatusLabel.Text" xml:space="preserve">
     <value>Status</value>
   </data>
   <data name="WbsDetail_EstHoursLabel.Text" xml:space="preserve">
-    <value>Beräknade tim.</value>
+    <value>Uppskattade tim.</value>
   </data>
   <data name="WbsDetail_ActHoursLabel.Text" xml:space="preserve">
     <value>Faktiska tim.</value>
@@ -321,14 +477,20 @@
   <data name="WbsDetail_TitleInput.PlaceholderText" xml:space="preserve">
     <value>Nodtitel…</value>
   </data>
+  <data name="WbsDetail_TitleInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Titel</value>
+  </data>
   <data name="WbsDetail_DeliverableToggle.Header" xml:space="preserve">
-    <value>Inkludera i rapport</value>
+    <value>Ta med i rapporten</value>
   </data>
   <data name="WbsDetail_DeliverableToggle.OnContent" xml:space="preserve">
     <value>Leverabel</value>
   </data>
   <data name="WbsDetail_DeliverableToggle.OffContent" xml:space="preserve">
     <value>Inte en leverabel</value>
+  </data>
+  <data name="WbsDetail_DeliverableToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Markera noden som leverabel</value>
   </data>
   <data name="WbsDetail_PredecessorsTitle.Text" xml:space="preserve">
     <value>Föregångare</value>
@@ -339,11 +501,50 @@
   <data name="WbsDetail_PredecessorInput.PlaceholderText" xml:space="preserve">
     <value>Välj föregångarnod</value>
   </data>
+  <data name="WbsDetail_PredecessorInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Föregångarnod</value>
+  </data>
   <data name="WbsDetail_AddPredecessorBtn.Content" xml:space="preserve">
     <value>Lägg till föregångare</value>
   </data>
+  <data name="WbsDetail_AddPredecessorBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Lägg till föregångarberoende</value>
+  </data>
   <data name="WbsDetail_LinkedMilestonesTitle.Text" xml:space="preserve">
     <value>Länkade milstolpar</value>
+  </data>
+  <data name="WbsDetail_CloseDetailPanel.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Stäng detaljpanelen</value>
+  </data>
+  <data name="WbsDetail_NodeCode.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Nodkod</value>
+  </data>
+  <data name="WbsDetail_Description.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Beskrivning</value>
+  </data>
+  <data name="WbsDetail_AssignedTo.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ansvarig</value>
+  </data>
+  <data name="WbsDetail_Status.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="WbsDetail_EstimatedHours.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Uppskattade timmar</value>
+  </data>
+  <data name="WbsDetail_ActualHours.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Faktiska timmar</value>
+  </data>
+  <data name="WbsDetail_StartDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Startdatum</value>
+  </data>
+  <data name="WbsDetail_DueDate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Förfallodatum</value>
+  </data>
+  <data name="WbsDetail_RemoveDependency.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ta bort beroende</value>
+  </data>
+  <data name="WbsDetail_DependencyType.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Beroendetyp</value>
   </data>
 
   <!-- ─── Settings page ───────────────────────────────────────────────────── -->
@@ -362,17 +563,29 @@
   <data name="SettingsPage_NewProjectBtn.Content" xml:space="preserve">
     <value>Nytt projekt</value>
   </data>
+  <data name="SettingsPage_NewProjectBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Skapa nytt projekt</value>
+  </data>
   <data name="SettingsPage_OpenProjectBtn.Content" xml:space="preserve">
     <value>Öppna projekt</value>
   </data>
+  <data name="SettingsPage_OpenProjectBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Öppna befintligt projekt</value>
+  </data>
   <data name="SettingsPage_CloseProjectBtn.Content" xml:space="preserve">
     <value>Stäng projekt</value>
+  </data>
+  <data name="SettingsPage_CloseProjectBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Stäng aktuellt projekt</value>
   </data>
   <data name="SettingsPage_RecentProjectsLabel.Text" xml:space="preserve">
     <value>Senaste projekt</value>
   </data>
   <data name="SettingsPage_RemoveBtn.Content" xml:space="preserve">
     <value>Ta bort</value>
+  </data>
+  <data name="SettingsPage_RemoveBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ta bort från senaste projekt</value>
   </data>
   <data name="SettingsPage_UpdatesSection.Text" xml:space="preserve">
     <value>Programvaruuppdateringar</value>
@@ -383,17 +596,29 @@
   <data name="SettingsPage_CheckUpdatesBtn.Content" xml:space="preserve">
     <value>Sök efter uppdateringar</value>
   </data>
+  <data name="SettingsPage_CheckUpdatesBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Sök efter uppdateringar</value>
+  </data>
   <data name="SettingsPage_CheckingText.Text" xml:space="preserve">
     <value>Söker efter uppdateringar…</value>
   </data>
   <data name="SettingsPage_DownloadInstallBtn.Content" xml:space="preserve">
     <value>Ladda ner och installera</value>
   </data>
+  <data name="SettingsPage_DownloadInstallBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ladda ner och installera uppdateringen</value>
+  </data>
   <data name="SettingsPage_ReleaseNotesBtn.Content" xml:space="preserve">
-    <value>Visa versionsnoteringar</value>
+    <value>Visa versionsinformation</value>
+  </data>
+  <data name="SettingsPage_ReleaseNotesBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Öppna versionsinformationen i webbläsaren</value>
   </data>
   <data name="SettingsPage_CancelBtn.Content" xml:space="preserve">
     <value>Avbryt</value>
+  </data>
+  <data name="SettingsPage_CancelBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Avbryt nedladdning</value>
   </data>
   <data name="SettingsPage_LanguageSection.Text" xml:space="preserve">
     <value>Språk</value>
@@ -402,10 +627,494 @@
     <value>Programspråk</value>
   </data>
   <data name="SettingsPage_ApplyLanguageBtn.Content" xml:space="preserve">
-    <value>Tillämpa</value>
+    <value>Verkställ</value>
+  </data>
+  <data name="SettingsPage_ApplyLanguageBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Verkställ språkändringen</value>
   </data>
   <data name="SettingsPage_RestartNote.Message" xml:space="preserve">
     <value>Språkändringar träder i kraft efter omstart av programmet.</value>
   </data>
+  <data name="SettingsPage_ActiveProjectName.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Namn på aktivt projekt</value>
+  </data>
+  <data name="SettingsPage_RecentProjectsList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Lista över senaste projekt</value>
+  </data>
+  <data name="SettingsPage_CurrentApplicationVersion.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Programmets aktuella version</value>
+  </data>
+  <data name="SettingsPage_AvailableUpdateName.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Namn på tillgänglig uppdatering</value>
+  </data>
+  <data name="SettingsPage_DownloadProgress.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Nedladdningsförlopp</value>
+  </data>
+  <data name="SettingsPage_ApplicationLanguage.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Programspråk</value>
+  </data>
 
+  <data name="NewProject_TxtName.Header" xml:space="preserve">
+    <value>Projektnamn *</value>
+  </data>
+  <data name="NewProject_TxtName.PlaceholderText" xml:space="preserve">
+    <value>Ange projektnamn</value>
+  </data>
+  <data name="NewProject_TxtName.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Projektnamn</value>
+  </data>
+  <data name="NewProject_TxtOwner.Header" xml:space="preserve">
+    <value>Ägare</value>
+  </data>
+  <data name="NewProject_TxtOwner.PlaceholderText" xml:space="preserve">
+    <value>Ange ägarens namn</value>
+  </data>
+  <data name="NewProject_TxtOwner.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Projektägare</value>
+  </data>
+  <data name="NewProject_SaveLocation.Text" xml:space="preserve">
+    <value>Lagringsplats *</value>
+  </data>
+  <data name="NewProject_TxtSavePath.Text" xml:space="preserve">
+    <value>Ingen mapp vald</value>
+  </data>
+  <data name="NewProject_BtnPickFolder.Content" xml:space="preserve">
+    <value>Välj mapp...</value>
+  </data>
+  <data name="NewProject_BtnPickFolder.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Välj mapp att spara i</value>
+  </data>
+
+  <!-- ─── Dialogs ─────────────────────────────────────────────────────────────── -->
+  <data name="Dialog_Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Dialog_Yes" xml:space="preserve">
+    <value>Ja</value>
+  </data>
+  <data name="Dialog_No" xml:space="preserve">
+    <value>Nej</value>
+  </data>
+  <data name="Dialog_Cancel" xml:space="preserve">
+    <value>Avbryt</value>
+  </data>
+
+  <!-- ─── Error dialog titles ─────────────────────────────────────────────────── -->
+  <data name="ErrorTitle_Generic" xml:space="preserve">
+    <value>Fel</value>
+  </data>
+  <data name="ErrorTitle_Dashboard" xml:space="preserve">
+    <value>Fel i instrumentpanelen</value>
+  </data>
+  <data name="ErrorTitle_Export" xml:space="preserve">
+    <value>Exporten misslyckades</value>
+  </data>
+  <data name="ErrorTitle_Gantt" xml:space="preserve">
+    <value>Fel i Gantt-diagrammet</value>
+  </data>
+  <data name="ErrorTitle_Load" xml:space="preserve">
+    <value>Inläsningsfel</value>
+  </data>
+  <data name="ErrorTitle_Save" xml:space="preserve">
+    <value>Det gick inte att spara</value>
+  </data>
+  <data name="ErrorTitle_Delete" xml:space="preserve">
+    <value>Det gick inte att ta bort</value>
+  </data>
+  <data name="ErrorTitle_AddMilestone" xml:space="preserve">
+    <value>Det gick inte att lägga till milstolpen</value>
+  </data>
+  <data name="ErrorTitle_MarkComplete" xml:space="preserve">
+    <value>Det gick inte att markera som klar</value>
+  </data>
+  <data name="ErrorTitle_Link" xml:space="preserve">
+    <value>Det gick inte att länka</value>
+  </data>
+  <data name="ErrorTitle_Unlink" xml:space="preserve">
+    <value>Det gick inte att ta bort länken</value>
+  </data>
+  <data name="ErrorTitle_CreateProject" xml:space="preserve">
+    <value>Det gick inte att skapa projektet</value>
+  </data>
+  <data name="ErrorTitle_OpenProject" xml:space="preserve">
+    <value>Det gick inte att öppna projektet</value>
+  </data>
+  <data name="ErrorTitle_CloseProject" xml:space="preserve">
+    <value>Det gick inte att stänga projektet</value>
+  </data>
+  <data name="ErrorTitle_AddNode" xml:space="preserve">
+    <value>Det gick inte att lägga till noden</value>
+  </data>
+  <data name="ErrorTitle_AddChild" xml:space="preserve">
+    <value>Det gick inte att lägga till undernoden</value>
+  </data>
+  <data name="ErrorTitle_AddSibling" xml:space="preserve">
+    <value>Det gick inte att lägga till syskonnoden</value>
+  </data>
+  <data name="ErrorTitle_AddDependency" xml:space="preserve">
+    <value>Det gick inte att lägga till beroendet</value>
+  </data>
+  <data name="ErrorTitle_RemoveDependency" xml:space="preserve">
+    <value>Det gick inte att ta bort beroendet</value>
+  </data>
+  <data name="ErrorTitle_Navigation" xml:space="preserve">
+    <value>Navigeringsfel</value>
+  </data>
+
+  <!-- ─── Error messages raised by Core (keys attached via LocalizedMessage) ──── -->
+  <data name="Error_NoProjectOpen" xml:space="preserve">
+    <value>Inget projekt är öppet.</value>
+  </data>
+  <data name="Error_ProjectNotFound" xml:space="preserve">
+    <value>Projektfilen '{0}' hittades inte eller kunde inte öppnas.</value>
+  </data>
+  <data name="Error_InvalidProjectData" xml:space="preserve">
+    <value>'{0}' innehåller inga giltiga projektdata.</value>
+  </data>
+  <data name="Error_NotAProjectFile" xml:space="preserve">
+    <value>Filen skapades inte av iscWBS och kan inte öppnas som ett projekt.</value>
+  </data>
+  <data name="Error_IntegrityCheckFailed" xml:space="preserve">
+    <value>Projektfilen klarade inte integritetskontrollen och kan vara skadad: {0}</value>
+  </data>
+  <data name="Error_MilestoneNotFound" xml:space="preserve">
+    <value>Milstolpen '{0}' hittades inte.</value>
+  </data>
+  <data name="Error_NodeNotFound" xml:space="preserve">
+    <value>WBS-noden '{0}' hittades inte.</value>
+  </data>
+  <data name="Error_MilestoneTitleRequired" xml:space="preserve">
+    <value>Milstolpen måste ha en titel.</value>
+  </data>
+  <data name="Error_SelfDependency" xml:space="preserve">
+    <value>En nod kan inte vara beroende av sig själv.</value>
+  </data>
+  <data name="Error_DuplicateDependency" xml:space="preserve">
+    <value>Beroendet finns redan.</value>
+  </data>
+  <data name="Error_CircularDependency" xml:space="preserve">
+    <value>Beroendet skulle skapa ett cirkulärt beroende.</value>
+  </data>
+
+  <!-- ─── Status and dependency labels ────────────────────────────────────────── -->
+  <data name="Status_NotStarted" xml:space="preserve">
+    <value>Ej påbörjad</value>
+  </data>
+  <data name="Status_InProgress" xml:space="preserve">
+    <value>Pågående</value>
+  </data>
+  <data name="Status_Complete" xml:space="preserve">
+    <value>Klar</value>
+  </data>
+  <data name="Status_Blocked" xml:space="preserve">
+    <value>Blockerad</value>
+  </data>
+  <data name="DependencyLabel_FinishToStart" xml:space="preserve">
+    <value>Slut → Start</value>
+  </data>
+  <data name="DependencyLabel_StartToStart" xml:space="preserve">
+    <value>Start → Start</value>
+  </data>
+  <data name="DependencyLabel_FinishToFinish" xml:space="preserve">
+    <value>Slut → Slut</value>
+  </data>
+  <data name="DependencyLabel_StartToFinish" xml:space="preserve">
+    <value>Start → Slut</value>
+  </data>
+  <data name="DependencyDescription_FinishToStart" xml:space="preserve">
+    <value>Föregångaren måste avslutas innan den här noden kan påbörjas</value>
+  </data>
+  <data name="DependencyDescription_StartToStart" xml:space="preserve">
+    <value>Föregångaren måste påbörjas innan den här noden kan påbörjas</value>
+  </data>
+  <data name="DependencyDescription_FinishToFinish" xml:space="preserve">
+    <value>Föregångaren måste avslutas innan den här noden kan avslutas</value>
+  </data>
+  <data name="DependencyDescription_StartToFinish" xml:space="preserve">
+    <value>Föregångaren måste påbörjas innan den här noden kan avslutas</value>
+  </data>
+  <data name="DependencyBlocking_FinishToStart" xml:space="preserve">
+    <value>Måste avslutas innan den här kan påbörjas — status: {0}</value>
+  </data>
+  <data name="DependencyBlocking_StartToStart" xml:space="preserve">
+    <value>Måste påbörjas innan den här kan påbörjas — status: {0}</value>
+  </data>
+  <data name="DependencyBlocking_FinishToFinish" xml:space="preserve">
+    <value>Måste avslutas innan den här kan avslutas — status: {0}</value>
+  </data>
+  <data name="DependencyBlocking_StartToFinish" xml:space="preserve">
+    <value>Måste påbörjas innan den här kan avslutas — status: {0}</value>
+  </data>
+
+  <!-- ─── WBS tree (code) ─────────────────────────────────────────────────────── -->
+  <data name="Wbs_NewNodeTitle" xml:space="preserve">
+    <value>Ny nod</value>
+  </data>
+  <data name="Wbs_DeleteNodeTitle" xml:space="preserve">
+    <value>Ta bort nod</value>
+  </data>
+  <data name="Wbs_DeleteNodeConfirm" xml:space="preserve">
+    <value>Ta bort ”{0}” och alla dess undernoder?</value>
+  </data>
+  <data name="Wbs_RemoveDependencyTitle" xml:space="preserve">
+    <value>Ta bort beroende</value>
+  </data>
+  <data name="Wbs_RemoveDependencyConfirm" xml:space="preserve">
+    <value>Ta bort beroendet av ”{0}”?</value>
+  </data>
+  <data name="Wbs_CannotStartTitle" xml:space="preserve">
+    <value>Kan inte markeras som pågående</value>
+  </data>
+  <data name="Wbs_CannotCompleteTitle" xml:space="preserve">
+    <value>Kan inte markeras som klar</value>
+  </data>
+  <data name="Wbs_CannotStartIntro" xml:space="preserve">
+    <value>Den här noden kan inte påbörjas förrän följande villkor för föregångare är uppfyllda:</value>
+  </data>
+  <data name="Wbs_CannotCompleteIntro" xml:space="preserve">
+    <value>Den här noden kan inte slutföras förrän följande villkor för föregångare är uppfyllda:</value>
+  </data>
+  <data name="Wbs_CompleteViolatedTitle" xml:space="preserve">
+    <value>Klar nod påverkas</value>
+  </data>
+  <data name="Wbs_CompleteViolatedIntro" xml:space="preserve">
+    <value>Ändringen bryter mot beroenden för följande klara noder:</value>
+  </data>
+  <data name="Wbs_CompleteViolatedOutro" xml:space="preserve">
+    <value>Noderna är fortfarande markerade som klara, men villkoren för deras föregångare är inte längre uppfyllda. Granska deras status vid behov.</value>
+  </data>
+  <data name="Wbs_InProgressViolatedTitle" xml:space="preserve">
+    <value>Pågående nod påverkas</value>
+  </data>
+  <data name="Wbs_InProgressViolatedIntro" xml:space="preserve">
+    <value>Ändringen bryter mot startvillkor för följande pågående noder:</value>
+  </data>
+  <data name="Wbs_InProgressViolatedOutro" xml:space="preserve">
+    <value>Noderna har redan påbörjats, men deras startberoenden är inte längre uppfyllda. Granska deras status vid behov.</value>
+  </data>
+  <data name="Diagram_StartBlocked" xml:space="preserve">
+    <value>Start blockerad — villkor för föregångare är inte uppfyllda</value>
+  </data>
+  <data name="Diagram_CompletionBlocked" xml:space="preserve">
+    <value>Slutförande blockerat — villkor för föregångare är inte uppfyllda</value>
+  </data>
+  <data name="Diagram_CompleteViolated" xml:space="preserve">
+    <value>Villkor brutet — noden är klar men en föregångare uppfyller inte längre beroendet</value>
+  </data>
+  <data name="Diagram_InProgressViolated" xml:space="preserve">
+    <value>Startvillkor brutet — noden pågår men en föregångare uppfyller inte längre startberoendet</value>
+  </data>
+  <data name="Diagram_ExpandChildren" xml:space="preserve">
+    <value>Fäll ut undernoder</value>
+  </data>
+  <data name="Diagram_CollapseChildren" xml:space="preserve">
+    <value>Fäll ihop undernoder</value>
+  </data>
+  <data name="Diagram_OneNodeHidden" xml:space="preserve">
+    <value>1 nod dold</value>
+  </data>
+  <data name="Diagram_NodesHidden" xml:space="preserve">
+    <value>{0} noder dolda</value>
+  </data>
+
+  <!-- ─── Milestones, dashboard, Gantt (code) ─────────────────────────────────── -->
+  <data name="Milestones_MarkCompleteTitle" xml:space="preserve">
+    <value>Markera som klar</value>
+  </data>
+  <data name="Milestones_MarkCompleteConfirm" xml:space="preserve">
+    <value>Markera ”{0}” som klar?</value>
+  </data>
+  <data name="Milestones_DeleteTitle" xml:space="preserve">
+    <value>Ta bort milstolpe</value>
+  </data>
+  <data name="Milestones_DeleteConfirm" xml:space="preserve">
+    <value>Ta bort ”{0}”?</value>
+  </data>
+  <data name="Milestones_NoNodes" xml:space="preserve">
+    <value>Inga noder</value>
+  </data>
+  <data name="Milestones_OneNode" xml:space="preserve">
+    <value>1 nod</value>
+  </data>
+  <data name="Milestones_NodeCount" xml:space="preserve">
+    <value>{0} noder</value>
+  </data>
+  <data name="Dashboard_AllAssignees" xml:space="preserve">
+    <value>Alla</value>
+  </data>
+  <data name="Gantt_TaskHeader" xml:space="preserve">
+    <value>Aktivitet</value>
+  </data>
+  <data name="Gantt_Today" xml:space="preserve">
+    <value>Idag</value>
+  </data>
+
+  <!-- ─── New project, pickers, settings (code) ───────────────────────────────── -->
+  <data name="NewProject_DialogTitle" xml:space="preserve">
+    <value>Nytt projekt</value>
+  </data>
+  <data name="NewProject_Create" xml:space="preserve">
+    <value>Skapa</value>
+  </data>
+  <data name="Picker_StatusReportFileName" xml:space="preserve">
+    <value>Statusrapport {0}</value>
+  </data>
+  <data name="Picker_PdfDocument" xml:space="preserve">
+    <value>PDF-dokument</value>
+  </data>
+  <data name="Settings_UpToDate" xml:space="preserve">
+    <value>Du använder den senaste versionen.</value>
+  </data>
+  <data name="Settings_RepositoryNotFound" xml:space="preserve">
+    <value>Uppdateringskällan hittades inte. Projektet kan ha flyttats eller bytt namn.</value>
+  </data>
+  <data name="Settings_RateLimited" xml:space="preserve">
+    <value>Gränsen för GitHubs API har nåtts. Vänta några minuter och försök igen.</value>
+  </data>
+  <data name="Settings_CheckFailed" xml:space="preserve">
+    <value>Det gick inte att söka efter uppdateringar. Kontrollera internetanslutningen.</value>
+  </data>
+  <data name="Settings_DownloadCancelled" xml:space="preserve">
+    <value>Nedladdningen avbröts.</value>
+  </data>
+  <data name="Settings_DownloadFailed" xml:space="preserve">
+    <value>Nedladdningen misslyckades. Försök igen eller besök versionssidan.</value>
+  </data>
+  <data name="Settings_OpenReleasePageFailed" xml:space="preserve">
+    <value>Det gick inte att öppna versionssidan.</value>
+  </data>
+
+  <!-- ─── PDF status report ───────────────────────────────────────────────────── -->
+  <data name="Report_Title" xml:space="preserve">
+    <value>Projektstatusrapport</value>
+  </data>
+  <data name="Report_MetadataTitle" xml:space="preserve">
+    <value>{0} — Statusrapport</value>
+  </data>
+  <data name="Report_GeneratedAt" xml:space="preserve">
+    <value>Skapad  {0}</value>
+  </data>
+  <data name="Report_HealthAtRisk" xml:space="preserve">
+    <value>● I RISKZONEN</value>
+  </data>
+  <data name="Report_HealthCaution" xml:space="preserve">
+    <value>● VARNING</value>
+  </data>
+  <data name="Report_HealthOnTrack" xml:space="preserve">
+    <value>● ENLIGT PLAN</value>
+  </data>
+  <data name="Report_Summary" xml:space="preserve">
+    <value>SAMMANFATTNING</value>
+  </data>
+  <data name="Report_AttentionRequired" xml:space="preserve">
+    <value>KRÄVER UPPMÄRKSAMHET</value>
+  </data>
+  <data name="Report_Deliverables" xml:space="preserve">
+    <value>LEVERABLER</value>
+  </data>
+  <data name="Report_EffortSummary" xml:space="preserve">
+    <value>TIDSÅTGÅNG</value>
+  </data>
+  <data name="Report_UpcomingMilestones" xml:space="preserve">
+    <value>KOMMANDE MILSTOLPAR</value>
+  </data>
+  <data name="Report_WbsTree" xml:space="preserve">
+    <value>ARBETSNEDBRYTNINGSSTRUKTUR</value>
+  </data>
+  <data name="Report_NoDeliverables" xml:space="preserve">
+    <value>Inga leverabler hittades. Öppna en nod i WBS-redigeraren och aktivera ”Ta med i rapporten” för att lägga till den här.</value>
+  </data>
+  <data name="Report_ColCode" xml:space="preserve">
+    <value>Kod</value>
+  </data>
+  <data name="Report_ColTitle" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="Report_ColAssignee" xml:space="preserve">
+    <value>Ansvarig</value>
+  </data>
+  <data name="Report_ColDueDate" xml:space="preserve">
+    <value>Förfallodatum</value>
+  </data>
+  <data name="Report_ColStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Report_ColProgress" xml:space="preserve">
+    <value>Förlopp</value>
+  </data>
+  <data name="Report_ColMilestone" xml:space="preserve">
+    <value>Milstolpe</value>
+  </data>
+  <data name="Report_ColEstimated" xml:space="preserve">
+    <value>Uppskattat</value>
+  </data>
+  <data name="Report_ColActual" xml:space="preserve">
+    <value>Faktiskt</value>
+  </data>
+  <data name="Report_ColRemaining" xml:space="preserve">
+    <value>Återstår</value>
+  </data>
+  <data name="Report_ColBurnRate" xml:space="preserve">
+    <value>Förbrukningsgrad</value>
+  </data>
+  <data name="Report_ColTasks" xml:space="preserve">
+    <value>Aktiviteter</value>
+  </data>
+  <data name="Report_ColEstHours" xml:space="preserve">
+    <value>Uppskattade tim.</value>
+  </data>
+  <data name="Report_ColActHours" xml:space="preserve">
+    <value>Faktiska tim.</value>
+  </data>
+  <data name="Report_ColPercentComplete" xml:space="preserve">
+    <value>% klart</value>
+  </data>
+  <data name="Report_ColComplete" xml:space="preserve">
+    <value>Klara</value>
+  </data>
+  <data name="Report_ColInProgress" xml:space="preserve">
+    <value>Pågående</value>
+  </data>
+  <data name="Report_ColAtRisk" xml:space="preserve">
+    <value>I riskzonen</value>
+  </data>
+  <data name="Report_ColOverdue" xml:space="preserve">
+    <value>Försenade</value>
+  </data>
+  <data name="Report_ColBlocked" xml:space="preserve">
+    <value>Blockerade</value>
+  </data>
+  <data name="Report_DaysOverdue" xml:space="preserve">
+    <value>{0} d försenad</value>
+  </data>
+  <data name="Report_DueInDays" xml:space="preserve">
+    <value>förfaller om {0} d</value>
+  </data>
+  <data name="Report_GeneratedBy" xml:space="preserve">
+    <value>Skapad med iscWBS</value>
+  </data>
+  <data name="Report_Page" xml:space="preserve">
+    <value>Sida</value>
+  </data>
+  <data name="Report_PageOf" xml:space="preserve">
+    <value>av</value>
+  </data>
+  <data name="MilestonesPage_MilestoneList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Milstolpar</value>
+  </data>
+  <data name="WelcomePage_RecentProjectsList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Senaste projekt</value>
+  </data>
+  <data name="WbsDetail_StartDate.PlaceholderText" xml:space="preserve">
+    <value>Välj ett datum</value>
+  </data>
+  <data name="WbsDetail_DueDate.PlaceholderText" xml:space="preserve">
+    <value>Välj ett datum</value>
+  </data>
+  <data name="MilestonesPage_NewMilestoneDueDate.PlaceholderText" xml:space="preserve">
+    <value>Välj ett datum</value>
+  </data>
+  <data name="MilestonesPage_MilestoneDueDate.PlaceholderText" xml:space="preserve">
+    <value>Välj ett datum</value>
+  </data>
 </root>

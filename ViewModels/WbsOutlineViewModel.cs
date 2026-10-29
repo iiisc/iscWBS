@@ -3,26 +3,24 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
+using iscWBS.Helpers;
 
 namespace iscWBS.ViewModels;
 
-public sealed partial class WbsOutlineViewModel : ObservableObject, INavigationAware
+public sealed partial class WbsOutlineViewModel : ObservableObject
 {
-    private readonly IWbsService _wbsService;
-    private readonly IProjectStateService _projectStateService;
-    private readonly IDialogService _dialogService;
-    private readonly INavigationService _navigationService;
+    private readonly WbsService _wbsService;
+    private readonly ProjectStateService _projectStateService;
+    private readonly DialogService _dialogService;
+    private readonly NavigationService _navigationService;
 
     public ObservableCollection<WbsOutlineRowViewModel> Nodes { get; } = new();
 
-    [ObservableProperty]
-    public partial bool IsLoading { get; set; }
-
     public WbsOutlineViewModel(
-        IWbsService wbsService,
-        IProjectStateService projectStateService,
-        IDialogService dialogService,
-        INavigationService navigationService)
+        WbsService wbsService,
+        ProjectStateService projectStateService,
+        DialogService dialogService,
+        NavigationService navigationService)
     {
         _wbsService = wbsService;
         _projectStateService = projectStateService;
@@ -30,48 +28,38 @@ public sealed partial class WbsOutlineViewModel : ObservableObject, INavigationA
         _navigationService = navigationService;
     }
 
-    public void OnNavigatedTo(object? parameter) => _ = LoadNodesAsync();
-    public void OnNavigatedFrom() { }
+    public void OnNavigatedTo() => _ = LoadNodesAsync();
 
-    [RelayCommand]
     private async Task LoadNodesAsync()
     {
         if (_projectStateService.ActiveProject is not { Id: var projectId }) return;
 
-        IsLoading = true;
         try
         {
             Nodes.Clear();
             IReadOnlyList<WbsNode> all = await _wbsService.GetAllByProjectAsync(projectId);
             IReadOnlyList<NodeDependency> deps = await _wbsService.GetAllDependenciesByProjectAsync(projectId);
-            IReadOnlySet<Guid> blockedIds = _wbsService.ResolveBlockedNodeIds(all, deps);
+            IReadOnlySet<Guid> blockedIds = DependencyConstraints.BlockedNodeIds(all, deps);
 
             foreach (WbsNode node in all)
                 Nodes.Add(new WbsOutlineRowViewModel
                 {
                     Node            = node,
-                    EffectiveStatus = blockedIds.Contains(node.Id) ? WbsStatus.Blocked : node.Status,
+                    EffectiveStatus = DependencyConstraints.EffectiveStatus(node, blockedIds),
                 });
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Load Error", ex.Message);
+            await _dialogService.ShowErrorAsync("ErrorTitle_Load", ex);
         }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    [RelayCommand]
-    private void SelectNode(WbsNode? node)
-    {
-        if (node is null) return;
-        _navigationService.NavigateTo("WbsTreePage", node.Id);
     }
 
     /// <summary>Navigates to the WBS tree, selecting the node from the given outline row.</summary>
     [RelayCommand]
-    private void SelectRow(WbsOutlineRowViewModel? row) => SelectNode(row?.Node);
+    private void SelectRow(WbsOutlineRowViewModel? row)
+    {
+        if (row is not null)
+            _navigationService.NavigateTo("WbsTreePage", row.Node.Id);
+    }
 }
 

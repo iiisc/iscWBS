@@ -10,9 +10,7 @@ public sealed class DependencyRowViewModel
     public string PredecessorTitle { get; init; } = string.Empty;
     public string TypeLabel { get; init; } = string.Empty;
     public string TypeDescription { get; init; } = string.Empty;
-    /// <summary>True when this predecessor is actively preventing the successor from proceeding.</summary>
     public bool IsBlocking { get; init; }
-    /// <summary>Human-readable explanation of why this predecessor is blocking, empty when not blocking.</summary>
     public string BlockingReason { get; init; } = string.Empty;
 }
 

@@ -1,68 +1,68 @@
 using System.IO;
-using SQLite;
+using Microsoft.Data.Sqlite;
 using iscWBS.Core.Exceptions;
 using iscWBS.Core.Models;
-using iscWBS.Core.Repositories;
+using iscWBS.Core.Data;
+using iscWBS.Helpers;
 
 namespace iscWBS.Core.Services;
 
-public sealed class ProjectStateService : IProjectStateService
+/// <summary>Owns the open project file; every service reads and writes through <see cref="Connection"/>.</summary>
+public sealed class ProjectStateService
 {
+    private readonly SettingsService _settingsService;
     private WbsDatabase? _database;
     private Project? _activeProject;
 
     public Project? ActiveProject => _activeProject;
     public bool HasActiveProject => _activeProject is not null;
-    public SQLiteAsyncConnection? Database => _database?.Connection;
+
+    public SqliteConnection Connection => _database?.Connection ?? throw WbsException.NoProjectOpen();
 
     public event EventHandler<Project?>? ActiveProjectChanged;
-    public event EventHandler<Project>? ActiveProjectUpdated;
+
+    public ProjectStateService(SettingsService settingsService)
+    {
+        _settingsService = settingsService;
+    }
 
     public async Task OpenProjectAsync(string filePath)
     {
         if (!File.Exists(filePath))
-            throw new ProjectNotFoundException(filePath);
+            throw WbsException.ProjectNotFound(filePath);
 
-        await CloseInternalAsync();
+        await OpenDatabaseAsync(filePath);
 
-        _database = new WbsDatabase(filePath);
-        try
+        Project? project = (await Connection.QueryAsync(
+            "SELECT Id, Name, Description, Owner, CreatedAt, UpdatedAt, StartDate FROM Projects LIMIT 1",
+            r => new Project
+            {
+                Id = r.GetGuidText(0),
+                Name = r.GetText(1),
+                Description = r.GetText(2),
+                Owner = r.GetText(3),
+                CreatedAt = r.GetNullableDateTime(4) ?? default,
+                UpdatedAt = r.GetNullableDateTime(5),
+                StartDate = r.GetNullableDateTime(6)
+            })).FirstOrDefault();
+        if (project is null)
         {
-            await _database.InitializeAsync();
+            await CloseInternalAsync();
+            throw new WbsException($"'{filePath}' does not contain valid project data.").WithMessageKey("Error_InvalidProjectData", filePath);
         }
-        catch
-        {
-            await _database.CloseAsync();
-            _database = null;
-            throw;
-        }
+        _activeProject = project;
 
-        var repo = new ProjectRepository(this);
-        _activeProject = await repo.GetFirstAsync()
-            ?? throw new WbsException($"'{filePath}' does not contain valid project data.");
-
+        _settingsService.AddRecentProject(filePath);
         ActiveProjectChanged?.Invoke(this, _activeProject);
     }
 
     public async Task CreateProjectAsync(string name, string filePath, string owner = "")
     {
-        await CloseInternalAsync();
-
         string? directory = Path.GetDirectoryName(filePath);
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
 
-        _database = new WbsDatabase(filePath);
-        try
-        {
-            await _database.InitializeAsync();
-        }
-        catch
-        {
-            await _database.CloseAsync();
-            _database = null;
-            throw;
-        }
+        await OpenDatabaseAsync(filePath);
 
         var project = new Project
         {
@@ -71,11 +71,14 @@ public sealed class ProjectStateService : IProjectStateService
             Owner = owner,
             CreatedAt = DateTime.UtcNow
         };
-
-        var repo = new ProjectRepository(this);
-        await repo.InsertAsync(project);
+        await Connection.ExecuteAsync(
+            "INSERT INTO Projects (Id, Name, Description, Owner, CreatedAt, UpdatedAt, StartDate) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+            project.Id, project.Name, project.Description, project.Owner, project.CreatedAt, project.UpdatedAt, project.StartDate);
         _activeProject = project;
 
+        _settingsService.AddRecentProject(filePath);
+        if (!string.IsNullOrEmpty(directory))
+            _settingsService.Set(SettingsKeys.LastProjectFolder, directory);
         ActiveProjectChanged?.Invoke(this, _activeProject);
     }
 
@@ -85,32 +88,30 @@ public sealed class ProjectStateService : IProjectStateService
         ActiveProjectChanged?.Invoke(this, null);
     }
 
-    private async Task CloseInternalAsync()
+    private async Task OpenDatabaseAsync(string filePath)
     {
-        if (_database is not null)
-        {
-            try
-            {
-                await _database.CloseAsync();
-            }
-            finally
-            {
-                _database = null;
-            }
-        }
+        await CloseInternalAsync();
 
-        _activeProject = null;
+        var database = new WbsDatabase(filePath);
+        try
+        {
+            await database.InitializeAsync();
+        }
+        catch
+        {
+            await database.CloseAsync();
+            throw;
+        }
+        _database = database;
     }
 
-    public async Task UpdateProjectAsync(Project project)
+    private async Task CloseInternalAsync()
     {
-        if (_activeProject is null)
-            throw new WbsException("No project is currently open.");
+        _activeProject = null;
+        if (_database is null) return;
 
-        project.UpdatedAt = DateTime.UtcNow;
-        var repo = new ProjectRepository(this);
-        await repo.UpdateAsync(project);
-        _activeProject = project;
-        ActiveProjectUpdated?.Invoke(this, project);
+        WbsDatabase database = _database;
+        _database = null;
+        await database.CloseAsync();
     }
 }

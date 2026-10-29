@@ -12,16 +12,23 @@
         <SolidColorBrush x:Key="DiagramCardBackground" Color="{ThemeResource SystemChromeLowColor}" />
         <SolidColorBrush x:Key="DiagramConnector"      Color="{ThemeResource SystemBaseMediumLowColor}" />
         <SolidColorBrush x:Key="DiagramSelection"      Color="{ThemeResource SystemAccentColor}" />
+        <SolidColorBrush x:Key="DiagramSecondaryText"  Color="{ThemeResource TextFillColorSecondary}" />
+        <SolidColorBrush x:Key="DiagramStatusNotStarted" Color="{ThemeResource WbsStatusNotStartedColor}" />
+        <SolidColorBrush x:Key="DiagramStatusInProgress" Color="{ThemeResource WbsStatusInProgressColor}" />
+        <SolidColorBrush x:Key="DiagramStatusComplete"   Color="{ThemeResource WbsStatusCompleteColor}" />
+        <SolidColorBrush x:Key="DiagramStatusBlocked"    Color="{ThemeResource WbsStatusBlockedColor}" />
     </UserControl.Resources>
 
     <ScrollViewer
+        x:Name="DiagramScroller"
         HorizontalScrollBarVisibility="Auto"
         VerticalScrollBarVisibility="Auto"
         ZoomMode="Enabled"
         MinZoomFactor="0.25"
         MaxZoomFactor="3.0"
         IsTabStop="True"
-        UseSystemFocusVisuals="False">
+        UseSystemFocusVisuals="False"
+        PreviewKeyDown="DiagramScroller_PreviewKeyDown">
         <Canvas x:Name="DiagramCanvas" />
     </ScrollViewer>
 </UserControl>

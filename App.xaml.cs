@@ -34,6 +34,9 @@ public partial class App : Application
         UpdateService.DeleteOldVersion();
 
         QuestPDF.Settings.License = LicenseType.Community;
+        // QuestPDF 2026.9 stopped using system fonts by default, and the report is set in Segoe UI,
+        // which every Windows install has. Without this, every export fails.
+        QuestPDF.Settings.UseSystemFonts = true;
 
         Services = new AppServices(_settingsService);
 

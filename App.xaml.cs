@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.UI.Xaml;
 using QuestPDF.Infrastructure;
 using iscWBS.Core.Services;
@@ -18,7 +19,12 @@ public partial class App : Application
         // Must precede any XAML or resource load so x:Uid and ResourceLoader resolve in the saved language.
         // Without a saved choice, Windows' language preferences pick between the shipped en-US and sv-SE resources.
         if (_settingsService.Get<string>(SettingsKeys.Language) is { } language)
+        {
             Microsoft.Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = language;
+            // Month names and number formats follow the chosen language too, not Windows' regional format.
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(language);
+            CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.DefaultThreadCurrentCulture;
+        }
 
         InitializeComponent();
     }

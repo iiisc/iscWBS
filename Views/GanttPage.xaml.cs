@@ -262,7 +262,7 @@ public sealed partial class GanttPage : Page
         {
             AddVLine(ChartCanvas, marker.X, 0, rowsH, lineBrush, 1.5);
 
-            // The diamond sits in the sticky header so it stays visible while the rows scroll.
+            // In the sticky header so it stays visible while the rows scroll, and in the top tier, clear of the day numbers.
             var diamond = new Rectangle
             {
                 Width           = size,
@@ -272,7 +272,7 @@ public sealed partial class GanttPage : Page
                 StrokeThickness = 1,
                 RenderTransform = new RotateTransform { Angle = 45, CenterX = size / 2, CenterY = size / 2 }
             };
-            Place(HeaderCanvas, diamond, marker.X - size / 2.0, _headerTierH + (_headerTierH - size) / 2.0);
+            Place(HeaderCanvas, diamond, marker.X - size / 2.0, (_headerTierH - size) / 2.0);
             ToolTipService.SetToolTip(diamond, marker.Title);
         }
     }
@@ -341,7 +341,8 @@ public sealed partial class GanttPage : Page
             FontWeight = FontWeights.SemiBold,
             Foreground = todayBrush
         };
-        Place(HeaderCanvas, todayLabel, todayX + 3, _headerTierH + 4);
+        // In the top tier, which only holds the month names; the bottom tier's day numbers would collide.
+        Place(HeaderCanvas, todayLabel, todayX + 3, 4);
 
         AddVLine(ChartCanvas, todayX, 0, rowsH, todayBrush, 2);
     }

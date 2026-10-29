@@ -1105,4 +1105,16 @@
   <data name="WelcomePage_RecentProjectsList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Recent projects</value>
   </data>
+  <data name="WbsDetail_StartDate.PlaceholderText" xml:space="preserve">
+    <value>Pick a date</value>
+  </data>
+  <data name="WbsDetail_DueDate.PlaceholderText" xml:space="preserve">
+    <value>Pick a date</value>
+  </data>
+  <data name="MilestonesPage_NewMilestoneDueDate.PlaceholderText" xml:space="preserve">
+    <value>Pick a date</value>
+  </data>
+  <data name="MilestonesPage_MilestoneDueDate.PlaceholderText" xml:space="preserve">
+    <value>Pick a date</value>
+  </data>
 </root>

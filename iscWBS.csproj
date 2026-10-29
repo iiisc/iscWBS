@@ -33,8 +33,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Loaded at run time. The font's license has to ship with it. -->
-    <Content Include="Assets\AppIcon.ico;Assets\Logo.svg;Assets\Fonts\**;Assets\Illustrations\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- XAML only loads fonts from disk, and the font's license has to ship with it -->
+    <Content Include="Assets\Fonts\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Built into the exe, so they aren't loose files next to it -->
+    <EmbeddedResource Include="Assets\Logo.svg;Assets\Illustrations\*.png" LogicalName="%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,6 @@
 using System.IO;
+using System.Runtime.InteropServices;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using iscWBS.Core.Services;
@@ -29,8 +31,9 @@ public sealed partial class ShellWindow : Window
         AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
         AppWindow.TitleBar.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
-        // The exe's icon only reaches Explorer; the taskbar and Alt+Tab use the window's own.
-        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico"));
+        // The exe's icon only reaches Explorer; the taskbar and Alt+Tab use the window's own. The build stores the
+        // ApplicationIcon in the exe under IDI_APPLICATION, so no separate .ico has to ship.
+        AppWindow.SetIcon(Win32Interop.GetIconIdFromIcon(LoadIcon(GetModuleHandle(0), IDI_APPLICATION)));
 
         ViewModel.PropertyChanged += (_, e) =>
         {
@@ -90,5 +93,13 @@ public sealed partial class ShellWindow : Window
             _ = _dialogService.ShowErrorAsync("ErrorTitle_Navigation", ex);
         }
     }
+
+    private const nint IDI_APPLICATION = 32512;
+
+    [LibraryImport("kernel32.dll", EntryPoint = "GetModuleHandleW")]
+    private static partial nint GetModuleHandle(nint moduleName);
+
+    [LibraryImport("user32.dll", EntryPoint = "LoadIconW")]
+    private static partial nint LoadIcon(nint instance, nint iconName);
 }
 

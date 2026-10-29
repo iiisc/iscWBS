@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace iscWBS.Views.Controls;
 
@@ -23,6 +24,9 @@ public sealed partial class IscLogo : UserControl
     public IscLogo()
     {
         InitializeComponent();
+        var logo = new SvgImageSource();
+        _ = logo.SetSourceAsync(typeof(IscLogo).Assembly.GetManifestResourceStream("Logo.svg")!.AsRandomAccessStream());
+        Icon.Source = logo;
         ApplySize();
     }
 

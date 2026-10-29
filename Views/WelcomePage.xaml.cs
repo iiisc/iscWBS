@@ -24,8 +24,8 @@ public sealed partial class WelcomePage : Page
 
     private async void BtnOpenProject_Click(object sender, RoutedEventArgs e)
     {
-        if (await FilePickers.PickProjectFileAsync() is { } file)
-            await ViewModel.OpenProjectAsync(file.Path);
+        if (await FilePickers.PickProjectFileAsync() is { } path)
+            await ViewModel.OpenProjectAsync(path);
     }
 
     private async void RecentProjectsList_ItemClick(object sender, ItemClickEventArgs e)

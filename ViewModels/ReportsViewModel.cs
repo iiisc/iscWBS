@@ -66,8 +66,8 @@ public sealed partial class ReportsViewModel : ObservableObject
     [RelayCommand]
     private async Task ExportPdfAsync()
     {
-        StorageFile? file = await FilePickers.PickStatusReportSaveFileAsync();
-        if (file is null) return;
+        string? path = await FilePickers.PickStatusReportSaveFileAsync();
+        if (path is null) return;
         try
         {
             var options = new ReportOptions
@@ -79,14 +79,14 @@ public sealed partial class ReportsViewModel : ObservableObject
                 IncludeMilestones        = IncludeMilestones,
                 IncludeWbsTree           = IncludeWbsTree,
             };
-            await _reportExportService.ExportAsync(file.Path, options);
+            await _reportExportService.ExportAsync(path, options);
         }
         catch (Exception ex)
         {
             await _dialogService.ShowErrorAsync("ErrorTitle_Export", ex);
             return;
         }
-        LastExportPath = file.Path;
-        await Launcher.LaunchFileAsync(file);
+        LastExportPath = path;
+        await Launcher.LaunchFileAsync(await StorageFile.GetFileFromPathAsync(path));
     }
 }

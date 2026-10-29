@@ -75,7 +75,7 @@
                 HorizontalScrollBarVisibility="Hidden"
                 VerticalScrollBarVisibility="Disabled"
                 IsTabStop="False">
-                <Canvas x:Name="HeaderCanvas" />
+                <Canvas x:Name="HeaderCanvas" HorizontalAlignment="Left" />
             </ScrollViewer>
         </Grid>
 

@@ -183,4 +183,17 @@ public class GanttLayoutBuilderTests
 
         Assert.Equal(new GanttMilestoneMarker("Go-live", 56.0, true), marker);
     }
+
+    [Fact]
+    public void MilestonesBeforeAndAfterTheBars_StayInsideTheChart()
+    {
+        WbsNode task = Bar(new DateTime(2027, 1, 1), new DateTime(2027, 1, 31));
+        Milestone kickoff = new() { Title = "Kickoff", DueDate = new DateTime(2026, 12, 15) };
+        Milestone launch = new() { Title = "Launch", DueDate = new DateTime(2027, 3, 1) };
+
+        GanttLayout layout = Build([task], Day, milestones: [kickoff, launch]);
+
+        Assert.All(layout.MilestoneMarkers, m => Assert.InRange(m.X, 0, layout.TotalWidth));
+        Assert.Contains(layout.HeaderTicks, t => t.X >= layout.MilestoneMarkers.Max(m => m.X));
+    }
 }

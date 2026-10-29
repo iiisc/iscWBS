@@ -19,9 +19,11 @@ public static class GanttLayoutBuilder
         DateTime? projectStartDate,
         int zoomIndex)
     {
+        // Milestones count too, so one outside the task bars can still be scrolled to.
         DateTime projectStart = projectStartDate?.Date
             ?? nodes.Where(n => n.StartDate.HasValue)
                     .Select(n => n.StartDate!.Value.Date)
+                    .Concat(milestones.Select(m => m.DueDate.Date))
                     .DefaultIfEmpty(DateTime.Today)
                     .Min();
 
@@ -61,6 +63,9 @@ public static class GanttLayoutBuilder
             });
         }
 
+        IReadOnlyList<GanttMilestoneMarker> markers = BuildMilestoneMarkers(milestones, projectStart, ppd);
+        maxRight = markers.Select(m => m.X).Append(maxRight).Max();
+
         double totalHeight = rows.Count * _rowHeight + 40;
         double totalWidth  = Math.Max(_minTotalWidth, maxRight + 120);
         double todayX      = (DateTime.Today - projectStart).TotalDays * ppd;
@@ -68,7 +73,7 @@ public static class GanttLayoutBuilder
         return new GanttLayout(
             rows,
             BuildHeaderTicks(projectStart, ppd, totalWidth, zoomIndex),
-            BuildMilestoneMarkers(milestones, projectStart, ppd),
+            markers,
             BuildDependencyArrows(dependencies, barPositions),
             totalWidth,
             totalHeight,

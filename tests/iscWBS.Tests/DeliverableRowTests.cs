@@ -56,6 +56,32 @@ public class DeliverableRowTests
     }
 
     [Fact]
+    public void Deliverables_AtDifferentLevels_FollowOutlineOrder()
+    {
+        WbsNode root1 = new() { Code = "1", SortOrder = 0 };
+        WbsNode first = new() { Code = "1.1", ParentId = root1.Id, SortOrder = 0 };
+        WbsNode d12 = new() { Code = "1.2", ParentId = root1.Id, SortOrder = 1, IsDeliverable = true };
+        WbsNode root2 = new() { Code = "2", SortOrder = 1 };
+        WbsNode d21 = new() { Code = "2.1", ParentId = root2.Id, SortOrder = 0, IsDeliverable = true };
+
+        Assert.Equal(["1.2", "2.1"], DeliverableRow.Build([d21, root2, d12, first, root1], NoneBlocked).Select(r => r.Code));
+    }
+
+    [Fact]
+    public void LeafDeliverable_ProgressComesFromHours_LikeEverywhereElse()
+    {
+        WbsNode leaf = Deliverable("1", 0);
+        leaf.EstimatedHours = 10;
+        leaf.ActualHours = 8;
+
+        Assert.Equal(0.8, DeliverableRow.Build([leaf], NoneBlocked).Single().ProgressFraction);
+    }
+
+    [Fact]
+    public void ProgressPercent_IsRounded()
+        => Assert.Equal(58, new DeliverableRow("1", "", 29 / 50.0, WbsStatus.InProgress, null).ProgressPercent);
+
+    [Fact]
     public void BlockedDeliverable_ReportsBlocked_OthersKeepTheirStatus()
     {
         WbsNode blocked = Deliverable("1", 0, WbsStatus.NotStarted);

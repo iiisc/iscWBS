@@ -39,6 +39,18 @@ public sealed class WbsServiceDatabaseTests : IAsyncLifetime
     private async Task<string> CodeOf(WbsNode node) => (await _service.GetByIdAsync(node.Id))!.Code;
 
     [Fact]
+    public async Task GetAll_ReturnsOutlineOrder_So1_10ComesAfter1_9()
+    {
+        WbsNode root = await _service.AddRootNodeAsync(_projectId, "Root");
+        for (int i = 0; i < 10; i++)
+            await _service.AddChildNodeAsync(root.Id, $"Child {i + 1}");
+
+        IReadOnlyList<WbsNode> all = await _service.GetAllByProjectAsync(_projectId);
+
+        Assert.Equal(["1", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10"], all.Select(n => n.Code));
+    }
+
+    [Fact]
     public async Task Inserts_AssignOutlineCodes_AndSiblingInsertRenumbersLaterSiblingsAndTheirChildren()
     {
         WbsNode root = await _service.AddRootNodeAsync(_projectId, "Root");

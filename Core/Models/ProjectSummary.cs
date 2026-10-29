@@ -18,7 +18,7 @@ public sealed record ProjectSummary(
             total,
             complete,
             nodes.Count(n => n.Status == WbsStatus.InProgress),
-            nodes.Count(n => blockedNodeIds.Contains(n.Id)),
+            nodes.Count(n => DependencyConstraints.EffectiveStatus(n, blockedNodeIds) == WbsStatus.Blocked),
             nodes.Count(n => DueDateRules.IsOverdue(n.DueDate, n.Status)),
             nodes.Count(n => DueDateRules.IsAtRisk(n.DueDate, n.Status)),
             total == 0 ? 0 : Math.Round(complete * 100.0 / total, 1));

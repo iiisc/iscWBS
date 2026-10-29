@@ -414,7 +414,7 @@ internal sealed class ProjectStatusReportDocument : IDocument
                     Cell(t, background: rowBg).Text(entry.Status.ToDisplayString()).FontSize(8).FontColor(StatusPalette.Hex(entry.Status));
                     Cell(t, background: rowBg).Column(pc =>
                     {
-                        pc.Item().Text($"{(int)(entry.ProgressFraction * 100)}%").FontSize(8).FontColor(_textDark);
+                        pc.Item().Text($"{Math.Round(entry.ProgressFraction * 100)}%").FontSize(8).FontColor(_textDark);
                         ProgressBar(pc.Item().PaddingTop(2), entry.ProgressFraction, 3);
                     });
                     Cell(t, background: rowBg).Text(entry.AssignedToShort).FontSize(8).FontColor(_textMuted);

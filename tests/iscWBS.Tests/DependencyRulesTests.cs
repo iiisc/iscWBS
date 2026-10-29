@@ -121,6 +121,10 @@ public class DependencyRulesTests
     }
 
     [Fact]
+    public void ProjectSummary_CountsAStoredBlockedStatusAsBlocked()
+        => Assert.Equal(1, ProjectSummary.Compute([Node(Blocked)], new HashSet<Guid>()).BlockedCount);
+
+    [Fact]
     public void ProjectSummary_RoundsPercentToOneDecimal_AndHandlesEmptyProject()
     {
         Assert.Equal(33.3, ProjectSummary.Compute([Node(Complete), Node(), Node()], new HashSet<Guid>()).PercentComplete);

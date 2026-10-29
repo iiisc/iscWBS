@@ -24,9 +24,10 @@ public sealed class WbsService
     public async Task<WbsNode?> GetByIdAsync(Guid id)
         => (await Db.QueryAsync($"SELECT {Columns} FROM WbsNodes WHERE Id = $1", Read, id)).FirstOrDefault();
 
-    /// <summary>All nodes of the project, ordered by <c>Code</c>.</summary>
+    /// <summary>All nodes of the project, in outline order (1.9 before 1.10, which sorting the codes as text gets wrong).</summary>
     public async Task<IReadOnlyList<WbsNode>> GetAllByProjectAsync(Guid projectId)
-        => await Db.QueryAsync($"SELECT {Columns} FROM WbsNodes WHERE ProjectId = $1 ORDER BY Code", Read, projectId);
+        => new WbsHierarchy(await Db.QueryAsync($"SELECT {Columns} FROM WbsNodes WHERE ProjectId = $1", Read, projectId))
+            .DepthFirst().Select(entry => entry.Node).ToList();
 
     public Task<WbsNode> AddRootNodeAsync(Guid projectId, string title)
         => InsertNodeAsync(projectId, null, null, title);

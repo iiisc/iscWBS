@@ -8,7 +8,7 @@ public sealed record DeliverableRow(
     WbsStatus Status,
     DateTime? DueDate)
 {
-    public int ProgressPercent => (int)(ProgressFraction * 100);
+    public int ProgressPercent => (int)Math.Round(ProgressFraction * 100);
 
     public string DueDateText => DueDate.HasValue ? DueDate.Value.ToString("d MMM yyyy") : "—";
 
@@ -16,7 +16,7 @@ public sealed record DeliverableRow(
 
     /// <summary>
     /// One row per deliverable node, leaving out those with nothing in <paramref name="matchingIds"/> when given.
-    /// Progress is the share of complete nodes in its subtree; the due date is the latest in the subtree.
+    /// Rows are in outline order; progress and the due date cover the whole subtree.
     /// </summary>
     public static IReadOnlyList<DeliverableRow> Build(
         IReadOnlyList<WbsNode> allNodes,
@@ -25,15 +25,14 @@ public sealed record DeliverableRow(
     {
         WbsHierarchy hierarchy = new(allNodes);
         var rows = new List<DeliverableRow>();
-        foreach (WbsNode root in allNodes.Where(n => n.IsDeliverable).OrderBy(n => n.SortOrder))
+        foreach ((WbsNode root, _) in hierarchy.DepthFirst().Where(entry => entry.Node.IsDeliverable))
         {
             List<WbsNode> subtree = hierarchy.CollectSubtree(root);
             if (matchingIds is not null && !subtree.Any(n => matchingIds.Contains(n.Id))) continue;
-            double fraction = (double)subtree.Count(n => n.Status == WbsStatus.Complete) / subtree.Count;
             DateTime? latestDue = subtree.Max(n => n.DueDate);
 
             rows.Add(new DeliverableRow(
-                root.Code, root.Title, fraction, DependencyConstraints.EffectiveStatus(root, blockedIds), latestDue));
+                root.Code, root.Title, hierarchy.Progress(root), DependencyConstraints.EffectiveStatus(root, blockedIds), latestDue));
         }
         return rows;
     }

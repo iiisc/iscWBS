@@ -236,7 +236,7 @@ public sealed partial class GanttPage : Page
                 {
                     var percent = new TextBlock
                     {
-                        Text       = $"{(int)(row.PercentComplete * 100)}%",
+                        Text       = $"{Math.Round(row.PercentComplete * 100)}%",
                         FontSize   = 9,
                         Foreground = _barTextBrush
                     };

@@ -219,7 +219,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     {
         try
         {
-            await add(Strings.Get("Wbs_NewNodeTitle"));
+            _pendingSelectNodeId = (await add(Strings.Get("Wbs_NewNodeTitle"))).Id;
             await LoadDiagramNodesAsync(PageToken);
         }
         catch (Exception ex)

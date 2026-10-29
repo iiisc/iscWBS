@@ -40,12 +40,14 @@ public sealed partial class WbsOutlineViewModel : ObservableObject
             IReadOnlyList<WbsNode> all = await _wbsService.GetAllByProjectAsync(projectId);
             IReadOnlyList<NodeDependency> deps = await _wbsService.GetAllDependenciesByProjectAsync(projectId);
             IReadOnlySet<Guid> blockedIds = DependencyConstraints.BlockedNodeIds(all, deps);
+            Dictionary<Guid, int> levels = new WbsHierarchy(all).BranchLevels();
 
             foreach (WbsNode node in all)
                 Nodes.Add(new WbsOutlineRowViewModel
                 {
                     Node            = node,
                     EffectiveStatus = DependencyConstraints.EffectiveStatus(node, blockedIds),
+                    Level           = levels.GetValueOrDefault(node.Id, 1),
                 });
         }
         catch (Exception ex)

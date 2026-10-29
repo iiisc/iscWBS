@@ -151,6 +151,7 @@ public sealed partial class WbsDiagramControl : UserControl
     private readonly Brush _cardBackground;
     private Guid _highlightedId;
     private WbsHierarchy? _hierarchy;
+    private Dictionary<Guid, int> _levels = [];
 
     public WbsDiagramControl()
     {
@@ -215,6 +216,7 @@ public sealed partial class WbsDiagramControl : UserControl
         if (AllNodes is null || AllNodes.Count == 0) return;
 
         var hierarchy = _hierarchy = new WbsHierarchy(AllNodes);
+        _levels = hierarchy.BranchLevels();
         DiagramNode Build(WbsNode n)
         {
             var node = new DiagramNode { Data = n };
@@ -530,8 +532,17 @@ public sealed partial class WbsDiagramControl : UserControl
         Grid.SetRow(header, 0);
         grid.Children.Add(header);
 
-        var body = new Border { Padding = new Thickness(8, 3, 8, 2) };
-        body.Child = new TextBlock
+        var body = new Grid { Padding = new Thickness(8, 3, 8, 2), ColumnSpacing = 6 };
+        body.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        body.ColumnDefinitions.Add(new ColumnDefinition());
+        body.Children.Add(new LevelMarker
+        {
+            Level             = _levels.GetValueOrDefault(node.Id, 1),
+            Width             = 10,
+            Height            = 10,
+            VerticalAlignment = VerticalAlignment.Center,
+        });
+        var title = new TextBlock
         {
             Text              = node.Title,
             FontSize          = 11,
@@ -540,6 +551,8 @@ public sealed partial class WbsDiagramControl : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             MaxLines          = 2,
         };
+        Grid.SetColumn(title, 1);
+        body.Children.Add(title);
         Grid.SetRow(body, 1);
         grid.Children.Add(body);
 

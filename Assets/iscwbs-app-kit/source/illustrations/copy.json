@@ -1,0 +1,27 @@
+{
+  "empty-projects": {
+    "title": "Plant your first project",
+    "body": "Start with a root, then break it down into deliverables and work packages.",
+    "action": "New project"
+  },
+  "empty-branch": {
+    "title": "This branch is still bare",
+    "body": "Add work packages to break this deliverable into doable pieces.",
+    "action": "Add work package"
+  },
+  "no-results": {
+    "title": "Nothing matches that search",
+    "body": "Try a different keyword, or clear your filters to see the whole tree.",
+    "action": "Clear filters"
+  },
+  "all-done": {
+    "title": "Every branch is done",
+    "body": "All work packages in this project are complete. Nicely done.",
+    "action": "View summary"
+  },
+  "not-found": {
+    "title": "This branch snapped off",
+    "body": "We couldn’t find that item. It may have been moved or deleted.",
+    "action": "Back to projects"
+  }
+}

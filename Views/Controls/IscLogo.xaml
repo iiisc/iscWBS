@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="iscWBS.Views.Controls.IscLogo"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel x:Name="Panel" Orientation="Horizontal">
+        <Image x:Name="Icon" AutomationProperties.AccessibilityView="Raw">
+            <Image.Source>
+                <SvgImageSource UriSource="ms-appx:///Assets/Logo.svg" />
+            </Image.Source>
+        </Image>
+        <!-- One line: whitespace between the runs would show as a space -->
+        <TextBlock x:Name="Wordmark" FontFamily="{StaticResource IscFontFamily}" VerticalAlignment="Center"><Run Text="isc" FontWeight="Light" Foreground="{ThemeResource IscTextMutedBrush}" /><Run Text="WBS" FontWeight="SemiBold" Foreground="{ThemeResource IscTextBrush}" /></TextBlock>
+    </StackPanel>
+</UserControl>

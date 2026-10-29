@@ -7,6 +7,7 @@
     <!-- Releases pass the real version; 0.0.0 marks a local build -->
     <Version>0.0.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <!-- Only x64 is released. Set here, a plain dotnet build or publish makes exactly what ships. -->
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -27,9 +28,14 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- The test project lives inside this folder but builds on its own -->
-    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**</DefaultItemExcludes>
+    <!-- The test project lives inside this folder but builds on its own; the design kits are source material -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**;Assets\iscwbs-*\**</DefaultItemExcludes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Loaded at run time. The font's license has to ship with it. -->
+    <Content Include="Assets\AppIcon.ico;Assets\Logo.svg;Assets\Fonts\**;Assets\Illustrations\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />

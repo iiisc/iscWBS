@@ -3,6 +3,7 @@
     x:Class="iscWBS.Views.WbsTreePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:iscWBS.Helpers"
     xmlns:vm="using:iscWBS.ViewModels"
     xmlns:controls="using:iscWBS.Views.Controls">
 
@@ -19,31 +20,44 @@
             Padding="12,8">
             <Button
                 x:Uid="WbsTreePage_AddRootNodeBtn"
-                Content="Add Root Node"
                 Command="{x:Bind ViewModel.AddRootNodeCommand}"
                 AutomationProperties.Name="Add root node">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Viewbox Width="16" Height="16">
+                        <PathIcon helpers:IscIcon.Kind="AddSibling" Width="24" Height="24" />
+                    </Viewbox>
+                    <TextBlock x:Uid="WbsTreePage_AddRootNodeText" Text="Add Root Node" />
+                </StackPanel>
                 <Button.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Control,Shift" Key="N" />
                 </Button.KeyboardAccelerators>
             </Button>
             <Button
                 x:Uid="WbsTreePage_AddChildBtn"
-                Content="Add Child"
                 Command="{x:Bind ViewModel.AddChildNodeCommand}"
                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
                 IsEnabled="{x:Bind ViewModel.IsDetailVisible, Mode=OneWay}"
                 AutomationProperties.Name="Add child node">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Viewbox Width="16" Height="16">
+                        <PathIcon helpers:IscIcon.Kind="AddChild" Width="24" Height="24" />
+                    </Viewbox>
+                    <TextBlock x:Uid="WbsTreePage_AddChildText" Text="Add Child" />
+                </StackPanel>
                 <Button.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Control" Key="N" />
                 </Button.KeyboardAccelerators>
             </Button>
             <Button
                 x:Uid="WbsTreePage_DeleteNodeBtn"
-                Content="Delete Node"
                 Command="{x:Bind ViewModel.DeleteNodeCommand}"
                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
                 IsEnabled="{x:Bind ViewModel.IsDetailVisible, Mode=OneWay}"
                 AutomationProperties.Name="Delete selected node">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE74D;" FontSize="16" />
+                    <TextBlock x:Uid="WbsTreePage_DeleteNodeText" Text="Delete Node" />
+                </StackPanel>
                 <Button.KeyboardAccelerators>
                     <!-- Scoped to the diagram so Delete in a detail text box still deletes text. -->
                     <KeyboardAccelerator Key="Delete" ScopeOwner="{x:Bind WbsDiagram}" />
@@ -52,14 +66,26 @@
             <Rectangle Width="1" Height="20" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" VerticalAlignment="Center" />
             <Button
                 x:Uid="WbsTreePage_CollapseAllBtn"
-                Content="Collapse All"
                 Click="CollapseAll_Click"
-                AutomationProperties.Name="Collapse all nodes" />
+                AutomationProperties.Name="Collapse all nodes">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Viewbox Width="16" Height="16">
+                        <PathIcon helpers:IscIcon.Kind="Collapse" Width="24" Height="24" />
+                    </Viewbox>
+                    <TextBlock x:Uid="WbsTreePage_CollapseAllText" Text="Collapse All" />
+                </StackPanel>
+            </Button>
             <Button
                 x:Uid="WbsTreePage_ExpandAllBtn"
-                Content="Expand All"
                 Click="ExpandAll_Click"
-                AutomationProperties.Name="Expand all nodes" />
+                AutomationProperties.Name="Expand all nodes">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Viewbox Width="16" Height="16">
+                        <PathIcon helpers:IscIcon.Kind="Expand" Width="24" Height="24" />
+                    </Viewbox>
+                    <TextBlock x:Uid="WbsTreePage_ExpandAllText" Text="Expand All" />
+                </StackPanel>
+            </Button>
         </StackPanel>
 
         <Grid Grid.Row="1">
@@ -86,43 +112,44 @@
                                 Text="Add Child"
                                 Command="{x:Bind ViewModel.AddChildNodeCommand}"
                                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
-                                AutomationProperties.Name="Add child node" />
+                                AutomationProperties.Name="Add child node">
+                                <MenuFlyoutItem.Icon>
+                                    <PathIcon helpers:IscIcon.Kind="AddChild" Width="24" Height="24" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                             <MenuFlyoutItem
                                 x:Uid="WbsTreePage_ContextAddSibling"
                                 Text="Add Sibling"
                                 Command="{x:Bind ViewModel.AddSiblingNodeCommand}"
                                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
-                                AutomationProperties.Name="Add sibling node" />
+                                AutomationProperties.Name="Add sibling node">
+                                <MenuFlyoutItem.Icon>
+                                    <PathIcon helpers:IscIcon.Kind="AddSibling" Width="24" Height="24" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                             <MenuFlyoutSeparator />
                             <MenuFlyoutItem
                                 x:Uid="WbsTreePage_ContextDelete"
                                 Text="Delete"
                                 Command="{x:Bind ViewModel.DeleteNodeCommand}"
                                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
-                                AutomationProperties.Name="Delete node" />
+                                AutomationProperties.Name="Delete node">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE74D;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                         </MenuFlyout>
                     </FlyoutBase.AttachedFlyout>
                 </controls:WbsDiagramControl>
 
-                <StackPanel
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Spacing="8"
-                    IsHitTestVisible="False"
-                    Visibility="{x:Bind ViewModel.HasNoNodes, Mode=OneWay}">
-                    <TextBlock
-                        x:Uid="WbsTreePage_EmptyTitle"
-                        Text="No nodes yet"
-                        Style="{ThemeResource SubtitleTextBlockStyle}"
-                        HorizontalAlignment="Center"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    <TextBlock
-                        x:Uid="WbsTreePage_EmptyHint"
-                        Text="Click &#x2018;Add Root Node&#x2019; to get started"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        HorizontalAlignment="Center"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
+                <controls:IscEmptyState
+                    x:Uid="WbsTreePage_Empty"
+                    Illustration="EmptyProjects"
+                    Title="Plant the root of your project"
+                    Body="Start with a root node, then break it down into deliverables and work packages."
+                    ActionText="Add Root Node"
+                    Command="{x:Bind ViewModel.AddRootNodeCommand}"
+                    Visibility="{x:Bind ViewModel.HasNoNodes, Mode=OneWay}" />
             </Grid>
 
             <Rectangle

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using iscWBS.Core.Models;
 using iscWBS.Core.Services;
 using iscWBS.Helpers;
@@ -64,6 +65,22 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     public void OnNavigatedTo() => _ = LoadAsync();
 
+    /// <summary>The project has nodes, but the filters exclude all of them.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasMatches))]
+    public partial bool NothingMatchesFilters { get; set; }
+
+    public bool HasMatches => !NothingMatchesFilters;
+
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        FilterStartDate = null;
+        FilterEndDate = null;
+        SelectedAssignee = null;
+        SelectedStatus = null;
+    }
+
     partial void OnSelectedAssigneeChanged(string? value)       => RebuildReport();
     partial void OnSelectedStatusChanged(StatusFilterOption? value) => RebuildReport();
     partial void OnFilterStartDateChanged(DateTimeOffset? value) => RebuildReport();
@@ -118,6 +135,7 @@ public sealed partial class DashboardViewModel : ObservableObject
             filtered = filtered.Where(n => n.DueDate.HasValue && n.DueDate.Value.Date <= FilterEndDate.Value.Date);
 
         List<WbsNode> nodes = filtered.ToList();
+        NothingMatchesFilters = nodes.Count == 0 && _allNodes.Count > 0;
         Summary = ProjectSummary.Compute(nodes, _blockedIds);
         BuildStatusChart(Summary);
         BuildDeliverableRows(nodes);

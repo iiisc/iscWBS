@@ -16,6 +16,7 @@
             Margin="12,12,12,0" VerticalAlignment="Center">
             <TextBlock
                 x:Uid="ReportsPage_Title"
+                FontFamily="{StaticResource IscFontFamily}"
                 Text="Reports"
                 Style="{ThemeResource SubtitleTextBlockStyle}" />
             <Border

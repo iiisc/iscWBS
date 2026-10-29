@@ -272,8 +272,9 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         node.Description    = EditDescription;
         node.AssignedTo     = EditAssignedTo;
         node.Status         = EditStatus;
-        node.EstimatedHours = EditEstimatedHours;
-        node.ActualHours    = EditActualHours;
+        // An emptied NumberBox holds NaN, which SQLite refuses to store.
+        node.EstimatedHours = double.IsNaN(EditEstimatedHours) ? 0 : EditEstimatedHours;
+        node.ActualHours    = double.IsNaN(EditActualHours) ? 0 : EditActualHours;
         node.StartDate      = EditStartDate?.Date;
         node.DueDate        = EditDueDate?.Date;
         node.IsDeliverable  = EditIsDeliverable;

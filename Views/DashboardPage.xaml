@@ -310,6 +310,7 @@
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock
                                             Grid.Column="0"
@@ -318,6 +319,15 @@
                                             VerticalAlignment="Center" />
                                         <TextBlock
                                             Grid.Column="1"
+                                            x:Uid="MilestonesPage_StatusOverdue"
+                                            Text="Overdue"
+                                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                            FontWeight="SemiBold"
+                                            FontSize="11"
+                                            VerticalAlignment="Center"
+                                            Visibility="{x:Bind IsOverdue}" />
+                                        <TextBlock
+                                            Grid.Column="2"
                                             Text="{x:Bind DueDateLabel}"
                                             FontSize="11"
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"

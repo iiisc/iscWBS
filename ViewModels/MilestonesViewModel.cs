@@ -88,8 +88,12 @@ public sealed partial class MilestonesViewModel : ObservableObject
     private async Task ReloadKeepingSelectionAsync()
     {
         Guid? selectedId = SelectedMilestone?.Milestone.Id;
+        // Reselecting loads the saved title and date, which would throw away edits not saved yet.
+        (string title, DateTimeOffset? dueDate) = (EditTitle, EditDueDate);
         await LoadMilestonesAsync();
         SelectedMilestone = Milestones.FirstOrDefault(r => r.Milestone.Id == selectedId);
+        if (SelectedMilestone is not null)
+            (EditTitle, EditDueDate) = (title, dueDate);
     }
 
     private async Task LoadMilestonesAsync()
@@ -129,7 +133,7 @@ public sealed partial class MilestonesViewModel : ObservableObject
             await _milestoneService.CreateAsync(projectId, NewTitle, dueDate);
             NewTitle = string.Empty;
             NewDueDate = null;
-            await LoadMilestonesAsync();
+            await ReloadKeepingSelectionAsync();
         }
         catch (Exception ex)
         {

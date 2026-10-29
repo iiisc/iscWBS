@@ -44,6 +44,10 @@ public sealed partial class ShellWindow : Window
         AppWindow.Title = ViewModel.WindowTitle;
 
         RootGrid.Loaded += OnLoaded;
+        // The app also navigates by itself (opening a project, Outline → Tree), so the highlight follows the page.
+        ContentFrame.Navigated += (_, e) => NavView.SelectedItem = NavView.MenuItems.Concat(NavView.FooterMenuItems)
+            .OfType<NavigationViewItem>()
+            .FirstOrDefault(item => item.Tag as string == e.SourcePageType.Name);
         // Text in the WBS detail panel is saved on blur, which closing the window skips.
         Closed += (_, _) => (ContentFrame.Content as WbsTreePage)?.ViewModel.SaveIfDirty();
     }

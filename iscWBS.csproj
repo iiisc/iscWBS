@@ -50,13 +50,14 @@
   <PropertyGroup>
     <!-- Windows App SDK files the app never loads: push notifications, background tasks, restarting, the bootstrapper
          that only framework-dependent apps need, WebView2, Visual Studio's designer support and the map control's page.
-         The three .pri files are already merged into iscWBS.pri. QuestPDF only needs qpdf for merging or encrypting PDFs,
-         and its Lato fonts only as a fallback the report never uses. -->
+         WinUI's two .pri files are already merged into iscWBS.pri; Microsoft.WindowsAppRuntime.pri isn't, and the file
+         pickers need it. QuestPDF only needs qpdf for merging or encrypting PDFs, and its Lato fonts only as a fallback
+         the report never uses. -->
     <UnusedPublishFiles>
       ;PushNotificationsLongRunningTask.ProxyStub.dll;Microsoft.Windows.ApplicationModel.Background.UniversalBGTask.dll;
       ;RestartAgent.exe;Microsoft.WindowsAppRuntime.Bootstrap.dll;Microsoft.Web.WebView2.Core.dll;WebView2Loader.dll;
       ;Microsoft.UI.Designer.dll;map.html;
-      ;Microsoft.UI.Xaml.Controls.pri;Microsoft.UI.pri;Microsoft.WindowsAppRuntime.pri;
+      ;Microsoft.UI.Xaml.Controls.pri;Microsoft.UI.pri;
       ;qpdf.dll;QuestPDF.Fonts.Lato.br;
     </UnusedPublishFiles>
   </PropertyGroup>

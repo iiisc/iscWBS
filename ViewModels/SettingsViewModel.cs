@@ -205,9 +205,10 @@ public sealed partial class SettingsViewModel : ObservableObject
         try
         {
             Progress<int> progress = new(p => DownloadProgress = p);
-            await _updateService.DownloadAndInstallAsync(AvailableUpdate, progress, cancellationToken);
+            if (!await _updateService.DownloadAndInstallAsync(AvailableUpdate, progress, cancellationToken))
+                return;
 
-            // The updater script is waiting for this process to exit.
+            // The staged new version is waiting for this process to exit before it copies itself over it.
             if (_projectStateService.HasActiveProject)
                 await _projectStateService.CloseProjectAsync();
 

@@ -25,6 +25,15 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        string[] commandLine = Environment.GetCommandLineArgs();
+        if (commandLine.Length == 4 && commandLine[1] == UpdateService.FinishUpdateArgument)
+        {
+            UpdateService.FinishUpdate(commandLine[2], int.Parse(commandLine[3]));
+            Exit();
+            return;
+        }
+        UpdateService.DeleteStagedUpdates();
+
         QuestPDF.Settings.License = LicenseType.Community;
 
         Services = new AppServices(_settingsService);
@@ -47,10 +56,15 @@ public partial class App : Application
 
     private static void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
     {
-        Logger.Write(e.Exception);
         if (System.Diagnostics.Debugger.IsAttached)
+        {
+            Logger.Write(e.Exception);
             System.Diagnostics.Debugger.Break();
-        e.Handled = !System.Diagnostics.Debugger.IsAttached;
+            return;
+        }
+        // Keep running, but tell the user instead of failing silently; the dialog call also logs it.
+        e.Handled = true;
+        _ = Services.Dialog.ShowErrorAsync("ErrorTitle_Generic", e.Exception);
     }
 }
 

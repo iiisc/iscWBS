@@ -85,6 +85,36 @@ public sealed class WbsDatabaseTests : IDisposable
     }
 
     [Fact]
+    public async Task OpenProject_RejectedFile_KeepsTheCurrentProjectOpen()
+    {
+        var state = new ProjectStateService(_settings);
+        await state.CreateProjectAsync("Current", _dir.File("current.iscwbs"));
+        string junk = _dir.File("junk.iscwbs");
+        File.WriteAllText(junk, "not a database");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => state.OpenProjectAsync(junk));
+
+        Assert.Equal("Current", state.ActiveProject?.Name);
+        Assert.Equal(1, await state.Connection.ScalarAsync<int>("SELECT COUNT(*) FROM Projects"));
+        await state.CloseProjectAsync();
+        File.Delete(junk);
+    }
+
+    [Fact]
+    public async Task CreateProject_OverAnExistingFile_IsRefusedAndLeavesItAlone()
+    {
+        string path = _dir.File("alpha.iscwbs");
+        var state = new ProjectStateService(_settings);
+        await state.CreateProjectAsync("Alpha", path);
+
+        await TestData.AssertFailsWith("Error_ProjectFileExists", () => state.CreateProjectAsync("Alpha", path));
+
+        Assert.Equal("Alpha", state.ActiveProject?.Name);
+        Assert.Equal(1, await state.Connection.ScalarAsync<int>("SELECT COUNT(*) FROM Projects"));
+        await state.CloseProjectAsync();
+    }
+
+    [Fact]
     public async Task OpenProject_MissingFile_IsProjectNotFound()
         => await TestData.AssertFailsWith("Error_ProjectNotFound",
             () => new ProjectStateService(_settings).OpenProjectAsync(_dir.File("missing.iscwbs")));

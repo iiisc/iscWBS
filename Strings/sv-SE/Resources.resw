@@ -783,6 +783,9 @@
   <data name="Error_InvalidProjectData" xml:space="preserve">
     <value>'{0}' innehåller inga giltiga projektdata.</value>
   </data>
+  <data name="Error_ProjectFileExists" xml:space="preserve">
+    <value>Det finns redan en projektfil som heter '{0}'. Välj ett annat namn eller en annan mapp, eller öppna det befintliga projektet.</value>
+  </data>
   <data name="Error_NotAProjectFile" xml:space="preserve">
     <value>Filen skapades inte av iscWBS och kan inte öppnas som ett projekt.</value>
   </data>

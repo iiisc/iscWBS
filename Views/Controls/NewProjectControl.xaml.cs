@@ -12,6 +12,9 @@ public sealed partial class NewProjectControl : UserControl
     public string Owner => TxtOwner.Text.Trim();
     public string FilePath => Path.Combine(_folderPath, $"{ProjectName}.iscwbs");
 
+    // The name becomes the file name, so a / or : would put the file somewhere else.
+    private bool HasValidName => ProjectName.Length > 0 && ProjectName.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
+
     private string _folderPath = App.Services.Settings.GetDefaultProjectFolder();
 
     public NewProjectControl()
@@ -31,12 +34,14 @@ public sealed partial class NewProjectControl : UserControl
             PrimaryButtonText = Strings.Get("NewProject_Create"),
             CloseButtonText = Strings.Get("Dialog_Cancel"),
             DefaultButton = ContentDialogButton.Primary,
+            IsPrimaryButtonEnabled = false,
             XamlRoot = xamlRoot
         };
+        control.TxtName.TextChanged += (_, _) => dialog.IsPrimaryButtonEnabled = control.HasValidName;
 
         ContentDialogResult result = await dialog.ShowAsync();
         return result == ContentDialogResult.Primary
-            && !string.IsNullOrWhiteSpace(control.ProjectName)
+            && control.HasValidName
             && !string.IsNullOrWhiteSpace(control._folderPath)
             ? control
             : null;

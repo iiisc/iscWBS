@@ -783,6 +783,9 @@
   <data name="Error_InvalidProjectData" xml:space="preserve">
     <value>'{0}' does not contain valid project data.</value>
   </data>
+  <data name="Error_ProjectFileExists" xml:space="preserve">
+    <value>A project file named '{0}' already exists. Choose another name or folder, or open the existing project.</value>
+  </data>
   <data name="Error_NotAProjectFile" xml:space="preserve">
     <value>This file was not created by iscWBS and cannot be opened as a project.</value>
   </data>

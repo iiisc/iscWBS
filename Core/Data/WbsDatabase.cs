@@ -56,7 +56,15 @@ public sealed class WbsDatabase
         await Connection.OpenAsync();
 
         // Everything that could reject the file runs before the first write to it.
-        int appId = await Connection.ScalarAsync<int>("PRAGMA application_id");
+        int appId;
+        try
+        {
+            appId = await Connection.ScalarAsync<int>("PRAGMA application_id");
+        }
+        catch (SqliteException ex) when (ex.SqliteErrorCode == 26) // SQLITE_NOTADB: not an SQLite file at all
+        {
+            throw NotAProjectFile();
+        }
         if (appId == 0)
         {
             // Unstamped is a brand-new file; any existing table means it is someone else's database.

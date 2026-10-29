@@ -31,39 +31,43 @@ public sealed class ProjectStateService
         if (!File.Exists(filePath))
             throw WbsException.ProjectNotFound(filePath);
 
-        await OpenDatabaseAsync(filePath);
-
-        Project? project = (await Connection.QueryAsync(
-            "SELECT Id, Name, Description, Owner, CreatedAt, UpdatedAt, StartDate FROM Projects LIMIT 1",
-            r => new Project
-            {
-                Id = r.GetGuidText(0),
-                Name = r.GetText(1),
-                Description = r.GetText(2),
-                Owner = r.GetText(3),
-                CreatedAt = r.GetNullableDateTime(4) ?? default,
-                UpdatedAt = r.GetNullableDateTime(5),
-                StartDate = r.GetNullableDateTime(6)
-            })).FirstOrDefault();
-        if (project is null)
+        WbsDatabase database = await OpenDatabaseAsync(filePath);
+        Project? project;
+        try
         {
-            await CloseInternalAsync();
-            throw new WbsException($"'{filePath}' does not contain valid project data.").WithMessageKey("Error_InvalidProjectData", filePath);
+            project = (await database.Connection.QueryAsync(
+                "SELECT Id, Name, Description, Owner, CreatedAt, UpdatedAt, StartDate FROM Projects LIMIT 1",
+                r => new Project
+                {
+                    Id = r.GetGuidText(0),
+                    Name = r.GetText(1),
+                    Description = r.GetText(2),
+                    Owner = r.GetText(3),
+                    CreatedAt = r.GetNullableDateTime(4) ?? default,
+                    UpdatedAt = r.GetNullableDateTime(5),
+                    StartDate = r.GetNullableDateTime(6)
+                })).FirstOrDefault()
+                ?? throw new WbsException($"'{filePath}' does not contain valid project data.").WithMessageKey("Error_InvalidProjectData", filePath);
         }
-        _activeProject = project;
-
-        _settingsService.AddRecentProject(filePath);
-        ActiveProjectChanged?.Invoke(this, _activeProject);
+        catch
+        {
+            await database.CloseAsync();
+            throw;
+        }
+        await ActivateAsync(database, project, filePath);
     }
 
     public async Task CreateProjectAsync(string name, string filePath, string owner = "")
     {
+        // The file would open as the existing project, and a second project in it is never shown again.
+        if (File.Exists(filePath))
+            throw new WbsException($"'{filePath}' already exists.").WithMessageKey("Error_ProjectFileExists", filePath);
+
         string? directory = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
 
-        await OpenDatabaseAsync(filePath);
-
+        WbsDatabase database = await OpenDatabaseAsync(filePath);
         var project = new Project
         {
             Id = Guid.NewGuid(),
@@ -71,15 +75,20 @@ public sealed class ProjectStateService
             Owner = owner,
             CreatedAt = DateTime.UtcNow
         };
-        await Connection.ExecuteAsync(
-            "INSERT INTO Projects (Id, Name, Description, Owner, CreatedAt, UpdatedAt, StartDate) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-            project.Id, project.Name, project.Description, project.Owner, project.CreatedAt, project.UpdatedAt, project.StartDate);
-        _activeProject = project;
-
-        _settingsService.AddRecentProject(filePath);
+        try
+        {
+            await database.Connection.ExecuteAsync(
+                "INSERT INTO Projects (Id, Name, Description, Owner, CreatedAt, UpdatedAt, StartDate) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+                project.Id, project.Name, project.Description, project.Owner, project.CreatedAt, project.UpdatedAt, project.StartDate);
+        }
+        catch
+        {
+            await database.CloseAsync();
+            throw;
+        }
+        await ActivateAsync(database, project, filePath);
         if (!string.IsNullOrEmpty(directory))
             _settingsService.Set(SettingsKeys.LastProjectFolder, directory);
-        ActiveProjectChanged?.Invoke(this, _activeProject);
     }
 
     public async Task CloseProjectAsync()
@@ -88,10 +97,9 @@ public sealed class ProjectStateService
         ActiveProjectChanged?.Invoke(this, null);
     }
 
-    private async Task OpenDatabaseAsync(string filePath)
+    /// <summary>Opens and checks the file without touching the open project, which stays open if this fails.</summary>
+    private static async Task<WbsDatabase> OpenDatabaseAsync(string filePath)
     {
-        await CloseInternalAsync();
-
         var database = new WbsDatabase(filePath);
         try
         {
@@ -102,7 +110,16 @@ public sealed class ProjectStateService
             await database.CloseAsync();
             throw;
         }
+        return database;
+    }
+
+    private async Task ActivateAsync(WbsDatabase database, Project project, string filePath)
+    {
+        await CloseInternalAsync();
         _database = database;
+        _activeProject = project;
+        _settingsService.AddRecentProject(filePath);
+        ActiveProjectChanged?.Invoke(this, project);
     }
 
     private async Task CloseInternalAsync()

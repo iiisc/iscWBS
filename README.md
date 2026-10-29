@@ -2,7 +2,9 @@
 
 A Windows desktop application for project management centred on a Work Breakdown Structure editor.
 
-Built with **WinUI 3** and **.NET 10**, distributed as a self-contained ZIP — no installation required. Project data lives in a portable `.iscwbs` file (SQLite) that you place wherever you like. The UI is available in English and Swedish.
+Built with **WinUI 3** and **.NET 10**, distributed as a self-contained ZIP — no installation required. Project data lives in a portable `.iscwbs` file (SQLite) that you place wherever you like. The UI is available in English and Swedish, in light and dark mode.
+
+![The WBS Tree with a node's details open](docs/screenshot.png)
 
 ---
 
@@ -12,8 +14,19 @@ Built with **WinUI 3** and **.NET 10**, distributed as a self-contained ZIP — 
 - **WBS Outline** — flat list of all nodes; select a row to open it in the tree
 - **Gantt Chart** (beta) — timeline view with dependency arrows and milestone markers
 - **Milestones** — milestone tracker linked to WBS nodes
-- **Dashboard** — progress KPIs, status chart and deliverables, filterable by assignee, status and date
-- **Reports** — export a project status report to PDF
+- **Dashboard** (beta) — progress KPIs, status chart and deliverables, filterable by assignee, status and date
+- **Reports** (beta) — export a project status report to PDF
+
+### Keyboard shortcuts
+
+| Keys | Where | Action |
+|---|---|---|
+| Ctrl+Shift+N | WBS Tree | Add a root node |
+| Ctrl+N | WBS Tree | Add a child to the selected node |
+| Delete | WBS Tree, diagram focused | Delete the selected node |
+| Arrow keys | WBS Tree, diagram focused | Move to the parent, first child or a sibling |
+| Esc | WBS Tree | Close the detail panel |
+| Ctrl+E | Reports | Generate the PDF report |
 
 ---
 
@@ -63,7 +76,7 @@ Run **Actions → Release → Run workflow**. Leave the version empty for the ne
 | | |
 |---|---|
 | UI framework | WinUI 3 (Windows App SDK) |
-| Language | C# 13 / .NET 10 |
+| Language | C# 14 / .NET 10, compiled with Native AOT |
 | Architecture | MVVM — CommunityToolkit.Mvvm |
 | Database | SQLite via Microsoft.Data.Sqlite |
 | PDF export | QuestPDF |
@@ -72,4 +85,4 @@ Run **Actions → Release → Run workflow**. Leave the version empty for the ne
 
 ## License
 
-MIT
+[MIT](LICENSE)

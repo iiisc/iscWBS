@@ -3,6 +3,7 @@
     x:Class="iscWBS.Views.DashboardPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:iscWBS.Helpers"
     xmlns:controls="using:iscWBS.Views.Controls"
     xmlns:vm="using:iscWBS.ViewModels"
     xmlns:models="using:iscWBS.Core.Models">
@@ -21,6 +22,7 @@
             Margin="12,12,12,0" VerticalAlignment="Center">
             <TextBlock
                 x:Uid="DashboardPage_Title"
+                FontFamily="{StaticResource IscFontFamily}"
                 Text="Dashboard"
                 Style="{ThemeResource TitleLargeTextBlockStyle}" />
             <Border
@@ -79,7 +81,17 @@
             </ComboBox>
         </Grid>
 
-        <Grid Grid.Row="2" Margin="12,0,12,8" ColumnSpacing="8">
+        <controls:IscEmptyState
+            x:Uid="DashboardPage_NoMatches"
+            Grid.Row="2" Grid.RowSpan="2"
+            Illustration="NoResults"
+            Title="Nothing matches these filters"
+            Body="Try other filters, or clear them to see the whole project."
+            ActionText="Clear Filters"
+            Command="{x:Bind ViewModel.ClearFiltersCommand}"
+            Visibility="{x:Bind ViewModel.NothingMatchesFilters, Mode=OneWay}" />
+
+        <Grid Grid.Row="2" Margin="12,0,12,8" ColumnSpacing="8" Visibility="{x:Bind ViewModel.HasMatches, Mode=OneWay}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
@@ -161,7 +173,7 @@
             </Border>
         </Grid>
 
-        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" Visibility="{x:Bind ViewModel.HasMatches, Mode=OneWay}">
             <Grid Margin="12,0,12,12" ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="3*" />
@@ -169,7 +181,12 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Spacing="8">
-                    <TextBlock x:Uid="DashboardPage_DeliverablesTitle" Text="Deliverables" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Viewbox Width="20" Height="20" VerticalAlignment="Center">
+                            <PathIcon helpers:IscIcon.Kind="Deliverable" Width="24" Height="24" />
+                        </Viewbox>
+                        <TextBlock x:Uid="DashboardPage_DeliverablesTitle" Text="Deliverables" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    </StackPanel>
                     <ListView
                         x:Uid="DashboardPage_DeliverablesList"
                         ItemsSource="{x:Bind ViewModel.DeliverableRows, Mode=OneWay}"
@@ -276,7 +293,12 @@
                     </StackPanel>
 
                     <StackPanel Spacing="8">
-                        <TextBlock x:Uid="DashboardPage_UpcomingMilestonesTitle" Text="Upcoming Milestones &#x2014; Next 60 Days" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Viewbox Width="20" Height="20" VerticalAlignment="Center">
+                                <PathIcon helpers:IscIcon.Kind="Milestone" Width="24" Height="24" />
+                            </Viewbox>
+                            <TextBlock x:Uid="DashboardPage_UpcomingMilestonesTitle" Text="Upcoming Milestones &#x2014; Next 60 Days" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
                         <ListView
                             x:Uid="DashboardPage_UpcomingMilestonesList"
                             ItemsSource="{x:Bind ViewModel.UpcomingMilestones, Mode=OneWay}"

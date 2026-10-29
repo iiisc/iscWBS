@@ -9,6 +9,9 @@ public sealed class WbsOutlineRowViewModel
 
     public WbsStatus EffectiveStatus { get; init; }
 
+    /// <summary>Brand colour level of the node's branch, 1–6.</summary>
+    public int Level { get; init; } = 1;
+
     // Forwarded for x:Bind — keeps the DataTemplate free of Node.* indirection
     public string    Code           => Node.Code;
     public string    Title          => Node.Title;

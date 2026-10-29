@@ -1,27 +1,35 @@
-using Windows.Storage;
-using Windows.Storage.Pickers;
-using WinRT.Interop;
+using Microsoft.UI;
+using Microsoft.Windows.Storage.Pickers;
 
 namespace iscWBS.Helpers;
 
-/// <summary>File pickers shared by several pages; each must be bound to the main window handle.</summary>
+/// <summary>
+/// File pickers shared by several pages. These are the Windows App SDK's own pickers: with the older
+/// Windows.Storage.Pickers, double-clicking a file in the dialog crashed the app.
+/// </summary>
 public static class FilePickers
 {
-    public static async Task<StorageFile?> PickProjectFileAsync()
+    // Pickers only open from the UI, so the window exists by then.
+    private static WindowId Owner => App.MainWindow!.AppWindow.Id;
+
+    public static async Task<string?> PickProjectFileAsync()
     {
-        var picker = new FileOpenPicker();
-        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(App.MainWindow));
+        var picker = new FileOpenPicker(Owner);
         picker.FileTypeFilter.Add(".iscwbs");
-        return await picker.PickSingleFileAsync();
+        return (await picker.PickSingleFileAsync())?.Path;
     }
 
-    public static async Task<StorageFile?> PickStatusReportSaveFileAsync()
+    public static async Task<string?> PickStatusReportSaveFileAsync()
     {
-        var picker = new FileSavePicker();
-        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(App.MainWindow));
-        picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-        picker.SuggestedFileName = Strings.Format("Picker_StatusReportFileName", DateTime.Today.ToString("yyyy-MM-dd"));
+        var picker = new FileSavePicker(Owner)
+        {
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = Strings.Format("Picker_StatusReportFileName", DateTime.Today.ToString("yyyy-MM-dd")),
+        };
         picker.FileTypeChoices.Add(Strings.Get("Picker_PdfDocument"), new List<string> { ".pdf" });
-        return await picker.PickSaveFileAsync();
+        return (await picker.PickSaveFileAsync())?.Path;
     }
+
+    public static async Task<string?> PickFolderAsync()
+        => (await new FolderPicker(Owner).PickSingleFolderAsync())?.Path;
 }

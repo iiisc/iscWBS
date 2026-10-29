@@ -37,6 +37,8 @@ public partial class App : Application
         // QuestPDF 2026.9 stopped using system fonts by default, and the report is set in Segoe UI,
         // which every Windows install has. Without this, every export fails.
         QuestPDF.Settings.UseSystemFonts = true;
+        // QuestPDF keeps its Lato fonts as a fallback after Segoe UI. They aren't shipped, and their absence shouldn't fail the export.
+        QuestPDF.Settings.ThrowOnMissingFontFamilies = false;
 
         Services = new AppServices(_settingsService);
 

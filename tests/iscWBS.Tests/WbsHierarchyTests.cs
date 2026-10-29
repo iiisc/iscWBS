@@ -52,4 +52,20 @@ public class WbsHierarchyTests
 
         Assert.Equal(expected, new WbsHierarchy([leaf]).Progress(leaf));
     }
+
+    [Fact]
+    public void BranchLevels_RootIsOneAndBranchesCycleThroughTwoToSixWithDescendantsInheriting()
+    {
+        WbsNode root = Node();
+        List<WbsNode> branches = Enumerable.Range(0, 6).Select(i => Node(parent: root, sortOrder: i)).ToList();
+        WbsNode child = Node(parent: branches[1]);
+        WbsNode grandchild = Node(parent: child);
+
+        Dictionary<Guid, int> levels = new WbsHierarchy([root, .. branches, child, grandchild]).BranchLevels();
+
+        Assert.Equal(1, levels[root.Id]);
+        Assert.Equal([2, 3, 4, 5, 6, 2], branches.Select(b => levels[b.Id]));
+        Assert.Equal(3, levels[child.Id]);
+        Assert.Equal(3, levels[grandchild.Id]);
+    }
 }

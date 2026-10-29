@@ -1,8 +1,6 @@
 using System.IO;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.Storage.Pickers;
-using WinRT.Interop;
 using iscWBS.Core.Services;
 using iscWBS.Helpers;
 
@@ -46,11 +44,7 @@ public sealed partial class NewProjectControl : UserControl
 
     private async void BtnPickFolder_Click(object sender, RoutedEventArgs e)
     {
-        var picker = new FolderPicker();
-        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(App.MainWindow));
-        picker.FileTypeFilter.Add("*");
-
-        if (await picker.PickSingleFolderAsync() is { } folder)
-            TxtSavePath.Text = _folderPath = folder.Path;
+        if (await FilePickers.PickFolderAsync() is { } folder)
+            TxtSavePath.Text = _folderPath = folder;
     }
 }

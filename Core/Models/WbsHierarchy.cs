@@ -50,6 +50,24 @@ public sealed class WbsHierarchy
         return result;
     }
 
+    /// <summary>
+    /// The brand colour level, 1–6, of every node reachable from a root: roots are 1, each branch directly under a
+    /// root takes the next of 2–6 in turn, and everything below a branch shares its level.
+    /// </summary>
+    public Dictionary<Guid, int> BranchLevels()
+    {
+        var levels = new Dictionary<Guid, int>();
+        int branch = 0;
+        foreach ((WbsNode node, int depth) in DepthFirst())
+            levels[node.Id] = depth switch
+            {
+                0 => 1,
+                1 => 2 + branch++ % 5,
+                _ => levels[node.ParentId!.Value],
+            };
+        return levels;
+    }
+
     /// <summary><paramref name="root"/> followed by all its descendants, depth-first.</summary>
     public List<WbsNode> CollectSubtree(WbsNode root)
     {

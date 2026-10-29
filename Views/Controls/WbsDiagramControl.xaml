@@ -10,7 +10,7 @@
             code-created Canvas children inherit the correct light/dark values.
         -->
         <SolidColorBrush x:Key="DiagramCardBackground" Color="{ThemeResource SystemChromeLowColor}" />
-        <SolidColorBrush x:Key="DiagramConnector"      Color="{ThemeResource SystemBaseMediumLowColor}" />
+        <SolidColorBrush x:Key="DiagramConnector"      Color="{ThemeResource IscConnectorColor}" />
         <SolidColorBrush x:Key="DiagramSelection"      Color="{ThemeResource SystemAccentColor}" />
         <SolidColorBrush x:Key="DiagramSecondaryText"  Color="{ThemeResource TextFillColorSecondary}" />
         <SolidColorBrush x:Key="DiagramStatusNotStarted" Color="{ThemeResource WbsStatusNotStartedColor}" />

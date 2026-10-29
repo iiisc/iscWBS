@@ -29,6 +29,7 @@
             Padding="16,8">
             <TextBlock
                 x:Uid="GanttPage_Title"
+                FontFamily="{StaticResource IscFontFamily}"
                 Text="Gantt Chart"
                 Style="{ThemeResource SubtitleTextBlockStyle}"
                 VerticalAlignment="Center" />

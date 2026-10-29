@@ -7,6 +7,7 @@
     <!-- Releases pass the real version; 0.0.0 marks a local build -->
     <Version>0.0.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <!-- Only x64 is released. Set here, a plain dotnet build or publish makes exactly what ships. -->
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -27,9 +28,14 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- The test project lives inside this folder but builds on its own -->
-    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**</DefaultItemExcludes>
+    <!-- The test project lives inside this folder but builds on its own; the design kits are source material -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**;Assets\iscwbs-*\**</DefaultItemExcludes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Loaded at run time. The font's license has to ship with it. -->
+    <Content Include="Assets\AppIcon.ico;Assets\Logo.svg;Assets\Fonts\**;Assets\Illustrations\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
@@ -43,11 +49,16 @@
 
   <PropertyGroup>
     <!-- Windows App SDK files the app never loads: push notifications, background tasks, restarting, the bootstrapper
-         that only framework-dependent apps need, WebView2, Visual Studio's designer support and the map control's page -->
+         that only framework-dependent apps need, WebView2, Visual Studio's designer support and the map control's page.
+         WinUI's two .pri files are already merged into iscWBS.pri; Microsoft.WindowsAppRuntime.pri isn't, and the file
+         pickers need it. QuestPDF only needs qpdf for merging or encrypting PDFs, and its Lato fonts only as a fallback
+         the report never uses. -->
     <UnusedPublishFiles>
       ;PushNotificationsLongRunningTask.ProxyStub.dll;Microsoft.Windows.ApplicationModel.Background.UniversalBGTask.dll;
       ;RestartAgent.exe;Microsoft.WindowsAppRuntime.Bootstrap.dll;Microsoft.Web.WebView2.Core.dll;WebView2Loader.dll;
       ;Microsoft.UI.Designer.dll;map.html;
+      ;Microsoft.UI.Xaml.Controls.pri;Microsoft.UI.pri;
+      ;qpdf.dll;QuestPDF.Fonts.Lato.br;
     </UnusedPublishFiles>
   </PropertyGroup>
 

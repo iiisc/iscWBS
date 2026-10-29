@@ -167,31 +167,31 @@
   </data>
 
   <!-- ─── WBS Tree page ───────────────────────────────────────────────────── -->
-  <data name="WbsTreePage_AddRootNodeBtn.Content" xml:space="preserve">
+  <data name="WbsTreePage_AddRootNodeText.Text" xml:space="preserve">
     <value>Add Root Node</value>
   </data>
   <data name="WbsTreePage_AddRootNodeBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Add root node</value>
   </data>
-  <data name="WbsTreePage_AddChildBtn.Content" xml:space="preserve">
+  <data name="WbsTreePage_AddChildText.Text" xml:space="preserve">
     <value>Add Child</value>
   </data>
   <data name="WbsTreePage_AddChildBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Add child node</value>
   </data>
-  <data name="WbsTreePage_DeleteNodeBtn.Content" xml:space="preserve">
+  <data name="WbsTreePage_DeleteNodeText.Text" xml:space="preserve">
     <value>Delete Node</value>
   </data>
   <data name="WbsTreePage_DeleteNodeBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Delete selected node</value>
   </data>
-  <data name="WbsTreePage_CollapseAllBtn.Content" xml:space="preserve">
+  <data name="WbsTreePage_CollapseAllText.Text" xml:space="preserve">
     <value>Collapse All</value>
   </data>
   <data name="WbsTreePage_CollapseAllBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Collapse all nodes</value>
   </data>
-  <data name="WbsTreePage_ExpandAllBtn.Content" xml:space="preserve">
+  <data name="WbsTreePage_ExpandAllText.Text" xml:space="preserve">
     <value>Expand All</value>
   </data>
   <data name="WbsTreePage_ExpandAllBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
@@ -215,11 +215,23 @@
   <data name="WbsTreePage_ContextDelete.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Delete node</value>
   </data>
-  <data name="WbsTreePage_EmptyTitle.Text" xml:space="preserve">
-    <value>No nodes yet</value>
+  <data name="WbsTreePage_Empty.Title" xml:space="preserve">
+    <value>Plant the root of your project</value>
   </data>
-  <data name="WbsTreePage_EmptyHint.Text" xml:space="preserve">
-    <value>Click 'Add Root Node' to get started</value>
+  <data name="WbsTreePage_Empty.Body" xml:space="preserve">
+    <value>Start with a root node, then break it down into deliverables and work packages.</value>
+  </data>
+  <data name="WbsTreePage_Empty.ActionText" xml:space="preserve">
+    <value>Add Root Node</value>
+  </data>
+  <data name="DashboardPage_NoMatches.Title" xml:space="preserve">
+    <value>Nothing matches these filters</value>
+  </data>
+  <data name="DashboardPage_NoMatches.Body" xml:space="preserve">
+    <value>Try other filters, or clear them to see the whole project.</value>
+  </data>
+  <data name="DashboardPage_NoMatches.ActionText" xml:space="preserve">
+    <value>Clear Filters</value>
   </data>
 
   <!-- ─── WBS Outline page ────────────────────────────────────────────────── -->

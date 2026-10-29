@@ -3,7 +3,9 @@
     x:Class="iscWBS.Views.ShellWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:iscWBS.Views">
+    xmlns:helpers="using:iscWBS.Helpers"
+    xmlns:local="using:iscWBS.Views"
+    xmlns:controls="using:iscWBS.Views.Controls">
 
     <Grid x:Name="RootGrid">
         <NavigationView
@@ -12,6 +14,10 @@
             IsSettingsVisible="False"
             IsBackButtonVisible="Collapsed"
             ItemInvoked="NavView_ItemInvoked">
+
+            <NavigationView.PaneHeader>
+                <controls:IscLogo Size="24" Margin="4,0,0,0" VerticalAlignment="Center" />
+            </NavigationView.PaneHeader>
 
             <NavigationView.MenuItems>
                 <NavigationViewItem
@@ -43,7 +49,7 @@
                     AutomationProperties.Name="WBS Tree"
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                     <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE8BE;" />
+                        <PathIcon helpers:IscIcon.Kind="Project" Width="24" Height="24" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 
@@ -54,7 +60,7 @@
                     AutomationProperties.Name="WBS Outline"
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                     <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE8A5;" />
+                        <PathIcon helpers:IscIcon.Kind="WorkPackage" Width="24" Height="24" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 
@@ -109,7 +115,7 @@
                     AutomationProperties.Name="Milestones"
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                     <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE919;" />
+                        <PathIcon helpers:IscIcon.Kind="Milestone" Width="24" Height="24" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>

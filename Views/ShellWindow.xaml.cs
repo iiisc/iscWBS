@@ -29,6 +29,8 @@ public sealed partial class ShellWindow : Window
         AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
         AppWindow.TitleBar.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
+        // The exe's icon only reaches Explorer; the taskbar and Alt+Tab use the window's own.
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico"));
 
         ViewModel.PropertyChanged += (_, e) =>
         {

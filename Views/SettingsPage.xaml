@@ -10,6 +10,7 @@
 
             <TextBlock
                 x:Uid="SettingsPage_Title"
+                FontFamily="{StaticResource IscFontFamily}"
                 Text="Settings"
                 Style="{ThemeResource TitleLargeTextBlockStyle}" />
 

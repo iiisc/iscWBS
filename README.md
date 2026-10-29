@@ -29,9 +29,9 @@ Built with **WinUI 3** and **.NET 10**, distributed as a self-contained ZIP — 
 
 ## Getting Started
 
-1. Download the latest `iscWBS-<version>-x64.zip` from [Releases](../../releases).
-2. Extract it to a folder you can write to (the in-app updater replaces files in that folder, so avoid `Program Files`).
-3. Run `iscWBS.exe` — no installer, no admin rights required.
+1. Download the latest `iscWBS-v<version>-win-x64.zip` from [Releases](../../releases).
+2. Extract it somewhere you can write to; it unpacks into an `iscWBS` folder. The in-app updater replaces files in that folder, so avoid `Program Files`.
+3. Run `iscWBS\iscWBS.exe` — no installer, no admin rights required. Later versions install from **Settings → Software Updates**, after checking the download against the SHA-256 GitHub publishes for it.
 4. Choose **New Project** to create a `.iscwbs` project file, or **Open Project** to load an existing one.
 
 Settings and logs are stored under `%LOCALAPPDATA%\ISC\iscWBS\`.
@@ -45,12 +45,16 @@ Settings and logs are stored under `%LOCALAPPDATA%\ISC\iscWBS\`.
 ```powershell
 git clone https://github.com/iiisc/iscWBS.git
 cd iscWBS
-dotnet build iscWBS.csproj -c Debug -p:Platform=x64
+dotnet build iscWBS.csproj
 dotnet test tests/iscWBS.Tests
-dotnet publish iscWBS.csproj -c Release -r win-x64 -p:Platform=x64
+dotnet publish iscWBS.csproj -c Release -o publish/iscWBS
 ```
 
 **Prerequisites:** the .NET 10 SDK. The Windows App SDK comes from NuGet and is bundled into the app. Publishing compiles to native code (Native AOT), which also needs the MSVC build tools (Visual Studio's "Desktop development with C++" workload).
+
+## Releasing
+
+Run **Actions → Release → Run workflow**. Leave the version empty for the next patch, or enter one such as `1.2.0`. The workflow runs the CI checks, publishes, tags the commit and creates a **draft** release whose notes list the commits since the last release. Rewrite the notes for users and publish the draft; the app only offers published releases.
 
 ---
 

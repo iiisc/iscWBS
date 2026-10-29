@@ -25,14 +25,7 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        string[] commandLine = Environment.GetCommandLineArgs();
-        if (commandLine.Length == 4 && commandLine[1] == UpdateService.FinishUpdateArgument)
-        {
-            UpdateService.FinishUpdate(commandLine[2], int.Parse(commandLine[3]));
-            Exit();
-            return;
-        }
-        UpdateService.DeleteStagedUpdates();
+        UpdateService.DeleteOldVersion();
 
         QuestPDF.Settings.License = LicenseType.Community;
 

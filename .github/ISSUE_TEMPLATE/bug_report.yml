@@ -1,0 +1,53 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      placeholder: Describe the bug clearly.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a project
+        2. Click '...'
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: >
+        The lines from around the problem, from the newest file in %LOCALAPPDATA%\ISC\iscWBS\Logs. The log holds error
+        details and file paths, so take out anything you'd rather not share.
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: iscWBS version
+      description: Shown under Settings → Software Updates.
+      placeholder: e.g. 1.2.0
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Windows version
+      placeholder: e.g. Windows 11 24H2
+    validations:
+      required: false

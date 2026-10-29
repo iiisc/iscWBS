@@ -30,9 +30,9 @@ Views (XAML + thin code-behind)  →  ViewModels (CommunityToolkit.Mvvm)  →  C
 ## Build and test
 
 ```
-dotnet build iscWBS.csproj -c Debug -p:Platform=x64
+dotnet build iscWBS.csproj
 dotnet test tests/iscWBS.Tests
-dotnet publish iscWBS.csproj -c Release -r win-x64 -p:Platform=x64   # Native AOT; needs the MSVC build tools
+dotnet publish iscWBS.csproj -c Release -o publish/iscWBS   # Native AOT; needs the MSVC build tools
 ```
 
 Release-only AOT failures don't show in Debug: run the published exe before shipping a change to bindings or JSON.

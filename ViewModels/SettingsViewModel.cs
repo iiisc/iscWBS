@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -208,10 +209,11 @@ public sealed partial class SettingsViewModel : ObservableObject
             if (!await _updateService.DownloadAndInstallAsync(AvailableUpdate, progress, cancellationToken))
                 return;
 
-            // The staged new version is waiting for this process to exit before it copies itself over it.
+            // The new version's files are in place; start it and let this one go.
             if (_projectStateService.HasActiveProject)
                 await _projectStateService.CloseProjectAsync();
 
+            Process.Start(new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false });
             Environment.Exit(0);
         }
         catch (OperationCanceledException)

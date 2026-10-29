@@ -8,18 +8,14 @@ using iscWBS.Core.Models;
 
 namespace iscWBS.Core.Services;
 
-/// <summary>
-/// Checks GitHub Releases for a newer version and installs its ZIP over this one. The running files can't be
-/// overwritten, so the downloaded version is started from a staging folder with <see cref="FinishUpdateArgument"/>,
-/// waits for this process to exit, copies itself over the install folder and starts it.
-/// </summary>
+/// <summary>Checks GitHub Releases for a newer version and installs its ZIP in place of the running app.</summary>
 public sealed partial class UpdateService
 {
-    public const string FinishUpdateArgument = "--finish-update";
+    /// <summary>Where the files an update replaced are moved, since they're in use until the app restarts.</summary>
+    internal const string OldVersionDir = "iscWBS-old";
 
     private const string _gitHubApiUrl = "https://api.github.com/repos/iiisc/iscWBS/releases/latest";
     private const string _exeName = "iscWBS.exe";
-    private const string _stagingPrefix = "iscWBS-update-";
 
     private readonly HttpClient _httpClient;
 
@@ -57,9 +53,9 @@ public sealed partial class UpdateService
     }
 
     /// <summary>
-    /// Downloads, verifies and stages the release, then starts it to finish the install. Returns
-    /// <see langword="true"/> when the caller must exit straight away so the new version can replace it;
-    /// <see langword="false"/> when the release has no verifiable ZIP and its page was opened instead.
+    /// Downloads and verifies the release, then puts it in place of the running app. Returns <see langword="true"/>
+    /// when the caller must restart into the new version; <see langword="false"/> when the release has no verifiable
+    /// ZIP and its page was opened instead. If installing fails, the app is left as it was.
     /// </summary>
     public async Task<bool> DownloadAndInstallAsync(UpdateInfo info, IProgress<int> progress, CancellationToken cancellationToken = default)
     {
@@ -69,101 +65,109 @@ public sealed partial class UpdateService
             return false;
         }
 
-        string stagingDir = Path.Combine(Path.GetTempPath(), _stagingPrefix + info.TagName);
-        string zipPath = stagingDir + ".zip";
-
-        using (HttpResponseMessage response = await _httpClient.GetAsync(
-            info.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
-        {
-            response.EnsureSuccessStatusCode();
-            long? totalBytes = response.Content.Headers.ContentLength;
-            await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            await using FileStream fileStream = File.Create(zipPath);
-
-            byte[] buffer = new byte[81920];
-            long downloaded = 0;
-            int bytesRead;
-            while ((bytesRead = await stream.ReadAsync(buffer, cancellationToken)) > 0)
-            {
-                await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
-                downloaded += bytesRead;
-                if (totalBytes > 0)
-                    progress.Report((int)(downloaded * 100 / totalBytes.Value));
-            }
-        }
-
-        if (!Sha256Matches(zipPath, info.Sha256))
-            throw new InvalidDataException("The downloaded update does not match the SHA-256 digest GitHub published for it.");
-
-        if (Directory.Exists(stagingDir))
-            Directory.Delete(stagingDir, recursive: true);
-        ZipFile.ExtractToDirectory(zipPath, stagingDir);
-        File.Delete(zipPath);
-
-        string stagedExe = Path.Combine(stagingDir, _exeName);
-        if (!File.Exists(stagedExe))
-            throw new InvalidDataException($"The update package does not contain {_exeName}.");
-
-        var start = new ProcessStartInfo(stagedExe) { UseShellExecute = false };
-        start.ArgumentList.Add(FinishUpdateArgument);
-        start.ArgumentList.Add(AppContext.BaseDirectory);
-        start.ArgumentList.Add(Environment.ProcessId.ToString());
-        Process.Start(start);
-        return true;
-    }
-
-    /// <summary>
-    /// Runs in the staged copy: waits for the old version to exit, copies the staged files over the install
-    /// folder and starts the installed app. The old version is started again even if copying fails.
-    /// </summary>
-    public static void FinishUpdate(string installDir, int oldProcessId)
-    {
+        string tempDir = Path.Combine(Path.GetTempPath(), "iscWBSUpdate");
         try
         {
-            try { Process.GetProcessById(oldProcessId).WaitForExit(TimeSpan.FromSeconds(30)); }
-            catch (ArgumentException) { } // already gone
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+            Directory.CreateDirectory(tempDir);
+            string zipPath = Path.Combine(tempDir, "release.zip");
 
-            // The old process can hold file handles for a moment after it exits.
-            for (int attempt = 1; ; attempt++)
+            using (HttpResponseMessage response = await _httpClient.GetAsync(
+                info.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
             {
-                try
+                response.EnsureSuccessStatusCode();
+                long? totalBytes = response.Content.Headers.ContentLength;
+                await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                await using FileStream fileStream = File.Create(zipPath);
+
+                byte[] buffer = new byte[81920];
+                long downloaded = 0;
+                int bytesRead;
+                while ((bytesRead = await stream.ReadAsync(buffer, cancellationToken)) > 0)
                 {
-                    CopyOver(AppContext.BaseDirectory, installDir);
-                    break;
-                }
-                catch (IOException) when (attempt < 10)
-                {
-                    Thread.Sleep(500);
+                    await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+                    downloaded += bytesRead;
+                    if (totalBytes > 0)
+                        progress.Report((int)(downloaded * 100 / totalBytes.Value));
                 }
             }
+
+            if (!Sha256Matches(zipPath, info.Sha256))
+                throw new InvalidDataException("The downloaded update does not match the SHA-256 digest GitHub published for it.");
+
+            string releaseDir = Path.Combine(tempDir, "release");
+            ZipFile.ExtractToDirectory(zipPath, releaseDir);
+            // The release zip holds the app in an iscWBS folder, so unzipping it by hand can't spill files elsewhere.
+            SwapIn(Path.Combine(releaseDir, "iscWBS"), Environment.ProcessPath ?? throw new InvalidOperationException("The app could not find its own exe."));
+            return true;
         }
         finally
         {
-            Process.Start(new ProcessStartInfo(Path.Combine(installDir, _exeName)) { UseShellExecute = false });
+            try { Directory.Delete(tempDir, recursive: true); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
     }
 
-    /// <summary>Removes staging folders left by earlier updates; best effort, run by the installed app on start.</summary>
-    public static void DeleteStagedUpdates()
+    /// <summary>Deletes the files the last update replaced; that version isn't running any more. Best effort, on start.</summary>
+    public static void DeleteOldVersion()
     {
-        string current = Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
-        foreach (string dir in Directory.EnumerateDirectories(Path.GetTempPath(), _stagingPrefix + "*"))
-        {
-            if (string.Equals(dir, current, StringComparison.OrdinalIgnoreCase)) continue;
-            try { Directory.Delete(dir, recursive: true); }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
-        }
+        try { Directory.Delete(Path.Combine(AppContext.BaseDirectory, OldVersionDir), recursive: true); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
-    /// <summary>Copies every file under <paramref name="sourceDir"/> into <paramref name="targetDir"/>, leaving other files there alone.</summary>
-    internal static void CopyOver(string sourceDir, string targetDir)
+    /// <summary>
+    /// Moves the release's files into the app's folder. Windows won't let a running program's files be overwritten, but
+    /// it does let them be moved, so each one being replaced goes into <see cref="OldVersionDir"/> first, for the next
+    /// start to delete. Files the release doesn't contain are left alone. If anything fails, every file is put back.
+    /// </summary>
+    internal static void SwapIn(string releaseDir, string currentExe)
     {
-        foreach (string source in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
+        if (!File.Exists(Path.Combine(releaseDir, _exeName)))
+            throw new InvalidDataException($"The update package does not contain {_exeName}.");
+        string appDir = Path.GetDirectoryName(currentExe)!;
+        string oldDir = Path.Combine(appDir, OldVersionDir);
+        if (Directory.Exists(oldDir))
+            Directory.Delete(oldDir, recursive: true);
+
+        var replaced = new List<(string File, string MovedTo)>();
+        var added = new List<string>();
+        try
         {
-            string target = Path.Combine(targetDir, Path.GetRelativePath(sourceDir, source));
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(source, target, overwrite: true);
+            foreach (string file in Directory.EnumerateFiles(releaseDir, "*", SearchOption.AllDirectories))
+            {
+                string name = Path.GetRelativePath(releaseDir, file);
+                // A copy of the app the user renamed keeps its name.
+                string target = name == _exeName ? currentExe : Path.Combine(appDir, name);
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                if (File.Exists(target))
+                {
+                    string movedTo = Path.Combine(oldDir, Path.GetRelativePath(appDir, target));
+                    Directory.CreateDirectory(Path.GetDirectoryName(movedTo)!);
+                    File.Move(target, movedTo);
+                    replaced.Add((target, movedTo));
+                }
+                else
+                {
+                    added.Add(target);
+                }
+                File.Move(file, target);
+            }
+        }
+        catch
+        {
+            foreach (string file in added)
+                try { File.Delete(file); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            foreach ((string file, string movedTo) in replaced)
+            {
+                try
+                {
+                    File.Delete(file);
+                    File.Move(movedTo, file);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            }
+            throw;
         }
     }
 

@@ -1,48 +1,36 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <WindowsPackageType>None</WindowsPackageType>
-    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-    <EnableMsixTooling>true</EnableMsixTooling>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>iscWBS</RootNamespace>
+    <!-- Releases pass the real version; 0.0.0 marks a local build -->
+    <Version>0.0.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Only x64 is released. Set here, a plain dotnet build or publish makes exactly what ships. -->
     <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <!-- Compiled to native code holding only the parts of .NET the app calls, so no .NET runtime files ship with it -->
+    <PublishAot>true</PublishAot>
+    <OptimizationPreference>Size</OptimizationPreference>
+    <!-- CsWinRT only generates the AOT marshalling code for collections bound to ItemsSource when this is on -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+    <SatelliteResourceLanguages>en;en-US;sv;sv-SE</SatelliteResourceLanguages>
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
+    <!-- Ships as a plain exe, so debug runs the same way instead of as an MSIX package -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!-- Still needed although the app isn't packaged: it builds iscWBS.pri, which holds the compiled XAML and strings -->
+    <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- CsWinRT only generates the AOT marshalling code for collections bound to ItemsSource when this is on. -->
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- The test project lives inside this folder but builds on its own -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**</DefaultItemExcludes>
   </PropertyGroup>
-  <!-- XAML files are included as Page items by the SDK glob and compiled by XamlPreCompile -->
-  <ItemGroup>
-    <Content Include="Assets\SplashScreen.scale-200.png" />
-    <Content Include="Assets\LockScreenLogo.scale-200.png" />
-    <Content Include="Assets\Square150x150Logo.scale-200.png" />
-    <Content Include="Assets\Square44x44Logo.scale-200.png" />
-    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
-    <Content Include="Assets\StoreLogo.png" />
-    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
-  </ItemGroup>
 
-  <!-- The default globs would otherwise compile the test project's sources into the app. -->
-  <ItemGroup>
-    <Compile Remove="tests\**" />
-    <None Remove="tests\**" />
-    <Content Remove="tests\**" />
-    <Page Remove="tests\**" />
-    <PRIResource Remove="tests\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Manifest Include="$(ApplicationManifest)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include=".github\workflows\release.yml" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
@@ -52,11 +40,26 @@
     <!-- A current native SQLite (the version number is SQLite's own); Microsoft.Data.Sqlite alone resolves an older 2.1.x build. -->
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
   </ItemGroup>
-  <!-- Release publishes as Native AOT, which trims as well: a native exe with no JIT or IL to ship. -->
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <PublishAot>true</PublishAot>
-    <SatelliteResourceLanguages>en;en-US;sv;sv-SE</SatelliteResourceLanguages>
-    <DebugType>none</DebugType>
+
+  <PropertyGroup>
+    <!-- Windows App SDK files the app never loads: push notifications, background tasks, restarting, the bootstrapper
+         that only framework-dependent apps need, WebView2, Visual Studio's designer support and the map control's page -->
+    <UnusedPublishFiles>
+      ;PushNotificationsLongRunningTask.ProxyStub.dll;Microsoft.Windows.ApplicationModel.Background.UniversalBGTask.dll;
+      ;RestartAgent.exe;Microsoft.WindowsAppRuntime.Bootstrap.dll;Microsoft.Web.WebView2.Core.dll;WebView2Loader.dll;
+      ;Microsoft.UI.Designer.dll;map.html;
+    </UnusedPublishFiles>
   </PropertyGroup>
 
+  <Target Name="LeaveOutUnusedFiles" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                             Condition="$([System.String]::Copy('$(UnusedPublishFiles)').Contains(';%(Filename)%(Extension);'))" />
+      <!-- WinRT type descriptions, which native code has compiled in -->
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.winmd'" />
+      <!-- WinUI's own text in 85 other languages, a folder each. The app is in English and Swedish; Windows falls back to en-us. -->
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                             Condition="'%(Extension)' == '.mui' And !$([System.String]::Copy('%(RelativePath)').StartsWith('en-us')) And !$([System.String]::Copy('%(RelativePath)').StartsWith('sv-SE'))" />
+    </ItemGroup>
+  </Target>
 </Project>

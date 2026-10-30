@@ -34,7 +34,7 @@ dotnet build iscWBS.csproj
 dotnet test tests/iscWBS.Tests
 ```
 
-Requires the .NET 10 SDK. Publishing compiles with Native AOT, which also needs Visual Studio's C++ build tools. To release, run **Actions → Release**; it creates a draft release to review and publish.
+Requires the .NET 10 SDK. Publishing compiles with Native AOT, which also needs Visual Studio's C++ build tools.
 
 ## License
 

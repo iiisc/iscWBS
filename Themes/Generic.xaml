@@ -23,9 +23,6 @@
             <Color x:Key="GanttHeaderBackgroundColor">#145A4F96</Color>
             <Color x:Key="GanttHeaderBottomBackgroundColor">#0A5A4F96</Color>
             <Color x:Key="GanttRowBandColor">#0A5A4F96</Color>
-            <!-- Solid backgrounds prevent content bleed-through in the acrylic dropdowns -->
-            <SolidColorBrush x:Key="ComboBoxDropDownBackground"     Color="#FFFFFF" />
-            <SolidColorBrush x:Key="MenuFlyoutPresenterBackground"  Color="#FFFFFF" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
             <Color x:Key="WbsStatusNotStartedColor">#A89EDB</Color>
@@ -38,11 +35,9 @@
             <SolidColorBrush x:Key="WbsStatusCompleteBrush"   Color="{StaticResource WbsStatusCompleteColor}" />
             <SolidColorBrush x:Key="WbsStatusBlockedBrush"    Color="{StaticResource WbsStatusBlockedColor}" />
             <Color x:Key="GanttLabelForegroundColor">#FFFFFF</Color>
-            <Color x:Key="GanttHeaderBackgroundColor">#28C4B8FF</Color>
-            <Color x:Key="GanttHeaderBottomBackgroundColor">#14C4B8FF</Color>
-            <Color x:Key="GanttRowBandColor">#0FC4B8FF</Color>
-            <SolidColorBrush x:Key="ComboBoxDropDownBackground"     Color="#1A1638" />
-            <SolidColorBrush x:Key="MenuFlyoutPresenterBackground"  Color="#1A1638" />
+            <Color x:Key="GanttHeaderBackgroundColor">#28FFFFFF</Color>
+            <Color x:Key="GanttHeaderBottomBackgroundColor">#14FFFFFF</Color>
+            <Color x:Key="GanttRowBandColor">#0FFFFFFF</Color>
         </ResourceDictionary>
         <!-- Four different system colours, each readable under Window-coloured text. -->
         <ResourceDictionary x:Key="HighContrast">

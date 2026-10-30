@@ -34,16 +34,23 @@
             <SolidColorBrush x:Key="IscLevel4Brush" Color="{ThemeResource IscLevel4Color}" />
             <SolidColorBrush x:Key="IscLevel5Brush" Color="{ThemeResource IscLevel5Color}" />
             <SolidColorBrush x:Key="IscLevel6Brush" Color="{ThemeResource IscLevel6Color}" />
-            <!-- WinUI's cards and the window's content area in the brand surfaces -->
+            <!-- WinUI's cards, popups and the window's content area in the brand surfaces. Popups are solid so the
+                 content behind an acrylic dropdown doesn't bleed through. -->
             <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="{ThemeResource IscSurfaceColor}" />
             <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="{ThemeResource IscBorderColor}" />
             <SolidColorBrush x:Key="NavigationViewContentBackground" Color="{ThemeResource IscBackgroundColor}" />
             <SolidColorBrush x:Key="NavigationViewContentGridBorderBrush" Color="{ThemeResource IscBorderColor}" />
+            <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="{ThemeResource IscSurfaceColor}" />
+            <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="{ThemeResource IscSurfaceColor}" />
+            <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="{ThemeResource IscSurfaceColor}" />
+            <SolidColorBrush x:Key="FlyoutPresenterBackground" Color="{ThemeResource IscSurfaceColor}" />
+            <SolidColorBrush x:Key="ContentDialogBackground" Color="{ThemeResource IscSurfaceColor}" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
-            <Color x:Key="IscBackgroundColor">#0E0B22</Color>
-            <Color x:Key="IscSurfaceColor">#1A1638</Color>
-            <Color x:Key="IscBorderColor">#2E2856</Color>
+            <!-- Near-neutral rather than the kit's purple night, so the brand colours stand out instead of tinting everything -->
+            <Color x:Key="IscBackgroundColor">#131316</Color>
+            <Color x:Key="IscSurfaceColor">#1E1E23</Color>
+            <Color x:Key="IscBorderColor">#303038</Color>
             <Color x:Key="IscTextColor">#FFFFFF</Color>
             <Color x:Key="IscTextMutedColor">#C4B8FF</Color>
             <Color x:Key="IscConnectorColor">#8A7FD6</Color>
@@ -73,6 +80,11 @@
             <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="{ThemeResource IscBorderColor}" />
             <SolidColorBrush x:Key="NavigationViewContentBackground" Color="{ThemeResource IscBackgroundColor}" />
             <SolidColorBrush x:Key="NavigationViewContentGridBorderBrush" Color="{ThemeResource IscBorderColor}" />
+            <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="{ThemeResource IscSurfaceColor}" />
+            <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="{ThemeResource IscSurfaceColor}" />
+            <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="{ThemeResource IscSurfaceColor}" />
+            <SolidColorBrush x:Key="FlyoutPresenterBackground" Color="{ThemeResource IscSurfaceColor}" />
+            <SolidColorBrush x:Key="ContentDialogBackground" Color="{ThemeResource IscSurfaceColor}" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="HighContrast">
             <StaticResource x:Key="IscBackgroundColor" ResourceKey="SystemColorWindowColor" />

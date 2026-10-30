@@ -10,15 +10,13 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- The banner art is always on Night, so its title stays white in both themes. -->
         <Border
             x:Name="Banner"
             Grid.Row="0"
             Margin="16,16,16,0"
             MaxWidth="800"
             Height="200"
-            CornerRadius="{StaticResource IscCornerRadiusLarge}"
-            Background="{StaticResource IscNightBrush}">
+            CornerRadius="{StaticResource IscCornerRadiusLarge}">
             <Grid>
                 <Image x:Name="BannerImage" Stretch="UniformToFill" HorizontalAlignment="Right" AutomationProperties.AccessibilityView="Raw" />
                 <StackPanel Orientation="Horizontal" Spacing="12" Margin="32,0" VerticalAlignment="Center">
@@ -28,7 +26,7 @@
                         FontFamily="{StaticResource IscFontFamily}"
                         FontWeight="SemiBold"
                         FontSize="36"
-                        Foreground="White" />
+                        Foreground="{ThemeResource IscTextBrush}" />
                     <Border Style="{StaticResource IscBadgeBorderStyle}">
                         <TextBlock
                             x:Uid="ReportsPage_BetaFeature"

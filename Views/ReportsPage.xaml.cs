@@ -1,8 +1,8 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.UI.ViewManagement;
 using iscWBS.ViewModels;
-using iscWBS.Views.Controls;
 
 namespace iscWBS.Views;
 
@@ -14,17 +14,22 @@ public sealed partial class ReportsPage : Page
     {
         InitializeComponent();
         ViewModel = App.Services.CreateReportsViewModel();
-        BannerImage.Source = IscEmptyState.LoadIllustration("ReportsHeader");
-        ShowBannerUnlessHighContrast();
-        // Turning High Contrast on or off changes the theme.
-        ActualThemeChanged += (_, _) => ShowBannerUnlessHighContrast();
+        ApplyTheme();
+        // Turning High Contrast on or off changes the theme too.
+        ActualThemeChanged += (_, _) => ApplyTheme();
     }
 
-    // High Contrast replaces every colour but the artwork's, so it gets the plain title instead.
-    private void ShowBannerUnlessHighContrast()
+    // The banner's colours are drawn into it, so each theme has its own, and High Contrast, which replaces every
+    // colour, gets the plain title instead.
+    private void ApplyTheme()
     {
         bool highContrast = new AccessibilitySettings().HighContrast;
         Banner.Visibility = highContrast ? Visibility.Collapsed : Visibility.Visible;
         PlainHeader.Visibility = highContrast ? Visibility.Visible : Visibility.Collapsed;
+
+        string name = ActualTheme == ElementTheme.Light ? "ReportsHeaderLight.svg" : "ReportsHeader.svg";
+        var banner = new SvgImageSource();
+        _ = banner.SetSourceAsync(typeof(ReportsPage).Assembly.GetManifestResourceStream(name)!.AsRandomAccessStream());
+        BannerImage.Source = banner;
     }
 }

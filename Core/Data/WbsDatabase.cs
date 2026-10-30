@@ -83,7 +83,8 @@ public sealed class WbsDatabase
             throw new InvalidOperationException(
                 $"The project file failed integrity check and may be corrupted: {check}").WithMessageKey("Error_IntegrityCheckFailed", check);
 
-        await Connection.ExecuteAsync("PRAGMA journal_mode=WAL");
+        // WAL keeps recent saves in a side file, which a copy of the project misses and network shares can't share.
+        await Connection.ExecuteAsync("PRAGMA journal_mode=DELETE");
         await Connection.ExecuteAsync("PRAGMA foreign_keys=ON");
 
         foreach (string statement in _schema)

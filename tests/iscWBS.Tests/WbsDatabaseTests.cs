@@ -115,6 +115,25 @@ public sealed class WbsDatabaseTests : IDisposable
     }
 
     [Fact]
+    public async Task SavedChanges_AreInTheProjectFileWhileItIsOpen()
+    {
+        string path = _dir.File("shared.iscwbs");
+        var state = new ProjectStateService(_settings);
+        await state.CreateProjectAsync("Shared", path);
+        await state.CloseProjectAsync();
+        using (var connection = TestData.OpenRaw(path))
+            await connection.ExecuteAsync("PRAGMA journal_mode=WAL"); // How earlier versions left their files
+
+        await state.OpenProjectAsync(path);
+        await new WbsService(state).AddRootNodeAsync(state.ActiveProject!.Id, "Root");
+        File.Copy(path, _dir.File("copy.iscwbs"));
+        await state.CloseProjectAsync();
+
+        using var copy = TestData.OpenRaw(_dir.File("copy.iscwbs"));
+        Assert.Equal(1, await copy.ScalarAsync<int>("SELECT COUNT(*) FROM WbsNodes"));
+    }
+
+    [Fact]
     public async Task OpenProject_MissingFile_IsProjectNotFound()
         => await TestData.AssertFailsWith("Error_ProjectNotFound",
             () => new ProjectStateService(_settings).OpenProjectAsync(_dir.File("missing.iscwbs")));

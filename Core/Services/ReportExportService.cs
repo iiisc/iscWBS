@@ -38,7 +38,7 @@ public sealed class ReportExportService
             projectName,
             DateTime.Now,
             ProjectSummary.Compute(nodes, blockedIds),
-            DeliverableRow.Build(nodes, blockedIds),
+            ProgressRow.Build(nodes, blockedIds, n => n.IsDeliverable),
             milestones.Select(m => (m.Title, m.DueDate)).ToList(),
             BuildWbsTree(nodes, blockedIds));
 

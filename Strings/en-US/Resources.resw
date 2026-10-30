@@ -117,9 +117,6 @@
   <data name="DashboardPage_KpiBlocked.Text" xml:space="preserve">
     <value>Blocked</value>
   </data>
-  <data name="DashboardPage_DeliverablesTitle.Text" xml:space="preserve">
-    <value>Deliverables</value>
-  </data>
   <data name="DashboardPage_StatusBreakdownTitle.Text" xml:space="preserve">
     <value>Status Breakdown</value>
   </data>
@@ -143,12 +140,6 @@
   </data>
   <data name="DashboardPage_BlockedTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Blocked task count</value>
-  </data>
-  <data name="DashboardPage_DeliverablesList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Deliverables list</value>
-  </data>
-  <data name="DashboardPage_DeliverableProgress.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Deliverable progress</value>
   </data>
   <data name="DashboardPage_StatusBreakdownChart.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Status breakdown chart</value>
@@ -1186,7 +1177,25 @@
   <data name="DashboardPage_FilterBlocked.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Show only blocked tasks</value>
   </data>
-  <data name="DashboardPage_NoMatchingDeliverables.Text" xml:space="preserve">
-    <value>No deliverables with this status.</value>
+  <data name="DashboardPage_TasksTitle.Text" xml:space="preserve">
+    <value>Tasks</value>
+  </data>
+  <data name="DashboardPage_TasksList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Tasks list</value>
+  </data>
+  <data name="DashboardPage_TaskProgress.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Progress</value>
+  </data>
+  <data name="DashboardPage_OnlyDeliverables.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Show only deliverables</value>
+  </data>
+  <data name="DashboardPage_OnlyDeliverablesText.Text" xml:space="preserve">
+    <value>Only deliverables</value>
+  </data>
+  <data name="DashboardPage_DeliverableBadge.Text" xml:space="preserve">
+    <value>Deliverable</value>
+  </data>
+  <data name="DashboardPage_NoMatchingRows.Text" xml:space="preserve">
+    <value>Nothing here with these filters.</value>
   </data>
 </root>

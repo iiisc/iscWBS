@@ -5,6 +5,6 @@ public sealed record ProjectStatusReportData(
     string ProjectName,
     DateTime GeneratedAt,
     ProjectSummary Summary,
-    IReadOnlyList<DeliverableRow> Deliverables,
+    IReadOnlyList<ProgressRow> Deliverables,
     IReadOnlyList<(string Title, DateTime DueDate)> Milestones,
     IReadOnlyList<WbsTreeEntry> WbsTree);

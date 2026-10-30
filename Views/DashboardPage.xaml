@@ -6,9 +6,11 @@
     xmlns:helpers="using:iscWBS.Helpers"
     xmlns:controls="using:iscWBS.Views.Controls"
     xmlns:vm="using:iscWBS.ViewModels"
-    xmlns:models="using:iscWBS.Core.Models">
+    xmlns:models="using:iscWBS.Core.Models"
+    xmlns:local="using:iscWBS.Views">
 
     <Page.Resources>
+        <SolidColorBrush x:Key="DeliverableBadgeBackground" Color="{ThemeResource SystemAccentColor}" Opacity="0.22" />
         <Style x:Key="CardStyle" TargetType="Border">
             <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
@@ -262,18 +264,35 @@
 
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}" VerticalAlignment="Top">
                     <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
                             <Viewbox Width="20" Height="20" VerticalAlignment="Center">
-                                <PathIcon helpers:IscIcon.Kind="Deliverable" Width="24" Height="24" />
+                                <PathIcon helpers:IscIcon.Kind="WorkPackage" Width="24" Height="24" />
                             </Viewbox>
-                            <TextBlock x:Uid="DashboardPage_DeliverablesTitle" Text="Deliverables" Style="{StaticResource IscSectionTitleTextBlockStyle}" />
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" x:Uid="DashboardPage_TasksTitle" Text="Tasks" Style="{StaticResource IscSectionTitleTextBlockStyle}" />
+                            <ToggleButton
+                                Grid.Column="2"
+                                x:Uid="DashboardPage_OnlyDeliverables"
+                                IsChecked="{x:Bind ViewModel.OnlyDeliverables, Mode=TwoWay}"
+                                AutomationProperties.Name="Show only deliverables">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Viewbox Width="16" Height="16">
+                                        <PathIcon helpers:IscIcon.Kind="Deliverable" Width="24" Height="24" />
+                                    </Viewbox>
+                                    <TextBlock x:Uid="DashboardPage_OnlyDeliverablesText" Text="Only deliverables" />
+                                </StackPanel>
+                            </ToggleButton>
+                        </Grid>
                         <TextBlock
-                            x:Uid="DashboardPage_NoMatchingDeliverables"
-                            Text="No deliverables with this status."
+                            x:Uid="DashboardPage_NoMatchingRows"
+                            Text="Nothing here with these filters."
                             Style="{ThemeResource BodyTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Visibility="{x:Bind ViewModel.HasNoMatchingDeliverables, Mode=OneWay}" />
+                            Visibility="{x:Bind ViewModel.HasNoMatchingRows, Mode=OneWay}" />
                         <TextBlock
                             x:Uid="DashboardPage_NoDeliverables"
                             Text="Mark nodes as deliverables in the WBS Tree to follow their progress here."
@@ -281,10 +300,10 @@
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Visibility="{x:Bind ViewModel.HasNoDeliverables, Mode=OneWay}" />
                         <ListView
-                            x:Uid="DashboardPage_DeliverablesList"
-                            ItemsSource="{x:Bind ViewModel.DeliverableRows, Mode=OneWay}"
+                            x:Uid="DashboardPage_TasksList"
+                            ItemsSource="{x:Bind ViewModel.Rows, Mode=OneWay}"
                             SelectionMode="None"
-                            AutomationProperties.Name="Deliverables list">
+                            AutomationProperties.Name="Tasks list">
                             <ListView.ItemContainerStyle>
                                 <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -292,12 +311,13 @@
                                 </Style>
                             </ListView.ItemContainerStyle>
                             <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="models:DeliverableRow">
+                                <DataTemplate x:DataType="models:ProgressRow">
                                     <Border
                                         Padding="4,10"
                                         BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                                         BorderThickness="0,0,0,1">
-                                        <Grid RowSpacing="6" ColumnSpacing="12">
+                                        <!-- Indented by depth, so the outline reads as in the tree -->
+                                        <Grid RowSpacing="6" ColumnSpacing="12" Margin="{x:Bind local:DashboardPage.Indent(Depth)}">
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto" />
                                                 <RowDefinition Height="Auto" />
@@ -314,13 +334,25 @@
                                                 Text="{x:Bind Code}"
                                                 FontWeight="SemiBold" FontSize="11"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                VerticalAlignment="Center" MinWidth="52" />
-                                            <TextBlock
-                                                Grid.Row="0" Grid.Column="1"
-                                                Text="{x:Bind Title}"
-                                                FontWeight="SemiBold"
-                                                TextTrimming="CharacterEllipsis"
-                                                VerticalAlignment="Center" />
+                                                VerticalAlignment="Center" MinWidth="44" />
+                                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                                <TextBlock
+                                                    Text="{x:Bind Title}"
+                                                    FontWeight="SemiBold"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    VerticalAlignment="Center" />
+                                                <Border
+                                                    Background="{StaticResource DeliverableBadgeBackground}"
+                                                    CornerRadius="4" Padding="6,1" VerticalAlignment="Center"
+                                                    Visibility="{x:Bind IsDeliverable}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <Viewbox Width="12" Height="12">
+                                                            <PathIcon helpers:IscIcon.Kind="Deliverable" Width="24" Height="24" />
+                                                        </Viewbox>
+                                                        <TextBlock x:Uid="DashboardPage_DeliverableBadge" Text="Deliverable" FontSize="10" FontWeight="SemiBold" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
                                             <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Spacing="6">
                                                 <controls:StatusMarker Status="{x:Bind Status}" Width="14" Height="14" />
                                                 <TextBlock
@@ -333,6 +365,8 @@
                                                 Grid.Row="0" Grid.Column="3"
                                                 Text="{x:Bind DueDateText}"
                                                 FontSize="11"
+                                                MinWidth="72"
+                                                TextAlignment="Right"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                 VerticalAlignment="Center" />
 
@@ -344,11 +378,11 @@
                                                     <ColumnDefinition Width="36" />
                                                 </Grid.ColumnDefinitions>
                                                 <ProgressBar
-                                                    x:Uid="DashboardPage_DeliverableProgress"
+                                                    x:Uid="DashboardPage_TaskProgress"
                                                     Grid.Column="0"
                                                     Value="{x:Bind ProgressFraction}"
                                                     Minimum="0" Maximum="1"
-                                                    AutomationProperties.Name="Deliverable progress" />
+                                                    AutomationProperties.Name="Progress" />
                                                 <TextBlock
                                                     Grid.Column="1"
                                                     Text="{x:Bind ProgressPercentText}"

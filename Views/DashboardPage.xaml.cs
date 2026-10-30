@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using iscWBS.ViewModels;
@@ -15,6 +16,8 @@ public sealed partial class DashboardPage : Page
         ViewModel = App.Services.CreateDashboardViewModel();
         AllDoneImage.Source = IscEmptyState.LoadIllustration("AllDone");
     }
+
+    public static Thickness Indent(int depth) => new(depth * 16, 0, 0, 0);
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {

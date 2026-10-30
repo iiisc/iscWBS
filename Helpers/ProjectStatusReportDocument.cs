@@ -347,7 +347,7 @@ internal sealed class ProjectStatusReportDocument : IDocument
 
                 HeaderRow(t, 5, "Report_ColCode", "Report_ColTitle", "Report_ColProgress", "Report_ColStatus", "Report_ColDueDate");
 
-                foreach (DeliverableRow row in _data.Deliverables)
+                foreach (ProgressRow row in _data.Deliverables)
                 {
                     Cell(t, 1, 5).Text(row.Code).FontSize(9).SemiBold().FontColor(_textMuted);
                     Cell(t, 1, 5).Text(row.Title).FontSize(9).SemiBold();

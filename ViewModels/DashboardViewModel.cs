@@ -55,11 +55,16 @@ public sealed partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     public partial List<StatusSlice> StatusSlices { get; set; } = [];
 
-    public ObservableCollection<DeliverableRow> DeliverableRows { get; } = new();
+    /// <summary>Every node the filters let through, in outline order.</summary>
+    public ObservableCollection<ProgressRow> Rows { get; } = new();
 
-    public bool HasNoDeliverables => !_allNodes.Any(n => n.IsDeliverable);
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoDeliverables))]
+    public partial bool OnlyDeliverables { get; set; }
 
-    public bool HasNoMatchingDeliverables => !HasNoDeliverables && DeliverableRows.Count == 0;
+    public bool HasNoDeliverables => OnlyDeliverables && !_allNodes.Any(n => n.IsDeliverable);
+
+    public bool HasNoMatchingRows => !HasNoDeliverables && Rows.Count == 0;
 
     public ObservableCollection<MilestoneRowViewModel> UpcomingMilestones { get; } = new();
 
@@ -116,6 +121,7 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     partial void OnSelectedAssigneeChanged(string? value)       => RebuildReport();
     partial void OnStatusFilterChanged(WbsStatus? value) => RebuildReport();
+    partial void OnOnlyDeliverablesChanged(bool value) => RebuildReport();
     partial void OnFilterStartDateChanged(DateTimeOffset? value) => RebuildReport();
     partial void OnFilterEndDateChanged(DateTimeOffset? value)   => RebuildReport();
 
@@ -172,10 +178,7 @@ public sealed partial class DashboardViewModel : ObservableObject
         NothingMatchesFilters = nodes.Count == 0 && _allNodes.Count > 0;
         Summary = ProjectSummary.Compute(nodes, _blockedIds);
         BuildStatusChart(Summary);
-        // The status shown everywhere else, so a node held up by a dependency counts as Blocked, not Not Started.
-        BuildDeliverableRows(StatusFilter is { } status
-            ? nodes.Where(n => DependencyConstraints.EffectiveStatus(n, _blockedIds) == status).ToList()
-            : nodes);
+        BuildRows(nodes);
         RebuildMilestones();
     }
 
@@ -190,20 +193,19 @@ public sealed partial class DashboardViewModel : ObservableObject
         ];
     }
 
-    private void BuildDeliverableRows(List<WbsNode> filteredNodes)
+    private void BuildRows(List<WbsNode> filteredNodes)
     {
-        DeliverableRows.Clear();
-        // A deliverable shows when something in it matches the filters. Matching on a task's status alone would list an
-        // in-progress deliverable under Complete, so the deliverable's own status has to match too.
-        HashSet<Guid> matchingIds = filteredNodes.Select(n => n.Id).ToHashSet();
-        WbsStatus? status = StatusFilter;
-        foreach (DeliverableRow row in DeliverableRow.Build(_allNodes, _blockedIds, matchingIds))
-        {
-            if (status is null || row.Status == status)
-                DeliverableRows.Add(row);
-        }
+        Rows.Clear();
+        HashSet<Guid> included = filteredNodes
+            // The status shown everywhere else, so a node held up by a dependency counts as Blocked, not Not Started.
+            .Where(n => StatusFilter is not { } status || DependencyConstraints.EffectiveStatus(n, _blockedIds) == status)
+            .Where(n => !OnlyDeliverables || n.IsDeliverable)
+            .Select(n => n.Id)
+            .ToHashSet();
+        foreach (ProgressRow row in ProgressRow.Build(_allNodes, _blockedIds, n => included.Contains(n.Id)))
+            Rows.Add(row);
         OnPropertyChanged(nameof(HasNoDeliverables));
-        OnPropertyChanged(nameof(HasNoMatchingDeliverables));
+        OnPropertyChanged(nameof(HasNoMatchingRows));
     }
 
     private void RebuildMilestones()

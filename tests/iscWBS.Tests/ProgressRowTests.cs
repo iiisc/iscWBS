@@ -3,7 +3,7 @@ using static iscWBS.Tests.TestData;
 
 namespace iscWBS.Tests;
 
-public class DeliverableRowTests
+public class ProgressRowTests
 {
     private static readonly HashSet<Guid> NoneBlocked = [];
 
@@ -17,30 +17,28 @@ public class DeliverableRowTests
         WbsNode first = Deliverable("1", 0);
         WbsNode notDeliverable = new() { Code = "3", SortOrder = 2 };
 
-        IReadOnlyList<DeliverableRow> rows = DeliverableRow.Build([second, notDeliverable, first], NoneBlocked);
+        IReadOnlyList<ProgressRow> rows = ProgressRow.Build([second, notDeliverable, first], NoneBlocked, n => n.IsDeliverable);
 
         Assert.Equal(["1", "2"], rows.Select(r => r.Code));
     }
 
     [Fact]
-    public void MatchingIds_LeaveOutDeliverablesWithNothingMatching_ProgressStillCountsWholeSubtree()
+    public void EveryIncludedNode_GetsARow_WithItsDepthAndWhetherItIsADeliverable()
     {
         WbsNode d1 = Deliverable("1", 0);
-        WbsNode done1 = Node(WbsStatus.Complete, d1, 0);
+        WbsNode done = Node(WbsStatus.Complete, d1, 0);
         WbsNode open = Node(WbsStatus.NotStarted, d1, 1);
-        WbsNode done2 = Node(WbsStatus.Complete, d1, 2);
-        WbsNode d2 = Deliverable("2", 1);
-        WbsNode other = Node(WbsStatus.NotStarted, d2, 0);
-        WbsNode[] nodes = [d1, done1, open, done2, d2, other];
+        done.Code = "1.1";
+        open.Code = "1.2";
 
-        Assert.Equal(["1", "2"], DeliverableRow.Build(nodes, NoneBlocked).Select(r => r.Code));
-        DeliverableRow row = DeliverableRow.Build(nodes, NoneBlocked, new HashSet<Guid> { open.Id }).Single();
-        Assert.Equal("1", row.Code);
-        Assert.Equal(0.5, row.ProgressFraction);
+        IReadOnlyList<ProgressRow> rows = ProgressRow.Build([open, d1, done], NoneBlocked, _ => true);
+
+        Assert.Equal([("1", 0, true), ("1.1", 1, false), ("1.2", 1, false)], rows.Select(r => (r.Code, r.Depth, r.IsDeliverable)));
+        Assert.Equal(1.0 / 3, rows[0].ProgressFraction, 6);
     }
 
     [Fact]
-    public void DueDate_IsLatestInFullSubtree_EvenWhenThatNodeDoesNotMatch()
+    public void DueDate_IsLatestInFullSubtree()
     {
         WbsNode d = Deliverable("1", 0);
         d.DueDate = new DateTime(2026, 3, 1);
@@ -49,8 +47,7 @@ public class DeliverableRowTests
         WbsNode otherGrandchild = Node(WbsStatus.NotStarted, matching);
         otherGrandchild.DueDate = new DateTime(2026, 6, 1);
 
-        DeliverableRow row = DeliverableRow.Build(
-            [d, matching, otherGrandchild], NoneBlocked, new HashSet<Guid> { matching.Id }).Single();
+        ProgressRow row = ProgressRow.Build([d, matching, otherGrandchild], NoneBlocked, n => n.IsDeliverable).Single();
 
         Assert.Equal(new DateTime(2026, 6, 1), row.DueDate);
     }
@@ -64,7 +61,7 @@ public class DeliverableRowTests
         WbsNode root2 = new() { Code = "2", SortOrder = 1 };
         WbsNode d21 = new() { Code = "2.1", ParentId = root2.Id, SortOrder = 0, IsDeliverable = true };
 
-        Assert.Equal(["1.2", "2.1"], DeliverableRow.Build([d21, root2, d12, first, root1], NoneBlocked).Select(r => r.Code));
+        Assert.Equal(["1.2", "2.1"], ProgressRow.Build([d21, root2, d12, first, root1], NoneBlocked, n => n.IsDeliverable).Select(r => r.Code));
     }
 
     [Fact]
@@ -74,12 +71,12 @@ public class DeliverableRowTests
         leaf.EstimatedHours = 10;
         leaf.ActualHours = 8;
 
-        Assert.Equal(0.8, DeliverableRow.Build([leaf], NoneBlocked).Single().ProgressFraction);
+        Assert.Equal(0.8, ProgressRow.Build([leaf], NoneBlocked, n => n.IsDeliverable).Single().ProgressFraction);
     }
 
     [Fact]
     public void ProgressPercent_IsRounded()
-        => Assert.Equal(58, new DeliverableRow("1", "", 29 / 50.0, WbsStatus.InProgress, null).ProgressPercent);
+        => Assert.Equal(58, new ProgressRow("1", "", 29 / 50.0, WbsStatus.InProgress, null).ProgressPercent);
 
     [Fact]
     public void BlockedDeliverable_ReportsBlocked_OthersKeepTheirStatus()
@@ -87,7 +84,7 @@ public class DeliverableRowTests
         WbsNode blocked = Deliverable("1", 0, WbsStatus.NotStarted);
         WbsNode free = Deliverable("2", 1, WbsStatus.InProgress);
 
-        IReadOnlyList<DeliverableRow> rows = DeliverableRow.Build([blocked, free], new HashSet<Guid> { blocked.Id });
+        IReadOnlyList<ProgressRow> rows = ProgressRow.Build([blocked, free], new HashSet<Guid> { blocked.Id }, n => n.IsDeliverable);
 
         Assert.Equal([WbsStatus.Blocked, WbsStatus.InProgress], rows.Select(r => r.Status));
     }

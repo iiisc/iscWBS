@@ -117,9 +117,6 @@
   <data name="DashboardPage_KpiBlocked.Text" xml:space="preserve">
     <value>Blockerade</value>
   </data>
-  <data name="DashboardPage_DeliverablesTitle.Text" xml:space="preserve">
-    <value>Leverabler</value>
-  </data>
   <data name="DashboardPage_StatusBreakdownTitle.Text" xml:space="preserve">
     <value>Statusuppdelning</value>
   </data>
@@ -143,12 +140,6 @@
   </data>
   <data name="DashboardPage_BlockedTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Antal blockerade aktiviteter</value>
-  </data>
-  <data name="DashboardPage_DeliverablesList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Lista över leverabler</value>
-  </data>
-  <data name="DashboardPage_DeliverableProgress.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Leverabelns förlopp</value>
   </data>
   <data name="DashboardPage_StatusBreakdownChart.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Diagram över statusuppdelning</value>
@@ -1186,7 +1177,25 @@
   <data name="DashboardPage_FilterBlocked.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Visa bara blockerade uppgifter</value>
   </data>
-  <data name="DashboardPage_NoMatchingDeliverables.Text" xml:space="preserve">
-    <value>Inga leveranser med den här statusen.</value>
+  <data name="DashboardPage_TasksTitle.Text" xml:space="preserve">
+    <value>Uppgifter</value>
+  </data>
+  <data name="DashboardPage_TasksList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Uppgiftslista</value>
+  </data>
+  <data name="DashboardPage_TaskProgress.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Framsteg</value>
+  </data>
+  <data name="DashboardPage_OnlyDeliverables.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Visa bara leverabler</value>
+  </data>
+  <data name="DashboardPage_OnlyDeliverablesText.Text" xml:space="preserve">
+    <value>Bara leverabler</value>
+  </data>
+  <data name="DashboardPage_DeliverableBadge.Text" xml:space="preserve">
+    <value>Leverabel</value>
+  </data>
+  <data name="DashboardPage_NoMatchingRows.Text" xml:space="preserve">
+    <value>Inget här med de här filtren.</value>
   </data>
 </root>

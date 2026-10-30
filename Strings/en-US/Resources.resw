@@ -99,12 +99,6 @@
   <data name="DashboardPage_FilterAssignee.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Filter by assignee</value>
   </data>
-  <data name="DashboardPage_FilterStatus.PlaceholderText" xml:space="preserve">
-    <value>Status</value>
-  </data>
-  <data name="DashboardPage_FilterStatus.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Filter by status</value>
-  </data>
   <data name="DashboardPage_KpiCompletePercent.Text" xml:space="preserve">
     <value>% Complete</value>
   </data>
@@ -1173,5 +1167,26 @@
   </data>
   <data name="WbsOutlinePage_Empty.ActionText" xml:space="preserve">
     <value>Open WBS Tree</value>
+  </data>
+  <data name="DashboardPage_KpiNotStarted.Text" xml:space="preserve">
+    <value>Not Started</value>
+  </data>
+  <data name="DashboardPage_NotStartedTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Not started task count</value>
+  </data>
+  <data name="DashboardPage_FilterNotStarted.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Show only not started tasks</value>
+  </data>
+  <data name="DashboardPage_FilterInProgress.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Show only tasks in progress</value>
+  </data>
+  <data name="DashboardPage_FilterComplete.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Show only complete tasks</value>
+  </data>
+  <data name="DashboardPage_FilterBlocked.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Show only blocked tasks</value>
+  </data>
+  <data name="DashboardPage_NoMatchingDeliverables.Text" xml:space="preserve">
+    <value>No deliverables with this status.</value>
   </data>
 </root>

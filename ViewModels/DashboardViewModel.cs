@@ -27,18 +27,26 @@ public sealed partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     public partial string? SelectedAssignee { get; set; }
 
+    /// <summary>Set by clicking a status card; null shows every status.</summary>
     [ObservableProperty]
-    public partial StatusFilterOption? SelectedStatus { get; set; }
+    [NotifyPropertyChangedFor(nameof(IsNotStartedFilter), nameof(IsInProgressFilter), nameof(IsCompleteFilter), nameof(IsBlockedFilter))]
+    public partial WbsStatus? StatusFilter { get; set; }
+
+    public bool IsNotStartedFilter => StatusFilter == WbsStatus.NotStarted;
+    public bool IsInProgressFilter => StatusFilter == WbsStatus.InProgress;
+    public bool IsCompleteFilter   => StatusFilter == WbsStatus.Complete;
+    public bool IsBlockedFilter    => StatusFilter == WbsStatus.Blocked;
 
     public ObservableCollection<string> AssigneeOptions { get; } = new();
 
     private readonly string _allAssignees;
 
-    public List<StatusFilterOption> StatusOptions { get; }
-
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(OverallPercentText), nameof(IsAllDone))]
+    [NotifyPropertyChangedFor(nameof(OverallPercentText), nameof(IsAllDone), nameof(NotStartedCount))]
     public partial ProjectSummary Summary { get; set; } = ProjectSummary.Compute([], new HashSet<Guid>());
+
+    // Blocked only covers work that hasn't started, so the four statuses add up to the total.
+    public int NotStartedCount => Summary.TotalNodes - Summary.CompleteCount - Summary.InProgressCount - Summary.BlockedCount;
 
     public bool IsAllDone => Summary.TotalNodes > 0 && Summary.CompleteCount == Summary.TotalNodes;
 
@@ -50,6 +58,8 @@ public sealed partial class DashboardViewModel : ObservableObject
     public ObservableCollection<DeliverableRow> DeliverableRows { get; } = new();
 
     public bool HasNoDeliverables => !_allNodes.Any(n => n.IsDeliverable);
+
+    public bool HasNoMatchingDeliverables => !HasNoDeliverables && DeliverableRows.Count == 0;
 
     public ObservableCollection<MilestoneRowViewModel> UpcomingMilestones { get; } = new();
 
@@ -70,7 +80,6 @@ public sealed partial class DashboardViewModel : ObservableObject
         _milestoneService = milestoneService;
         _dialogService = dialogService;
         _allAssignees = Strings.Get("Dashboard_FilterAll");
-        StatusOptions = [new(null, _allAssignees), .. Enum.GetValues<WbsStatus>().Select(s => new StatusFilterOption(s, s.ToDisplayString()))];
     }
 
     public void OnNavigatedTo() => _ = LoadAsync();
@@ -94,11 +103,19 @@ public sealed partial class DashboardViewModel : ObservableObject
         FilterStartDate = null;
         FilterEndDate = null;
         SelectedAssignee = null;
-        SelectedStatus = null;
+        StatusFilter = null;
+    }
+
+    /// <summary>Filters to <paramref name="status"/>, or back to every status when it is already the filter.</summary>
+    [RelayCommand]
+    private void ToggleStatusFilter(string status)
+    {
+        WbsStatus picked = Enum.Parse<WbsStatus>(status);
+        StatusFilter = StatusFilter == picked ? null : picked;
     }
 
     partial void OnSelectedAssigneeChanged(string? value)       => RebuildReport();
-    partial void OnSelectedStatusChanged(StatusFilterOption? value) => RebuildReport();
+    partial void OnStatusFilterChanged(WbsStatus? value) => RebuildReport();
     partial void OnFilterStartDateChanged(DateTimeOffset? value) => RebuildReport();
     partial void OnFilterEndDateChanged(DateTimeOffset? value)   => RebuildReport();
 
@@ -143,29 +160,30 @@ public sealed partial class DashboardViewModel : ObservableObject
 
         if (!string.IsNullOrEmpty(SelectedAssignee) && SelectedAssignee != _allAssignees)
             filtered = filtered.Where(n => n.AssignedTo == SelectedAssignee);
-        // The status shown everywhere else, so a node held up by a dependency counts as Blocked, not Not Started.
-        if (SelectedStatus?.Status is { } status)
-            filtered = filtered.Where(n => DependencyConstraints.EffectiveStatus(n, _blockedIds) == status);
         if (FilterStartDate.HasValue)
             filtered = filtered.Where(n => n.DueDate.HasValue && n.DueDate.Value.Date >= FilterStartDate.Value.Date);
         if (FilterEndDate.HasValue)
             filtered = filtered.Where(n => n.DueDate.HasValue && n.DueDate.Value.Date <= FilterEndDate.Value.Date);
 
+        // The cards and the chart leave the status filter out: they are what it picks from, and under it every
+        // other status would count 0.
         List<WbsNode> nodes = filtered.ToList();
         IsEmptyProject = _allNodes.Count == 0;
         NothingMatchesFilters = nodes.Count == 0 && _allNodes.Count > 0;
         Summary = ProjectSummary.Compute(nodes, _blockedIds);
         BuildStatusChart(Summary);
-        BuildDeliverableRows(nodes);
+        // The status shown everywhere else, so a node held up by a dependency counts as Blocked, not Not Started.
+        BuildDeliverableRows(StatusFilter is { } status
+            ? nodes.Where(n => DependencyConstraints.EffectiveStatus(n, _blockedIds) == status).ToList()
+            : nodes);
         RebuildMilestones();
     }
 
     private void BuildStatusChart(ProjectSummary summary)
     {
-        int notStarted = Math.Max(0, summary.TotalNodes - summary.CompleteCount - summary.InProgressCount - summary.BlockedCount);
         StatusSlices = summary.TotalNodes == 0 ? [] :
         [
-            new(WbsStatus.NotStarted, notStarted),
+            new(WbsStatus.NotStarted, NotStartedCount),
             new(WbsStatus.InProgress, summary.InProgressCount),
             new(WbsStatus.Complete,   summary.CompleteCount),
             new(WbsStatus.Blocked,    summary.BlockedCount),
@@ -178,13 +196,14 @@ public sealed partial class DashboardViewModel : ObservableObject
         // A deliverable shows when something in it matches the filters. Matching on a task's status alone would list an
         // in-progress deliverable under Complete, so the deliverable's own status has to match too.
         HashSet<Guid> matchingIds = filteredNodes.Select(n => n.Id).ToHashSet();
-        WbsStatus? status = SelectedStatus?.Status;
+        WbsStatus? status = StatusFilter;
         foreach (DeliverableRow row in DeliverableRow.Build(_allNodes, _blockedIds, matchingIds))
         {
             if (status is null || row.Status == status)
                 DeliverableRows.Add(row);
         }
         OnPropertyChanged(nameof(HasNoDeliverables));
+        OnPropertyChanged(nameof(HasNoMatchingDeliverables));
     }
 
     private void RebuildMilestones()
@@ -215,12 +234,5 @@ public sealed class StatusSlice(WbsStatus status, int count)
     public WbsStatus Status { get; } = status;
     public int Count { get; } = count;
     public string Label => $"{Status.ToDisplayString()} ({Count})";
-    public override string ToString() => Label;
-}
-
-public sealed class StatusFilterOption(WbsStatus? status, string label)
-{
-    public WbsStatus? Status { get; } = status;
-    public string Label { get; } = label;
     public override string ToString() => Label;
 }

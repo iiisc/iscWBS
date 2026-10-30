@@ -99,12 +99,6 @@
   <data name="DashboardPage_FilterAssignee.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Filtrera på ansvarig</value>
   </data>
-  <data name="DashboardPage_FilterStatus.PlaceholderText" xml:space="preserve">
-    <value>Status</value>
-  </data>
-  <data name="DashboardPage_FilterStatus.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Filtrera på status</value>
-  </data>
   <data name="DashboardPage_KpiCompletePercent.Text" xml:space="preserve">
     <value>% klart</value>
   </data>
@@ -1173,5 +1167,26 @@
   </data>
   <data name="WbsOutlinePage_Empty.ActionText" xml:space="preserve">
     <value>Öppna WBS-trädet</value>
+  </data>
+  <data name="DashboardPage_KpiNotStarted.Text" xml:space="preserve">
+    <value>Ej påbörjade</value>
+  </data>
+  <data name="DashboardPage_NotStartedTaskCount.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Antal ej påbörjade uppgifter</value>
+  </data>
+  <data name="DashboardPage_FilterNotStarted.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Visa bara ej påbörjade uppgifter</value>
+  </data>
+  <data name="DashboardPage_FilterInProgress.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Visa bara pågående uppgifter</value>
+  </data>
+  <data name="DashboardPage_FilterComplete.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Visa bara klara uppgifter</value>
+  </data>
+  <data name="DashboardPage_FilterBlocked.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Visa bara blockerade uppgifter</value>
+  </data>
+  <data name="DashboardPage_NoMatchingDeliverables.Text" xml:space="preserve">
+    <value>Inga leveranser med den här statusen.</value>
   </data>
 </root>

@@ -19,6 +19,17 @@
         <Style x:Key="KpiCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
             <Setter Property="Padding" Value="14,12" />
         </Style>
+        <Style x:Key="KpiToggleStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="{StaticResource IscCornerRadiusMedium}" />
+            <Setter Property="Padding" Value="13,11" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+        </Style>
         <Style x:Key="KpiValueStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="{StaticResource IscFontFamily}" />
             <Setter Property="FontSize" Value="28" />
@@ -59,7 +70,6 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
@@ -83,20 +93,6 @@
                 PlaceholderText="Assignee"
                 MinWidth="140"
                 AutomationProperties.Name="Filter by assignee" />
-            <ComboBox
-                Grid.Column="3"
-                x:Uid="DashboardPage_FilterStatus"
-                ItemsSource="{x:Bind ViewModel.StatusOptions}"
-                SelectedItem="{x:Bind ViewModel.SelectedStatus, Mode=TwoWay}"
-                PlaceholderText="Status"
-                MinWidth="140"
-                AutomationProperties.Name="Filter by status">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="vm:StatusFilterOption">
-                        <TextBlock Text="{x:Bind Label}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
         </Grid>
 
         <controls:IscEmptyState
@@ -118,7 +114,26 @@
             Visibility="{x:Bind ViewModel.NothingMatchesFilters, Mode=OneWay}" />
 
         <Grid Grid.Row="2" Margin="16,0,16,16" ColumnSpacing="12" Visibility="{x:Bind ViewModel.HasMatches, Mode=OneWay}">
+            <!-- The status cards are toggle buttons that filter the list below; the selected one is outlined in the accent. -->
+            <Grid.Resources>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundPointerOver" Color="{ThemeResource IscSurfaceColor}" />
+                <SolidColorBrush x:Key="ToggleButtonBackgroundPressed" Color="{ThemeResource SystemAccentColor}" Opacity="0.12" />
+                <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="{ThemeResource SystemAccentColor}" Opacity="0.18" />
+                <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="{ThemeResource SystemAccentColor}" Opacity="0.24" />
+                <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="{ThemeResource SystemAccentColor}" Opacity="0.12" />
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushPointerOver" Color="{ThemeResource SystemAccentColor}" Opacity="0.5" />
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushPressed" Color="{ThemeResource SystemAccentColor}" />
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="{ThemeResource SystemAccentColor}" />
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="{ThemeResource SystemAccentColor}" />
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="{ThemeResource SystemAccentColor}" />
+                <SolidColorBrush x:Key="ToggleButtonForegroundPointerOver" Color="{ThemeResource TextFillColorPrimary}" />
+                <SolidColorBrush x:Key="ToggleButtonForegroundPressed" Color="{ThemeResource TextFillColorPrimary}" />
+                <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{ThemeResource TextFillColorPrimary}" />
+                <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{ThemeResource TextFillColorPrimary}" />
+                <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="{ThemeResource TextFillColorPrimary}" />
+            </Grid.Resources>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
@@ -137,19 +152,33 @@
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="1" Style="{StaticResource KpiCardStyle}">
+            <ToggleButton
+                Grid.Column="1"
+                x:Uid="DashboardPage_FilterNotStarted"
+                Style="{StaticResource KpiToggleStyle}"
+                IsChecked="{x:Bind ViewModel.IsNotStartedFilter, Mode=OneWay}"
+                Command="{x:Bind ViewModel.ToggleStatusFilterCommand}"
+                CommandParameter="NotStarted"
+                AutomationProperties.Name="Show only not started tasks">
                 <StackPanel Spacing="6">
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <controls:StatusMarker Status="Complete" />
-                        <TextBlock x:Uid="DashboardPage_KpiComplete" Text="Complete" Style="{StaticResource KpiLabelStyle}" />
+                        <controls:StatusMarker Status="NotStarted" />
+                        <TextBlock x:Uid="DashboardPage_KpiNotStarted" Text="Not Started" Style="{StaticResource KpiLabelStyle}" />
                     </StackPanel>
-                    <TextBlock x:Uid="DashboardPage_CompleteTaskCount" Text="{x:Bind ViewModel.Summary.CompleteCount, Mode=OneWay}"
+                    <TextBlock x:Uid="DashboardPage_NotStartedTaskCount" Text="{x:Bind ViewModel.NotStartedCount, Mode=OneWay}"
                                Style="{StaticResource KpiValueStyle}"
-                               AutomationProperties.Name="Complete task count" />
+                               AutomationProperties.Name="Not started task count" />
                 </StackPanel>
-            </Border>
+            </ToggleButton>
 
-            <Border Grid.Column="2" Style="{StaticResource KpiCardStyle}">
+            <ToggleButton
+                Grid.Column="2"
+                x:Uid="DashboardPage_FilterInProgress"
+                Style="{StaticResource KpiToggleStyle}"
+                IsChecked="{x:Bind ViewModel.IsInProgressFilter, Mode=OneWay}"
+                Command="{x:Bind ViewModel.ToggleStatusFilterCommand}"
+                CommandParameter="InProgress"
+                AutomationProperties.Name="Show only tasks in progress">
                 <StackPanel Spacing="6">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <controls:StatusMarker Status="InProgress" />
@@ -159,9 +188,47 @@
                                Style="{StaticResource KpiValueStyle}"
                                AutomationProperties.Name="In progress task count" />
                 </StackPanel>
-            </Border>
+            </ToggleButton>
 
-            <Border Grid.Column="3" Style="{StaticResource KpiCardStyle}">
+            <ToggleButton
+                Grid.Column="3"
+                x:Uid="DashboardPage_FilterComplete"
+                Style="{StaticResource KpiToggleStyle}"
+                IsChecked="{x:Bind ViewModel.IsCompleteFilter, Mode=OneWay}"
+                Command="{x:Bind ViewModel.ToggleStatusFilterCommand}"
+                CommandParameter="Complete"
+                AutomationProperties.Name="Show only complete tasks">
+                <StackPanel Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <controls:StatusMarker Status="Complete" />
+                        <TextBlock x:Uid="DashboardPage_KpiComplete" Text="Complete" Style="{StaticResource KpiLabelStyle}" />
+                    </StackPanel>
+                    <TextBlock x:Uid="DashboardPage_CompleteTaskCount" Text="{x:Bind ViewModel.Summary.CompleteCount, Mode=OneWay}"
+                               Style="{StaticResource KpiValueStyle}"
+                               AutomationProperties.Name="Complete task count" />
+                </StackPanel>
+            </ToggleButton>
+
+            <ToggleButton
+                Grid.Column="4"
+                x:Uid="DashboardPage_FilterBlocked"
+                Style="{StaticResource KpiToggleStyle}"
+                IsChecked="{x:Bind ViewModel.IsBlockedFilter, Mode=OneWay}"
+                Command="{x:Bind ViewModel.ToggleStatusFilterCommand}"
+                CommandParameter="Blocked"
+                AutomationProperties.Name="Show only blocked tasks">
+                <StackPanel Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <controls:StatusMarker Status="Blocked" />
+                        <TextBlock x:Uid="DashboardPage_KpiBlocked" Text="Blocked" Style="{StaticResource KpiLabelStyle}" />
+                    </StackPanel>
+                    <TextBlock x:Uid="DashboardPage_BlockedTaskCount" Text="{x:Bind ViewModel.Summary.BlockedCount, Mode=OneWay}"
+                               Style="{StaticResource KpiValueStyle}"
+                               AutomationProperties.Name="Blocked task count" />
+                </StackPanel>
+            </ToggleButton>
+
+            <Border Grid.Column="5" Style="{StaticResource KpiCardStyle}">
                 <StackPanel Spacing="6">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon Glyph="&#xE823;" FontSize="14" Foreground="{ThemeResource IscTextMutedBrush}" />
@@ -173,7 +240,7 @@
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="4" Style="{StaticResource KpiCardStyle}">
+            <Border Grid.Column="6" Style="{StaticResource KpiCardStyle}">
                 <StackPanel Spacing="6">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon Glyph="&#xE7BA;" FontSize="14" Foreground="{ThemeResource WbsStatusBlockedBrush}" />
@@ -182,18 +249,6 @@
                     <TextBlock x:Uid="DashboardPage_OverdueTaskCount" Text="{x:Bind ViewModel.Summary.OverdueCount, Mode=OneWay}"
                                Style="{StaticResource KpiValueStyle}"
                                AutomationProperties.Name="Overdue task count" />
-                </StackPanel>
-            </Border>
-
-            <Border Grid.Column="5" Style="{StaticResource KpiCardStyle}">
-                <StackPanel Spacing="6">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <controls:StatusMarker Status="Blocked" />
-                        <TextBlock x:Uid="DashboardPage_KpiBlocked" Text="Blocked" Style="{StaticResource KpiLabelStyle}" />
-                    </StackPanel>
-                    <TextBlock x:Uid="DashboardPage_BlockedTaskCount" Text="{x:Bind ViewModel.Summary.BlockedCount, Mode=OneWay}"
-                               Style="{StaticResource KpiValueStyle}"
-                               AutomationProperties.Name="Blocked task count" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -213,6 +268,12 @@
                             </Viewbox>
                             <TextBlock x:Uid="DashboardPage_DeliverablesTitle" Text="Deliverables" Style="{StaticResource IscSectionTitleTextBlockStyle}" />
                         </StackPanel>
+                        <TextBlock
+                            x:Uid="DashboardPage_NoMatchingDeliverables"
+                            Text="No deliverables with this status."
+                            Style="{ThemeResource BodyTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Visibility="{x:Bind ViewModel.HasNoMatchingDeliverables, Mode=OneWay}" />
                         <TextBlock
                             x:Uid="DashboardPage_NoDeliverables"
                             Text="Mark nodes as deliverables in the WBS Tree to follow their progress here."

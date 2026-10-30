@@ -14,7 +14,7 @@ public sealed partial class DashboardPage : Page, IReloadablePage
     {
         InitializeComponent();
         ViewModel = App.Services.CreateDashboardViewModel();
-        AllDoneImage.Source = EmbeddedAssets.Png("AllDone.png");
+        AllDoneImage.Source = EmbeddedAssets.Png("AllDone.png", AllDoneImage.Width);
     }
 
     public static Thickness Indent(int depth) => new(depth * 16, 0, 0, 0);

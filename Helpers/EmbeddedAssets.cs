@@ -7,19 +7,16 @@ public static class EmbeddedAssets
 {
     private static Stream? Open(string name) => typeof(EmbeddedAssets).Assembly.GetManifestResourceStream(name);
 
-    /// <summary>Null when there is no such image.</summary>
-    public static BitmapImage? Png(string name)
+    /// <summary>
+    /// The image decoded at <paramref name="width"/> (in view pixels, so the display scale is applied), or null when
+    /// there is no such image. Decoding at the shown size is what keeps the edges smooth: the decoder scales down
+    /// properly, whereas XAML shrinking a large image, and its SVG renderer, both leave jagged edges.
+    /// </summary>
+    public static BitmapImage? Png(string name, double width)
     {
         if (Open(name) is not { } stream) return null;
-        var image = new BitmapImage();
+        var image = new BitmapImage { DecodePixelType = DecodePixelType.Logical, DecodePixelWidth = (int)Math.Ceiling(width) };
         _ = image.SetSourceAsync(stream.AsRandomAccessStream());
-        return image;
-    }
-
-    public static SvgImageSource Svg(string name)
-    {
-        var image = new SvgImageSource();
-        _ = image.SetSourceAsync(Open(name)!.AsRandomAccessStream());
         return image;
     }
 

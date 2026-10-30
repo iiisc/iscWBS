@@ -19,7 +19,7 @@ public sealed partial class IscEmptyState : UserControl
         set
         {
             _illustration = value;
-            IllustrationImage.Source = EmbeddedAssets.Png($"{value}.png");
+            IllustrationImage.Source = EmbeddedAssets.Png($"{value}.png", IllustrationImage.Width);
             IllustrationImage.Visibility = IllustrationImage.Source is null ? Visibility.Collapsed : Visibility.Visible;
         }
     }

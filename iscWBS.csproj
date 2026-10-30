@@ -35,7 +35,7 @@
   <ItemGroup>
     <!-- XAML only loads fonts from disk, and the font's license has to ship with it -->
     <Content Include="Assets\Fonts\**" CopyToOutputDirectory="PreserveNewest" />
-    <EmbeddedResource Include="Assets\Logo.svg;Assets\Illustrations\*.png;Assets\Illustrations\*.svg" LogicalName="%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Assets\Logo.svg;Assets\Logo.png;Assets\Illustrations\*.png" LogicalName="%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

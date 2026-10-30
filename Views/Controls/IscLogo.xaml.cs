@@ -24,13 +24,13 @@ public sealed partial class IscLogo : UserControl
     public IscLogo()
     {
         InitializeComponent();
-        Icon.Source = EmbeddedAssets.Svg("Logo.svg");
         ApplySize();
     }
 
     private void ApplySize()
     {
         Icon.Width = Icon.Height = Size;
+        Icon.Source = EmbeddedAssets.Png("Logo.png", Size);
         Wordmark.FontSize = Size * 0.75;
         Panel.Spacing = Size * 0.3;
     }

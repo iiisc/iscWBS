@@ -27,6 +27,7 @@ public sealed partial class ReportsPage : Page
         Banner.Visibility = highContrast ? Visibility.Collapsed : Visibility.Visible;
         PlainHeader.Visibility = highContrast ? Visibility.Visible : Visibility.Collapsed;
 
-        BannerImage.Source = EmbeddedAssets.Svg(ActualTheme == ElementTheme.Light ? "ReportsHeaderLight.svg" : "ReportsHeader.svg");
+        // Shown at most 432 view pixels wide, the width of the settings column.
+        BannerImage.Source = EmbeddedAssets.Png(ActualTheme == ElementTheme.Light ? "ReportsHeaderLight.png" : "ReportsHeader.png", 432);
     }
 }

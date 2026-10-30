@@ -19,7 +19,7 @@
             Padding="12,8">
             <TextBox
                 x:Uid="MilestonesPage_NewTitleInput"
-                Text="{x:Bind ViewModel.NewTitle, Mode=TwoWay}"
+                Text="{x:Bind ViewModel.NewTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 PlaceholderText="Milestone title"
                 Width="220"
                 AutomationProperties.Name="New milestone title" />
@@ -141,7 +141,7 @@
                         <TextBlock x:Uid="MilestonesPage_TitleLabel" Text="Title" Style="{ThemeResource CaptionTextBlockStyle}" />
                         <TextBox
                             x:Uid="MilestonesPage_MilestoneTitle"
-                            Text="{x:Bind ViewModel.EditTitle, Mode=TwoWay}"
+                            Text="{x:Bind ViewModel.EditTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             AutomationProperties.Name="Milestone title" />
                     </StackPanel>
 

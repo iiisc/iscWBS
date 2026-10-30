@@ -80,7 +80,7 @@
                 <TextBlock x:Uid="WbsDetail_StatusLabel" Text="Status" Style="{ThemeResource CaptionTextBlockStyle}" />
                 <ComboBox
                     x:Uid="WbsDetail_Status"
-                    ItemsSource="{x:Bind ViewModel.StatusOptions}"
+                    ItemsSource="{x:Bind ViewModel.StatusOptions, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.EditStatus, Mode=TwoWay}"
                     HorizontalAlignment="Stretch"
                     AutomationProperties.Name="Status">

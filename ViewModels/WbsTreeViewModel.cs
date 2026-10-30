@@ -39,15 +39,16 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     [ObservableProperty]
     public partial string EditAssignedTo { get; set; } = string.Empty;
 
+    /// <summary>Null while the status box is between item lists, which happens when the selection changes.</summary>
     [ObservableProperty]
-    public partial WbsStatus EditStatus { get; set; }
+    public partial WbsStatus? EditStatus { get; set; }
 
-    partial void OnEditStatusChanged(WbsStatus value)
+    partial void OnEditStatusChanged(WbsStatus? value)
     {
-        if (_isLoadingEditFields || SelectedNode is not { } node) return;
+        if (_isLoadingEditFields || SelectedNode is not { } node || value is not { } status) return;
 
         IReadOnlyList<NodeDependency> blockers = DependencyConstraints.TransitionBlockers(
-            value,
+            status,
             DiagramDependencies.Where(d => d.SuccessorId == node.Id),
             (DiagramNodes ?? []).ToDictionary(n => n.Id, n => n.Status));
 
@@ -66,7 +67,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         // dispatch is still on the stack, so re-notify once it clears for the ComboBox to show the reverted value.
         DispatcherQueue.GetForCurrentThread()?.TryEnqueue(() => OnPropertyChanged(nameof(EditStatus)));
 
-        bool starting = value == WbsStatus.InProgress;
+        bool starting = status == WbsStatus.InProgress;
         string details = string.Join("\n", NodeDependencies
             .Where(r => blockers.Any(b => b.Id == r.Dependency.Id))
             .Select(r => $"  • {r.PredecessorCode} {r.PredecessorTitle}: {r.BlockingReason}"));
@@ -135,6 +136,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         => OnPropertyChanged(nameof(HasNoNodes));
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AddDependencyCommand))]
     public partial WbsNode? NewDepPredecessor { get; set; }
 
     [ObservableProperty]
@@ -145,8 +147,12 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     /// <summary>The id of <see cref="SelectedNode"/> for the diagram highlight, or <see cref="Guid.Empty"/> when nothing is selected.</summary>
     public Guid SelectedNodeId => SelectedNode?.Id ?? Guid.Empty;
 
-    public List<WbsStatus> StatusOptions { get; } =
-        Enum.GetValues<WbsStatus>().Except([WbsStatus.Blocked]).ToList();
+    private static readonly List<WbsStatus> _settableStatuses = Enum.GetValues<WbsStatus>().Except([WbsStatus.Blocked]).ToList();
+    private static readonly List<WbsStatus> _allStatuses = [.. Enum.GetValues<WbsStatus>()];
+
+    /// <summary>Blocked can't be chosen, but files from earlier versions can hold it, and the box has to be able to show it.</summary>
+    [ObservableProperty]
+    public partial List<WbsStatus> StatusOptions { get; private set; } = _settableStatuses;
 
     public WbsTreeViewModel(
         WbsService wbsService,
@@ -271,7 +277,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         node.Title          = EditTitle;
         node.Description    = EditDescription;
         node.AssignedTo     = EditAssignedTo;
-        node.Status         = EditStatus;
+        node.Status         = EditStatus ?? node.Status;
         // An emptied NumberBox holds NaN, which SQLite refuses to store.
         node.EstimatedHours = double.IsNaN(EditEstimatedHours) ? 0 : EditEstimatedHours;
         node.ActualHours    = double.IsNaN(EditActualHours) ? 0 : EditActualHours;
@@ -312,7 +318,9 @@ public sealed partial class WbsTreeViewModel : ObservableObject
                 $"{Strings.Get(introKey)}\n\n{string.Join("\n", newlyViolated)}\n\n{Strings.Get(outroKey)}");
     }
 
-    [RelayCommand]
+    private bool CanAddDependency => SelectedNode is not null && NewDepPredecessor is not null;
+
+    [RelayCommand(CanExecute = nameof(CanAddDependency))]
     private async Task AddDependencyAsync()
     {
         if (SelectedNode is null || NewDepPredecessor is null) return;
@@ -429,7 +437,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         if (target is null) return;
 
         WbsStatus original = target.Status;
-        target.Status = EditStatus;
+        target.Status = EditStatus ?? original;
         try
         {
             RecomputeConstraintSets(DiagramNodes, DiagramDependencies);
@@ -467,6 +475,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
             EditTitle = node.Title;
             EditDescription = node.Description;
             EditAssignedTo = node.AssignedTo;
+            StatusOptions = node.Status == WbsStatus.Blocked ? _allStatuses : _settableStatuses;
             EditStatus = node.Status;
             EditEstimatedHours = node.EstimatedHours;
             EditActualHours = node.ActualHours;

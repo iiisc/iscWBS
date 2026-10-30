@@ -25,18 +25,21 @@ public sealed partial class MilestonesViewModel : ObservableObject
     public partial MilestoneRowViewModel? SelectedMilestone { get; set; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AddMilestoneCommand))]
     public partial string NewTitle { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial DateTimeOffset? NewDueDate { get; set; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SaveEditCommand))]
     public partial string EditTitle { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial DateTimeOffset? EditDueDate { get; set; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AddLinkedNodeCommand))]
     public partial WbsNode? NewLinkedNode { get; set; }
 
     public bool IsDetailVisible => SelectedMilestone is not null;
@@ -58,6 +61,8 @@ public sealed partial class MilestonesViewModel : ObservableObject
 
     partial void OnSelectedMilestoneChanged(MilestoneRowViewModel? value)
     {
+        SaveEditCommand.NotifyCanExecuteChanged();
+        AddLinkedNodeCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(IsDetailVisible));
         OnPropertyChanged(nameof(IsSelectedMilestoneIncomplete));
         if (value is null)
@@ -121,7 +126,9 @@ public sealed partial class MilestonesViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    private bool CanAddMilestone => !string.IsNullOrWhiteSpace(NewTitle);
+
+    [RelayCommand(CanExecute = nameof(CanAddMilestone))]
     private async Task AddMilestoneAsync()
     {
         if (_projectStateService.ActiveProject is not { Id: var projectId }) return;
@@ -141,7 +148,9 @@ public sealed partial class MilestonesViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    private bool CanSaveEdit => SelectedMilestone is not null && !string.IsNullOrWhiteSpace(EditTitle);
+
+    [RelayCommand(CanExecute = nameof(CanSaveEdit))]
     private async Task SaveEditAsync()
     {
         if (SelectedMilestone is null || string.IsNullOrWhiteSpace(EditTitle)) return;
@@ -204,7 +213,9 @@ public sealed partial class MilestonesViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    private bool CanAddLinkedNode => SelectedMilestone is not null && NewLinkedNode is not null;
+
+    [RelayCommand(CanExecute = nameof(CanAddLinkedNode))]
     private async Task AddLinkedNodeAsync()
     {
         if (SelectedMilestone is null || NewLinkedNode is null) return;

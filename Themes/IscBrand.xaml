@@ -34,6 +34,11 @@
             <SolidColorBrush x:Key="IscLevel4Brush" Color="{ThemeResource IscLevel4Color}" />
             <SolidColorBrush x:Key="IscLevel5Brush" Color="{ThemeResource IscLevel5Color}" />
             <SolidColorBrush x:Key="IscLevel6Brush" Color="{ThemeResource IscLevel6Color}" />
+            <!-- WinUI's cards and the window's content area in the brand surfaces -->
+            <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="{ThemeResource IscSurfaceColor}" />
+            <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="{ThemeResource IscBorderColor}" />
+            <SolidColorBrush x:Key="NavigationViewContentBackground" Color="{ThemeResource IscBackgroundColor}" />
+            <SolidColorBrush x:Key="NavigationViewContentGridBorderBrush" Color="{ThemeResource IscBorderColor}" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
             <Color x:Key="IscBackgroundColor">#0E0B22</Color>
@@ -64,6 +69,10 @@
             <SolidColorBrush x:Key="IscLevel4Brush" Color="{ThemeResource IscLevel4Color}" />
             <SolidColorBrush x:Key="IscLevel5Brush" Color="{ThemeResource IscLevel5Color}" />
             <SolidColorBrush x:Key="IscLevel6Brush" Color="{ThemeResource IscLevel6Color}" />
+            <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="{ThemeResource IscSurfaceColor}" />
+            <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="{ThemeResource IscBorderColor}" />
+            <SolidColorBrush x:Key="NavigationViewContentBackground" Color="{ThemeResource IscBackgroundColor}" />
+            <SolidColorBrush x:Key="NavigationViewContentGridBorderBrush" Color="{ThemeResource IscBorderColor}" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="HighContrast">
             <StaticResource x:Key="IscBackgroundColor" ResourceKey="SystemColorWindowColor" />
@@ -113,7 +122,34 @@
     <CornerRadius x:Key="IscNodeCornerRadius">11</CornerRadius>
     <x:Double x:Key="IscConnectorThickness">2</x:Double>
 
-    <!-- Optional: tint WinUI controls with the brand accent. Uncomment to apply.
+    <!-- WinUI's accent (buttons, toggles, progress, selection) in the brand's connector purple. Light theme fills use
+         Dark1 under white text, Dark theme fills Light2 under black text; both read at 6:1 or better. -->
     <Color x:Key="SystemAccentColor">#7465C9</Color>
-    -->
+    <Color x:Key="SystemAccentColorLight1">#8A7FD6</Color>
+    <Color x:Key="SystemAccentColorLight2">#A89EDB</Color>
+    <Color x:Key="SystemAccentColorLight3">#C4B8FF</Color>
+    <Color x:Key="SystemAccentColorDark1">#5F51B3</Color>
+    <Color x:Key="SystemAccentColorDark2">#4A3E96</Color>
+    <Color x:Key="SystemAccentColorDark3">#352B73</Color>
+
+    <Style x:Key="IscPageTitleTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleTextBlockStyle}">
+        <Setter Property="FontFamily" Value="{StaticResource IscFontFamily}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="IscSectionTitleTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource SubtitleTextBlockStyle}">
+        <Setter Property="FontFamily" Value="{StaticResource IscFontFamily}" />
+    </Style>
+
+    <!-- The BETA tag next to a page title or navigation item -->
+    <Style x:Key="IscBadgeBorderStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource IscAccentBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="6,1" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="IscBadgeTextBlockStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{ThemeResource IscOnAccentBrush}" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
 </ResourceDictionary>

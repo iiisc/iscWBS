@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using iscWBS.ViewModels;
+using iscWBS.Views.Controls;
 
 namespace iscWBS.Views;
 
@@ -12,6 +13,7 @@ public sealed partial class DashboardPage : Page
     {
         InitializeComponent();
         ViewModel = App.Services.CreateDashboardViewModel();
+        AllDoneImage.Source = IscEmptyState.LoadIllustration("AllDone");
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)

@@ -28,6 +28,7 @@
                     x:Name="BtnNewProject"
                     x:Uid="WelcomePage_NewProjectBtn"
                     Content="New Project"
+                    Style="{ThemeResource AccentButtonStyle}"
                     HorizontalAlignment="Stretch"
                     AutomationProperties.Name="Create a new project"
                     Click="BtnNewProject_Click" />
@@ -48,7 +49,7 @@
                     <TextBlock
                         x:Uid="WelcomePage_RecentProjectsLabel"
                         Text="Recent Projects"
-                        Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        Style="{StaticResource IscSectionTitleTextBlockStyle}" />
 
                     <ListView
                         x:Name="RecentProjectsList"

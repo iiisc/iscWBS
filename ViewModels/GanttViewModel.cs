@@ -21,10 +21,14 @@ public sealed partial class GanttViewModel : ObservableObject
     [ObservableProperty]
     public partial GanttLayout Layout { get; private set; } = EmptyLayout;
 
+    /// <summary>Nothing has dates to draw. Not before the first load, so the empty state doesn't flash up.</summary>
+    public bool IsEmpty => _loaded && _milestones.Count == 0 && !_nodes.Any(n => n.StartDate.HasValue && n.DueDate.HasValue);
+
     private IReadOnlyList<WbsNode> _nodes = Array.Empty<WbsNode>();
     private IReadOnlyList<Milestone> _milestones = Array.Empty<Milestone>();
     private IReadOnlyList<NodeDependency> _dependencies = Array.Empty<NodeDependency>();
     private DateTime? _projectStartDate;
+    private bool _loaded;
 
     public GanttViewModel(
         ProjectStateService projectStateService,
@@ -52,6 +56,7 @@ public sealed partial class GanttViewModel : ObservableObject
             _dependencies = await _wbsService.GetAllDependenciesByProjectAsync(projectId);
 
             _projectStartDate = project.StartDate;
+            _loaded = true;
 
             RebuildLayout();
         }
@@ -63,12 +68,7 @@ public sealed partial class GanttViewModel : ObservableObject
 
     private void RebuildLayout()
     {
-        if (_nodes.Count == 0 && _milestones.Count == 0)
-        {
-            Layout = EmptyLayout;
-            return;
-        }
-
+        OnPropertyChanged(nameof(IsEmpty));
         IReadOnlySet<Guid> blockedIds = DependencyConstraints.BlockedNodeIds(_nodes, _dependencies);
         Layout = GanttLayoutBuilder.Build(
             _nodes, _milestones, _dependencies, blockedIds, _projectStartDate, SelectedZoomIndex);

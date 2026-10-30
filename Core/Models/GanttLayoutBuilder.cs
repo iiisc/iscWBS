@@ -31,6 +31,7 @@ public static class GanttLayoutBuilder
         double maxRight = 0;
 
         WbsHierarchy hierarchy = new(nodes);
+        Dictionary<Guid, int> levels = hierarchy.BranchLevels();
         var barPositions = new Dictionary<Guid, (double Left, double Right, double MidY)>();
         var rows = new List<GanttRow>();
 
@@ -57,6 +58,7 @@ public static class GanttLayoutBuilder
                 BarWidth        = barWidth,
                 Status          = DependencyConstraints.EffectiveStatus(node, blockedNodeIds),
                 Depth           = depth,
+                Level           = levels[node.Id],
                 IsParent        = hierarchy.HasChildren(node.Id),
                 AssignedTo      = node.AssignedTo,
                 PercentComplete = hierarchy.Progress(node),

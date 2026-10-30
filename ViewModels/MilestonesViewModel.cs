@@ -43,6 +43,9 @@ public sealed partial class MilestonesViewModel : ObservableObject
     public partial WbsNode? NewLinkedNode { get; set; }
 
     public bool IsDetailVisible => SelectedMilestone is not null;
+
+    [ObservableProperty]
+    public partial bool HasNoMilestones { get; private set; }
     public bool IsSelectedMilestoneIncomplete => SelectedMilestone?.Milestone.IsComplete == false;
 
     public MilestonesViewModel(
@@ -119,6 +122,7 @@ public sealed partial class MilestonesViewModel : ObservableObject
                     LinkedNodeCount = counts.TryGetValue(m.Id, out int c) ? c : 0
                 });
             }
+            HasNoMilestones = Milestones.Count == 0;
         }
         catch (Exception ex)
         {

@@ -10,6 +10,8 @@ public sealed class GanttRow
     public double BarWidth { get; init; }
     public WbsStatus Status { get; init; }
     public int Depth { get; init; }
+    /// <summary>Brand colour level of the node's branch, 1–6.</summary>
+    public int Level { get; init; } = 1;
     public bool IsParent { get; init; }
     public string AssignedTo { get; init; } = string.Empty;
     public double PercentComplete { get; init; }

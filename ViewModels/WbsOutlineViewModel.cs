@@ -16,6 +16,9 @@ public sealed partial class WbsOutlineViewModel : ObservableObject
 
     public ObservableCollection<WbsOutlineRowViewModel> Nodes { get; } = new();
 
+    [ObservableProperty]
+    public partial bool HasNoNodes { get; private set; }
+
     public WbsOutlineViewModel(
         WbsService wbsService,
         ProjectStateService projectStateService,
@@ -49,12 +52,16 @@ public sealed partial class WbsOutlineViewModel : ObservableObject
                     EffectiveStatus = DependencyConstraints.EffectiveStatus(node, blockedIds),
                     Level           = levels.GetValueOrDefault(node.Id, 1),
                 });
+            HasNoNodes = Nodes.Count == 0;
         }
         catch (Exception ex)
         {
             await _dialogService.ShowErrorAsync("ErrorTitle_Load", ex);
         }
     }
+
+    [RelayCommand]
+    private void OpenTree() => _navigationService.NavigateTo("WbsTreePage");
 
     /// <summary>Navigates to the WBS tree, selecting the node from the given outline row.</summary>
     [RelayCommand]

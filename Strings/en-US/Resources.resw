@@ -389,7 +389,7 @@
     <value>Add milestone</value>
   </data>
   <data name="MilestonesPage_StatusComplete.Text" xml:space="preserve">
-    <value>✓ Complete</value>
+    <value>Complete</value>
   </data>
   <data name="MilestonesPage_StatusOverdue.Text" xml:space="preserve">
     <value>Overdue</value>
@@ -1134,5 +1134,44 @@
   </data>
   <data name="MilestonesPage_MilestoneDueDate.PlaceholderText" xml:space="preserve">
     <value>Pick a date</value>
+  </data>
+  <data name="DashboardPage_Empty.Title" xml:space="preserve">
+    <value>Nothing to report yet</value>
+  </data>
+  <data name="DashboardPage_Empty.Body" xml:space="preserve">
+    <value>Add deliverables and work packages in the WBS Tree, and their progress shows up here.</value>
+  </data>
+  <data name="DashboardPage_NoDeliverables.Text" xml:space="preserve">
+    <value>Mark nodes as deliverables in the WBS Tree to follow their progress here.</value>
+  </data>
+  <data name="DashboardPage_AllDoneTitle.Text" xml:space="preserve">
+    <value>Every branch is done</value>
+  </data>
+  <data name="DashboardPage_AllDoneBody.Text" xml:space="preserve">
+    <value>All work in this project is complete. Nicely done.</value>
+  </data>
+  <data name="DashboardPage_NoMilestones.Text" xml:space="preserve">
+    <value>No open milestones in this period.</value>
+  </data>
+  <data name="GanttPage_Empty.Title" xml:space="preserve">
+    <value>Nothing scheduled yet</value>
+  </data>
+  <data name="GanttPage_Empty.Body" xml:space="preserve">
+    <value>Give work packages start and end dates to see them on the timeline.</value>
+  </data>
+  <data name="MilestonesPage_Empty.Title" xml:space="preserve">
+    <value>No milestones yet</value>
+  </data>
+  <data name="MilestonesPage_Empty.Body" xml:space="preserve">
+    <value>Mark key dates and checkpoints so everyone can see what the project is building toward.</value>
+  </data>
+  <data name="WbsOutlinePage_Empty.Title" xml:space="preserve">
+    <value>This outline is still bare</value>
+  </data>
+  <data name="WbsOutlinePage_Empty.Body" xml:space="preserve">
+    <value>Build the tree first. Every node you add there is listed here with its code, owner and status.</value>
+  </data>
+  <data name="WbsOutlinePage_Empty.ActionText" xml:space="preserve">
+    <value>Open WBS Tree</value>
   </data>
 </root>

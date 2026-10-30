@@ -18,13 +18,11 @@
             Grid.Row="0"
             Orientation="Horizontal"
             Spacing="8"
-            Padding="12,8">
+            Padding="16,12,16,8">
             <TextBlock
                 x:Uid="WbsOutlinePage_Title"
-                FontFamily="{StaticResource IscFontFamily}"
                 Text="WBS Outline"
-                Style="{ThemeResource SubtitleTextBlockStyle}"
-                VerticalAlignment="Center" />
+                Style="{StaticResource IscPageTitleTextBlockStyle}" />
         </StackPanel>
 
         <!-- Column headers -->
@@ -33,9 +31,9 @@
                 <ColumnDefinition Width="100" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="120" />
-                <ColumnDefinition Width="100" />
-                <ColumnDefinition Width="90" />
-                <ColumnDefinition Width="90" />
+                <ColumnDefinition Width="120" />
+                <ColumnDefinition Width="130" />
+                <ColumnDefinition Width="110" />
                 <ColumnDefinition Width="110" />
             </Grid.ColumnDefinitions>
             <TextBlock x:Uid="WbsOutlinePage_ColCode" Grid.Column="0" Text="Code" FontWeight="SemiBold" />
@@ -68,9 +66,9 @@
                             <ColumnDefinition Width="100" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="120" />
-                            <ColumnDefinition Width="100" />
-                            <ColumnDefinition Width="90" />
-                            <ColumnDefinition Width="90" />
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="130" />
+                            <ColumnDefinition Width="110" />
                             <ColumnDefinition Width="110" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
@@ -79,7 +77,10 @@
                         </StackPanel>
                         <TextBlock Grid.Column="1" Text="{x:Bind Title}" />
                         <TextBlock Grid.Column="2" Text="{x:Bind AssignedTo}" />
-                        <TextBlock Grid.Column="3" Text="{x:Bind EffectiveStatus, Converter={StaticResource StatusToStringConverter}}" />
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6">
+                            <controls:StatusMarker Status="{x:Bind EffectiveStatus}" Width="14" Height="14" />
+                            <TextBlock Text="{x:Bind EffectiveStatus, Converter={StaticResource StatusToStringConverter}}" />
+                        </StackPanel>
                         <TextBlock Grid.Column="4" Text="{x:Bind EstimatedHours}" />
                         <TextBlock Grid.Column="5" Text="{x:Bind ActualHours}" />
                         <TextBlock Grid.Column="6" Text="{x:Bind DueDateText}" />
@@ -87,5 +88,15 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
+
+        <controls:IscEmptyState
+            x:Uid="WbsOutlinePage_Empty"
+            Grid.Row="1" Grid.RowSpan="2"
+            Illustration="EmptyBranch"
+            Title="This outline is still bare"
+            Body="Build the tree first. Every node you add there is listed here with its code, owner and status."
+            ActionText="Open WBS Tree"
+            Command="{x:Bind ViewModel.OpenTreeCommand}"
+            Visibility="{x:Bind ViewModel.HasNoNodes, Mode=OneWay}" />
     </Grid>
 </Page>

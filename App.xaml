@@ -15,7 +15,6 @@
             </ResourceDictionary.MergedDictionaries>
 
             <converters:StatusToStringConverter x:Key="StatusToStringConverter" />
-            <converters:StatusToBrushConverter x:Key="StatusToBrushConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

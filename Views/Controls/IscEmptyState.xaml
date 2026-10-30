@@ -5,7 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8" MaxWidth="400" Padding="16">
-        <Image x:Name="IllustrationImage" Width="320" Height="200" AutomationProperties.AccessibilityView="Raw" />
+        <Image x:Name="IllustrationImage" Width="320" Height="200" Visibility="Collapsed" AutomationProperties.AccessibilityView="Raw" />
         <TextBlock
             x:Name="TitleText"
             FontFamily="{StaticResource IscFontFamily}"

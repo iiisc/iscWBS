@@ -1,4 +1,3 @@
-using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -8,6 +7,7 @@ using Microsoft.UI.Xaml.Shapes;
 using iscWBS.Core.Models;
 using iscWBS.Helpers;
 using iscWBS.ViewModels;
+using iscWBS.Views.Controls;
 using Color = Windows.UI.Color;
 
 namespace iscWBS.Views;
@@ -21,14 +21,12 @@ public sealed partial class GanttPage : Page
     private const double _headerTierH  = _headerHeight / 2.0;
     private const double _labelWidth   = 220.0; // matches the label column width in GanttPage.xaml
 
+    private const double _barRadius    = 7.0; // the brand's squircle corners, about 31% of the bar height
+
     private readonly SolidColorBrush _gridLineBrush    = new(Color.FromArgb(0x20, 0x80, 0x80, 0x80));
     private readonly SolidColorBrush _majorLineBrush   = new(Color.FromArgb(0x40, 0x80, 0x80, 0x80));
-    private readonly SolidColorBrush _progressBrush    = new(Color.FromArgb(0x45, 0xFF, 0xFF, 0xFF));
-    private readonly SolidColorBrush _barTextBrush     = new(Colors.White);
     private readonly SolidColorBrush _noBarDotBrush    = new(Color.FromArgb(0x60, 0x80, 0x80, 0x80));
-    private readonly SolidColorBrush _parentAccentBrush = new(Color.FromArgb(0x90, 0x00, 0x78, 0xD4));
-    private readonly Dictionary<WbsStatus, SolidColorBrush> _statusBrushes =
-        Enum.GetValues<WbsStatus>().ToDictionary(s => s, s => new SolidColorBrush(StatusPalette.Color(s)));
+    private readonly Dictionary<WbsStatus, SolidColorBrush> _statusBrushes;
 
     public GanttViewModel ViewModel { get; }
 
@@ -36,6 +34,7 @@ public sealed partial class GanttPage : Page
     {
         ViewModel = App.Services.CreateGanttViewModel();
         InitializeComponent();
+        _statusBrushes = Enum.GetValues<WbsStatus>().ToDictionary(s => s, s => (SolidColorBrush)Resources[$"Gantt{s}"]);
         ViewModel.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(GanttViewModel.Layout))
@@ -168,20 +167,10 @@ public sealed partial class GanttPage : Page
     {
         foreach (GanttRow row in ViewModel.Layout.Rows)
         {
-            double indent = 12.0 + row.Depth * 14.0;
+            double indent = 26.0 + row.Depth * 14.0;
 
-            if (row.IsParent)
-            {
-                var accent = new Rectangle
-                {
-                    Width   = 3,
-                    Height  = _rowHeight * 0.5,
-                    Fill    = _parentAccentBrush,
-                    RadiusX = 1.5,
-                    RadiusY = 1.5
-                };
-                Place(LabelCanvas, accent, indent - 7, row.RowTop + _rowHeight * 0.25);
-            }
+            // The branch colour, as in the Outline and the diagram.
+            Place(LabelCanvas, new LevelMarker { Level = row.Level, Width = 10, Height = 10 }, indent - 16, row.RowTop + (_rowHeight - 10) / 2.0);
 
             var label = new TextBlock
             {
@@ -200,6 +189,7 @@ public sealed partial class GanttPage : Page
     private void DrawBars()
     {
         var assigneeFg = (Brush)Resources["GanttAssigneeForeground"];
+        var onStatus   = (Brush)Resources["GanttOnStatus"];
         foreach (GanttRow row in ViewModel.Layout.Rows)
         {
             double barTop = row.RowTop + _barOffsetY;
@@ -215,33 +205,37 @@ public sealed partial class GanttPage : Page
                 Width   = row.BarWidth,
                 Height  = _barHeight,
                 Fill    = _statusBrushes[row.Status],
-                RadiusX = 3,
-                RadiusY = 3
+                RadiusX = _barRadius,
+                RadiusY = _barRadius
             };
             Place(ChartCanvas, bar, row.BarLeft, barTop);
 
-            if (row.PercentComplete > 0 && row.BarWidth > 0)
+            // The part still to do is darker: the bar under a veil of the colour its text uses.
+            double done = row.BarWidth * row.PercentComplete;
+            if (done < row.BarWidth)
             {
-                var progress = new Rectangle
+                var remaining = new Rectangle
                 {
-                    Width   = Math.Clamp(row.BarWidth * row.PercentComplete, 4, row.BarWidth),
+                    Width   = row.BarWidth - done,
                     Height  = _barHeight,
-                    Fill    = _progressBrush,
-                    RadiusX = 3,
-                    RadiusY = 3
+                    Fill    = onStatus,
+                    Opacity = 0.3,
+                    RadiusX = _barRadius,
+                    RadiusY = _barRadius
                 };
-                Place(ChartCanvas, progress, row.BarLeft, barTop);
+                Place(ChartCanvas, remaining, row.BarLeft + done, barTop);
+            }
 
-                if (row.BarWidth > 36)
+            if (row.PercentComplete > 0 && row.BarWidth > 36)
+            {
+                var percent = new TextBlock
                 {
-                    var percent = new TextBlock
-                    {
-                        Text       = $"{Math.Round(row.PercentComplete * 100)}%",
-                        FontSize   = 9,
-                        Foreground = _barTextBrush
-                    };
-                    Place(ChartCanvas, percent, row.BarLeft + 4, barTop + (_barHeight - 12) / 2.0);
-                }
+                    Text       = $"{Math.Round(row.PercentComplete * 100)}%",
+                    FontSize   = 9,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = onStatus
+                };
+                Place(ChartCanvas, percent, row.BarLeft + 6, barTop + (_barHeight - 12) / 2.0);
             }
 
             if (!string.IsNullOrEmpty(row.AssignedTo) && row.BarWidth > 30)
@@ -255,12 +249,11 @@ public sealed partial class GanttPage : Page
     private void DrawMilestones(double rowsH)
     {
         const double size = 12.0;
-        var lineBrush     = new SolidColorBrush(Color.FromArgb(0x1A, 0xFF, 0xB9, 0x00));
-        var openBrush     = new SolidColorBrush(Color.FromArgb(0xFF, 0xFF, 0xB9, 0x00));
-        var strokeBrush   = new SolidColorBrush(Color.FromArgb(0x80, 0x00, 0x00, 0x00));
+        var openBrush     = (SolidColorBrush)Resources["GanttMilestone"];
+        var strokeBrush   = (SolidColorBrush)Resources["GanttOnStatus"];
         foreach (GanttMilestoneMarker marker in ViewModel.Layout.MilestoneMarkers)
         {
-            AddVLine(ChartCanvas, marker.X, 0, rowsH, lineBrush, 1.5);
+            AddVLine(ChartCanvas, marker.X, 0, rowsH, openBrush, 1.5).Opacity = 0.35;
 
             // In the sticky header so it stays visible while the rows scroll, and in the top tier, clear of the day numbers.
             var diamond = new Rectangle
@@ -279,15 +272,13 @@ public sealed partial class GanttPage : Page
 
     private void DrawDependencies()
     {
-        var startBrush  = new SolidColorBrush(Color.FromArgb(0x80, 0x80, 0x80, 0x80));
-        var finishBrush = new SolidColorBrush(Color.FromArgb(0xC0, 0xCA, 0x50, 0x10));
+        var brush = (SolidColorBrush)Resources["GanttConnector"];
         const double exitGap   = 8.0;
         const double arrowSize = 5.0;
 
         foreach (GanttDependencyArrow arrow in ViewModel.Layout.DependencyArrows)
         {
             bool   isFinish  = DependencyConstraints.IsFinishConstraint(arrow.Type);
-            var    brush     = isFinish ? finishBrush : startBrush;
             string typeLabel = DisplayText.GetLabel(arrow.Type);
 
             bool   isFromFinish = arrow.Type is DependencyType.FinishToStart or DependencyType.FinishToFinish;
@@ -330,7 +321,7 @@ public sealed partial class GanttPage : Page
     {
         if (ViewModel.Layout.TodayX is not { } todayX) return;
 
-        var todayBrush = new SolidColorBrush(Color.FromArgb(0xEE, 0xC5, 0x0F, 0x1F));
+        var todayBrush = (SolidColorBrush)Resources["GanttToday"];
         AddVLine(HeaderCanvas, todayX, 0, _headerHeight, todayBrush, 2);
 
         var todayLabel = new TextBlock
@@ -338,7 +329,7 @@ public sealed partial class GanttPage : Page
             Text       = Strings.Get("Gantt_Today"),
             FontSize   = 9,
             FontWeight = FontWeights.SemiBold,
-            Foreground = (Brush)Resources["GanttTodayForeground"]
+            Foreground = todayBrush
         };
         // In the top tier, which only holds the month names; the bottom tier's day numbers would collide.
         Place(HeaderCanvas, todayLabel, todayX + 3, 4);
@@ -357,7 +348,11 @@ public sealed partial class GanttPage : Page
         SolidColorBrush brush, double thickness)
         => canvas.Children.Add(new Line { X1 = x1, Y1 = y, X2 = x2, Y2 = y, Stroke = brush, StrokeThickness = thickness });
 
-    private static void AddVLine(Canvas canvas, double x, double y1, double y2,
+    private static Line AddVLine(Canvas canvas, double x, double y1, double y2,
         SolidColorBrush brush, double thickness)
-        => canvas.Children.Add(new Line { X1 = x, Y1 = y1, X2 = x, Y2 = y2, Stroke = brush, StrokeThickness = thickness });
+    {
+        var line = new Line { X1 = x, Y1 = y1, X2 = x, Y2 = y2, Stroke = brush, StrokeThickness = thickness };
+        canvas.Children.Add(line);
+        return line;
+    }
 }

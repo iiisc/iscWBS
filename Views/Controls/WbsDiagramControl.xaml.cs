@@ -1,4 +1,3 @@
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -134,13 +133,9 @@ public sealed partial class WbsDiagramControl : UserControl
         public double[] RightContour { get; set; } = [];
     }
 
-    private static readonly Windows.UI.Color _badgeRed    = Windows.UI.Color.FromArgb(0xFF, 0xC5, 0x0F, 0x1F);
-    private static readonly Windows.UI.Color _badgeOrange = Windows.UI.Color.FromArgb(0xFF, 0xCA, 0x50, 0x10);
-
     private readonly Dictionary<Guid, Border> _cards          = new();
     private readonly List<UIElement>          _arrowElements  = new();
     private readonly HashSet<Guid>            _collapsedNodes = new();
-    private readonly Brush                    _white          = new SolidColorBrush(Colors.White);
     private readonly FontFamily               _iconFont       = new("Segoe MDL2 Assets");
 
     // Proxy brushes from the XAML resources; their colours follow the theme.
@@ -149,6 +144,9 @@ public sealed partial class WbsDiagramControl : UserControl
     private readonly Brush _selectionBrush;
     private readonly Brush _connectorBrush;
     private readonly Brush _cardBackground;
+    private readonly Brush _onStatusBrush;
+    private readonly Brush _accentBrush;
+    private readonly Brush _onAccentBrush;
     private Guid _highlightedId;
     private WbsHierarchy? _hierarchy;
     private Dictionary<Guid, int> _levels = [];
@@ -161,6 +159,9 @@ public sealed partial class WbsDiagramControl : UserControl
         _selectionBrush = (Brush)Resources["DiagramSelection"];
         _connectorBrush = (Brush)Resources["DiagramConnector"];
         _cardBackground = (Brush)Resources["DiagramCardBackground"];
+        _onStatusBrush  = (Brush)Resources["DiagramOnStatus"];
+        _accentBrush    = (Brush)Resources["DiagramAccent"];
+        _onAccentBrush  = (Brush)Resources["DiagramOnAccent"];
         // Cards are built in code with brushes resolved for the current theme, so rebuild on a theme switch.
         ActualThemeChanged += (_, _) => RebuildDiagram();
     }
@@ -392,7 +393,7 @@ public sealed partial class WbsDiagramControl : UserControl
         {
             Width            = _cardWidth,
             Height           = _cardHeight,
-            CornerRadius     = new CornerRadius(6),
+            CornerRadius     = new CornerRadius(8),
             BorderThickness  = new Thickness(1.5),
             BorderBrush      = statusBrush,
             Background       = _cardBackground,
@@ -410,16 +411,18 @@ public sealed partial class WbsDiagramControl : UserControl
         _cards[node.Data.Id] = card;
 
         Guid id = node.Data.Id;
-        (string Glyph, Windows.UI.Color Color, string TipKey)? blocking = id switch
+        // Blocked-coloured when the node can't go on, accent-coloured when it only can't finish yet.
+        Brush blockedBrush = _statusBrushes[WbsStatus.Blocked];
+        (string Glyph, Brush Background, Brush Foreground, string TipKey)? blocking = id switch
         {
-            _ when BlockedNodeIds?.Contains(id) == true            => ("\uE83D", _badgeRed,    "Diagram_StartBlocked"),
-            _ when CompletionBlockedNodeIds?.Contains(id) == true  => ("\uE7BA", _badgeOrange, "Diagram_CompletionBlocked"),
-            _ when ViolatedCompleteNodeIds?.Contains(id) == true   => ("\uE7BA", _badgeOrange, "Diagram_CompleteViolated"),
-            _ when ViolatedInProgressNodeIds?.Contains(id) == true => ("\uE7BA", _badgeRed,    "Diagram_InProgressViolated"),
+            _ when BlockedNodeIds?.Contains(id) == true            => ("\uE83D", blockedBrush, _onStatusBrush, "Diagram_StartBlocked"),
+            _ when CompletionBlockedNodeIds?.Contains(id) == true  => ("\uE7BA", _accentBrush, _onAccentBrush, "Diagram_CompletionBlocked"),
+            _ when ViolatedCompleteNodeIds?.Contains(id) == true   => ("\uE7BA", _accentBrush, _onAccentBrush, "Diagram_CompleteViolated"),
+            _ when ViolatedInProgressNodeIds?.Contains(id) == true => ("\uE7BA", blockedBrush, _onStatusBrush, "Diagram_InProgressViolated"),
             _ => null,
         };
         if (blocking is { } b)
-            AddBlockingBadge(node.X, node.Y, b.Glyph, b.Color, Strings.Get(b.TipKey));
+            AddBlockingBadge(node.X, node.Y, b.Glyph, b.Background, b.Foreground, Strings.Get(b.TipKey));
 
         bool isCollapsed = _collapsedNodes.Contains(node.Data.Id);
         bool hasChildren = node.Children.Count > 0;
@@ -439,7 +442,7 @@ public sealed partial class WbsDiagramControl : UserControl
                     Text                = isCollapsed ? "\uE76C" : "\uE70D",
                     FontFamily          = _iconFont,
                     FontSize            = 9,
-                    Foreground          = _white,
+                    Foreground          = _onStatusBrush,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment   = VerticalAlignment.Center,
                 },
@@ -482,7 +485,7 @@ public sealed partial class WbsDiagramControl : UserControl
         }
     }
 
-    private void AddBlockingBadge(double cardX, double cardY, string icon, Windows.UI.Color color, string tooltip)
+    private void AddBlockingBadge(double cardX, double cardY, string icon, Brush background, Brush foreground, string tooltip)
     {
         const double size = 16.0;
         var badge = new Border
@@ -490,13 +493,13 @@ public sealed partial class WbsDiagramControl : UserControl
             Width        = size,
             Height       = size,
             CornerRadius = new CornerRadius(size / 2),
-            Background   = new SolidColorBrush(color),
+            Background   = background,
             Child        = new TextBlock
             {
                 Text                = icon,
                 FontFamily          = _iconFont,
                 FontSize            = 9,
-                Foreground          = _white,
+                Foreground          = foreground,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment   = VerticalAlignment.Center,
             },
@@ -517,7 +520,7 @@ public sealed partial class WbsDiagramControl : UserControl
         var header = new Border
         {
             Background   = headerBrush,
-            CornerRadius = new CornerRadius(4.5, 4.5, 0, 0),
+            CornerRadius = new CornerRadius(6.5, 6.5, 0, 0),
             Padding      = new Thickness(8, 0, 8, 0),
         };
         header.Child = new TextBlock
@@ -525,7 +528,7 @@ public sealed partial class WbsDiagramControl : UserControl
             Text              = node.Code,
             FontWeight        = Microsoft.UI.Text.FontWeights.SemiBold,
             FontSize          = 11,
-            Foreground        = _white,
+            Foreground        = _onStatusBrush,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming      = TextTrimming.CharacterEllipsis,
         };
@@ -600,8 +603,6 @@ public sealed partial class WbsDiagramControl : UserControl
         if (Dependencies is not { Count: > 0 } deps) return;
         if (SelectedNodeId == Guid.Empty) return;
 
-        var finishConstraintBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(0xA0, 0xCA, 0x50, 0x10));
-
         foreach (NodeDependency dep in deps)
         {
             if (dep.PredecessorId != SelectedNodeId && dep.SuccessorId != SelectedNodeId)
@@ -638,7 +639,6 @@ public sealed partial class WbsDiagramControl : UserControl
             }
 
             bool isFinishConstraint = DependencyConstraints.IsFinishConstraint(dep.Type);
-            Brush arrowBrush = isFinishConstraint ? finishConstraintBrush : _connectorBrush;
 
             var figure = new PathFigure { StartPoint = new Point(fromX, fromY), IsClosed = false };
             figure.Segments.Add(new BezierSegment
@@ -653,7 +653,7 @@ public sealed partial class WbsDiagramControl : UserControl
             var curve = new Microsoft.UI.Xaml.Shapes.Path
             {
                 Data            = geometry,
-                Stroke          = arrowBrush,
+                Stroke          = _connectorBrush,
                 StrokeThickness = 2.0,
                 Fill            = new SolidColorBrush(Windows.UI.Color.FromArgb(0, 0, 0, 0)),
                 StrokeDashArray = isFinishConstraint ? new DoubleCollection { 4, 2 } : null,
@@ -664,7 +664,7 @@ public sealed partial class WbsDiagramControl : UserControl
 
             // Filled circle at the destination marks the direction of the arrow.
             const double dotR = 4.0;
-            var dot = new Ellipse { Width = dotR * 2, Height = dotR * 2, Fill = arrowBrush };
+            var dot = new Ellipse { Width = dotR * 2, Height = dotR * 2, Fill = _connectorBrush };
             Canvas.SetLeft(dot, toX - dotR);
             Canvas.SetTop(dot,  toY - dotR);
             DiagramCanvas.Children.Add(dot);

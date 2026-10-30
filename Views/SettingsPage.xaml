@@ -10,15 +10,14 @@
 
             <TextBlock
                 x:Uid="SettingsPage_Title"
-                FontFamily="{StaticResource IscFontFamily}"
                 Text="Settings"
-                Style="{ThemeResource TitleLargeTextBlockStyle}" />
+                Style="{StaticResource IscPageTitleTextBlockStyle}" />
 
             <StackPanel Spacing="8">
                 <TextBlock
                     x:Uid="SettingsPage_ProjectSection"
                     Text="Project"
-                    Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    Style="{StaticResource IscSectionTitleTextBlockStyle}" />
 
                 <Border
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -118,7 +117,7 @@
                 <TextBlock
                     x:Uid="SettingsPage_UpdatesSection"
                     Text="Software Updates"
-                    Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    Style="{StaticResource IscSectionTitleTextBlockStyle}" />
 
                 <Border
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -251,7 +250,7 @@
             <StackPanel Spacing="8">
                 <TextBlock
                     x:Uid="SettingsPage_LanguageSection"
-                    Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    Style="{StaticResource IscSectionTitleTextBlockStyle}" />
 
                 <Border
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"

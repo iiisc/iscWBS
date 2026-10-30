@@ -12,17 +12,25 @@ public sealed partial class IscEmptyState : UserControl
 
     public IscEmptyState() => InitializeComponent();
 
-    /// <summary>File name, without extension, in Assets\Illustrations; the build embeds them in the exe.</summary>
+    /// <summary>File name, without extension, in Assets\Illustrations; the build embeds them in the exe. Optional.</summary>
     public string Illustration
     {
         get => _illustration;
         set
         {
             _illustration = value;
-            var image = new BitmapImage();
-            _ = image.SetSourceAsync(typeof(IscEmptyState).Assembly.GetManifestResourceStream($"{value}.png")!.AsRandomAccessStream());
-            IllustrationImage.Source = image;
+            IllustrationImage.Source = LoadIllustration(value);
+            IllustrationImage.Visibility = IllustrationImage.Source is null ? Visibility.Collapsed : Visibility.Visible;
         }
+    }
+
+    public static BitmapImage? LoadIllustration(string name)
+    {
+        if (typeof(IscEmptyState).Assembly.GetManifestResourceStream($"{name}.png") is not { } stream)
+            return null;
+        var image = new BitmapImage();
+        _ = image.SetSourceAsync(stream.AsRandomAccessStream());
+        return image;
     }
 
     public string Title

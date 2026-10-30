@@ -37,8 +37,10 @@ public sealed partial class DashboardViewModel : ObservableObject
     public List<StatusFilterOption> StatusOptions { get; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(OverallPercentText))]
+    [NotifyPropertyChangedFor(nameof(OverallPercentText), nameof(IsAllDone))]
     public partial ProjectSummary Summary { get; set; } = ProjectSummary.Compute([], new HashSet<Guid>());
+
+    public bool IsAllDone => Summary.TotalNodes > 0 && Summary.CompleteCount == Summary.TotalNodes;
 
     public string OverallPercentText => $"{Summary.PercentComplete:F1}%";
 
@@ -47,7 +49,11 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     public ObservableCollection<DeliverableRow> DeliverableRows { get; } = new();
 
+    public bool HasNoDeliverables => !_allNodes.Any(n => n.IsDeliverable);
+
     public ObservableCollection<MilestoneRowViewModel> UpcomingMilestones { get; } = new();
+
+    public bool HasNoUpcomingMilestones => UpcomingMilestones.Count == 0;
 
     public string MilestonesTitle => FilterStartDate.HasValue || FilterEndDate.HasValue
         ? Strings.Get("Dashboard_MilestonesInDates")
@@ -74,7 +80,13 @@ public sealed partial class DashboardViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasMatches))]
     public partial bool NothingMatchesFilters { get; set; }
 
-    public bool HasMatches => !NothingMatchesFilters;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasMatches), nameof(HasNodes))]
+    public partial bool IsEmptyProject { get; set; }
+
+    public bool HasNodes => !IsEmptyProject;
+
+    public bool HasMatches => !NothingMatchesFilters && !IsEmptyProject;
 
     [RelayCommand]
     private void ClearFilters()
@@ -140,6 +152,7 @@ public sealed partial class DashboardViewModel : ObservableObject
             filtered = filtered.Where(n => n.DueDate.HasValue && n.DueDate.Value.Date <= FilterEndDate.Value.Date);
 
         List<WbsNode> nodes = filtered.ToList();
+        IsEmptyProject = _allNodes.Count == 0;
         NothingMatchesFilters = nodes.Count == 0 && _allNodes.Count > 0;
         Summary = ProjectSummary.Compute(nodes, _blockedIds);
         BuildStatusChart(Summary);
@@ -171,6 +184,7 @@ public sealed partial class DashboardViewModel : ObservableObject
             if (status is null || row.Status == status)
                 DeliverableRows.Add(row);
         }
+        OnPropertyChanged(nameof(HasNoDeliverables));
     }
 
     private void RebuildMilestones()
@@ -190,6 +204,7 @@ public sealed partial class DashboardViewModel : ObservableObject
 
         foreach (Milestone m in filtered)
             UpcomingMilestones.Add(new MilestoneRowViewModel { Milestone = m });
+        OnPropertyChanged(nameof(HasNoUpcomingMilestones));
     }
 
 }

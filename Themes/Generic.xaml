@@ -5,50 +5,56 @@
     <!--
         Colours are keyed separately from their brushes so controls that draw in code (the WBS diagram,
         the Gantt chart) can declare proxy brushes with {ThemeResource ...Color} that follow the theme.
+        Status colours are the brand's level hues, deepened in Light so they stand out on white while
+        night text on them stays readable. Text on a status fill uses WbsStatusOnFill.
     -->
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-            <Color x:Key="WbsStatusNotStartedColor">#808080</Color>
-            <Color x:Key="WbsStatusInProgressColor">#0078D4</Color>
-            <Color x:Key="WbsStatusCompleteColor">#107C10</Color>
-            <Color x:Key="WbsStatusBlockedColor">#C50F1F</Color>
+            <Color x:Key="WbsStatusNotStartedColor">#9C92D0</Color>
+            <Color x:Key="WbsStatusInProgressColor">#1E96E6</Color>
+            <Color x:Key="WbsStatusCompleteColor">#5FA81C</Color>
+            <Color x:Key="WbsStatusBlockedColor">#F2496E</Color>
+            <Color x:Key="WbsStatusOnFillColor">#14112B</Color>
             <SolidColorBrush x:Key="WbsStatusNotStartedBrush" Color="{StaticResource WbsStatusNotStartedColor}" />
             <SolidColorBrush x:Key="WbsStatusInProgressBrush" Color="{StaticResource WbsStatusInProgressColor}" />
             <SolidColorBrush x:Key="WbsStatusCompleteBrush"   Color="{StaticResource WbsStatusCompleteColor}" />
             <SolidColorBrush x:Key="WbsStatusBlockedBrush"    Color="{StaticResource WbsStatusBlockedColor}" />
-            <Color x:Key="GanttLabelForegroundColor">#FF000000</Color>
-            <Color x:Key="GanttHeaderBackgroundColor">#14000000</Color>
-            <Color x:Key="GanttHeaderBottomBackgroundColor">#0A000000</Color>
-            <Color x:Key="GanttRowBandColor">#0A000000</Color>
+            <Color x:Key="GanttLabelForegroundColor">#1E1838</Color>
+            <Color x:Key="GanttHeaderBackgroundColor">#145A4F96</Color>
+            <Color x:Key="GanttHeaderBottomBackgroundColor">#0A5A4F96</Color>
+            <Color x:Key="GanttRowBandColor">#0A5A4F96</Color>
             <!-- Solid backgrounds prevent content bleed-through in the acrylic dropdowns -->
-            <SolidColorBrush x:Key="ComboBoxDropDownBackground"     Color="#F3F3F3" />
-            <SolidColorBrush x:Key="MenuFlyoutPresenterBackground"  Color="#F3F3F3" />
+            <SolidColorBrush x:Key="ComboBoxDropDownBackground"     Color="#FFFFFF" />
+            <SolidColorBrush x:Key="MenuFlyoutPresenterBackground"  Color="#FFFFFF" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
-            <Color x:Key="WbsStatusNotStartedColor">#9E9E9E</Color>
-            <Color x:Key="WbsStatusInProgressColor">#60CDFF</Color>
-            <Color x:Key="WbsStatusCompleteColor">#6CCB5F</Color>
-            <Color x:Key="WbsStatusBlockedColor">#FF99A4</Color>
+            <Color x:Key="WbsStatusNotStartedColor">#A89EDB</Color>
+            <Color x:Key="WbsStatusInProgressColor">#4DC3FF</Color>
+            <Color x:Key="WbsStatusCompleteColor">#B8F35A</Color>
+            <Color x:Key="WbsStatusBlockedColor">#FF6B8B</Color>
+            <Color x:Key="WbsStatusOnFillColor">#14112B</Color>
             <SolidColorBrush x:Key="WbsStatusNotStartedBrush" Color="{StaticResource WbsStatusNotStartedColor}" />
             <SolidColorBrush x:Key="WbsStatusInProgressBrush" Color="{StaticResource WbsStatusInProgressColor}" />
             <SolidColorBrush x:Key="WbsStatusCompleteBrush"   Color="{StaticResource WbsStatusCompleteColor}" />
             <SolidColorBrush x:Key="WbsStatusBlockedBrush"    Color="{StaticResource WbsStatusBlockedColor}" />
-            <Color x:Key="GanttLabelForegroundColor">#FFFFFFFF</Color>
-            <Color x:Key="GanttHeaderBackgroundColor">#28FFFFFF</Color>
-            <Color x:Key="GanttHeaderBottomBackgroundColor">#14FFFFFF</Color>
-            <Color x:Key="GanttRowBandColor">#0FFFFFFF</Color>
-            <SolidColorBrush x:Key="ComboBoxDropDownBackground"     Color="#202020" />
-            <SolidColorBrush x:Key="MenuFlyoutPresenterBackground"  Color="#202020" />
+            <Color x:Key="GanttLabelForegroundColor">#FFFFFF</Color>
+            <Color x:Key="GanttHeaderBackgroundColor">#28C4B8FF</Color>
+            <Color x:Key="GanttHeaderBottomBackgroundColor">#14C4B8FF</Color>
+            <Color x:Key="GanttRowBandColor">#0FC4B8FF</Color>
+            <SolidColorBrush x:Key="ComboBoxDropDownBackground"     Color="#1A1638" />
+            <SolidColorBrush x:Key="MenuFlyoutPresenterBackground"  Color="#1A1638" />
         </ResourceDictionary>
+        <!-- Four different system colours, each readable under Window-coloured text. -->
         <ResourceDictionary x:Key="HighContrast">
-            <StaticResource x:Key="WbsStatusNotStartedColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="WbsStatusNotStartedColor" ResourceKey="SystemColorGrayTextColor" />
             <StaticResource x:Key="WbsStatusInProgressColor" ResourceKey="SystemColorHighlightColor" />
             <StaticResource x:Key="WbsStatusCompleteColor"   ResourceKey="SystemColorWindowTextColor" />
-            <StaticResource x:Key="WbsStatusBlockedColor"    ResourceKey="SystemColorHighlightTextColor" />
-            <SolidColorBrush x:Key="WbsStatusNotStartedBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+            <StaticResource x:Key="WbsStatusBlockedColor"    ResourceKey="SystemColorHotlightColor" />
+            <StaticResource x:Key="WbsStatusOnFillColor"     ResourceKey="SystemColorWindowColor" />
+            <SolidColorBrush x:Key="WbsStatusNotStartedBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
             <SolidColorBrush x:Key="WbsStatusInProgressBrush" Color="{ThemeResource SystemColorHighlightColor}" />
             <SolidColorBrush x:Key="WbsStatusCompleteBrush"   Color="{ThemeResource SystemColorWindowTextColor}" />
-            <SolidColorBrush x:Key="WbsStatusBlockedBrush"    Color="{ThemeResource SystemColorHighlightTextColor}" />
+            <SolidColorBrush x:Key="WbsStatusBlockedBrush"    Color="{ThemeResource SystemColorHotlightColor}" />
             <StaticResource x:Key="GanttLabelForegroundColor"        ResourceKey="SystemColorWindowTextColor" />
             <StaticResource x:Key="GanttHeaderBackgroundColor"       ResourceKey="SystemColorWindowColor" />
             <StaticResource x:Key="GanttHeaderBottomBackgroundColor" ResourceKey="SystemColorWindowColor" />

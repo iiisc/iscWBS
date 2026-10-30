@@ -3,13 +3,12 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Path = Microsoft.UI.Xaml.Shapes.Path;
 using Windows.Foundation;
-using iscWBS.Helpers;
 using iscWBS.ViewModels;
 
 namespace iscWBS.Views.Controls;
 
 /// <summary>Ring chart of the dashboard's status counts, drawn with plain shapes.</summary>
-public sealed partial class StatusDonut : Canvas
+public sealed partial class StatusDonut : UserControl
 {
     private const double Diameter = 200;
     private const double RingWidth = 36;
@@ -19,8 +18,8 @@ public sealed partial class StatusDonut : Canvas
 
     public StatusDonut()
     {
-        Width = Diameter;
-        Height = Diameter;
+        InitializeComponent();
+        Chart.Width = Chart.Height = Diameter;
     }
 
     // A plain property is enough: x:Bind assigns it directly, so no dependency property is needed.
@@ -36,16 +35,16 @@ public sealed partial class StatusDonut : Canvas
 
     private void Draw()
     {
-        Children.Clear();
+        Chart.Children.Clear();
         int total = _slices.Sum(s => s.Count);
         if (total == 0) return;
 
         double start = -90; // 12 o'clock
         foreach (StatusSlice slice in _slices.Where(s => s.Count > 0))
         {
-            var brush = new SolidColorBrush(StatusPalette.Color(slice.Status));
+            var brush = (Brush)Resources[slice.Status.ToString()];
             double sweep = 360.0 * slice.Count / total;
-            Children.Add(sweep >= 360 ? Ring(brush) : Arc(start, sweep, brush));
+            Chart.Children.Add(sweep >= 360 ? Ring(brush) : Arc(start, sweep, brush));
             start += sweep;
         }
     }
@@ -54,8 +53,8 @@ public sealed partial class StatusDonut : Canvas
     private static Ellipse Ring(Brush brush)
     {
         var ring = new Ellipse { Width = Diameter - RingWidth, Height = Diameter - RingWidth, Stroke = brush, StrokeThickness = RingWidth };
-        SetLeft(ring, RingWidth / 2);
-        SetTop(ring, RingWidth / 2);
+        Canvas.SetLeft(ring, RingWidth / 2);
+        Canvas.SetTop(ring, RingWidth / 2);
         return ring;
     }
 

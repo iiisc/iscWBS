@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="iscWBS.Views.Controls.StatusMarker"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Width="16"
+    Height="16"
+    IsTabStop="False"
+    AutomationProperties.AccessibilityView="Raw">
+
+    <!-- Brushes declared on an element follow theme changes; app-level ones keep the colour they started with. -->
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="NotStarted" Color="{ThemeResource WbsStatusNotStartedColor}" />
+        <SolidColorBrush x:Key="InProgress" Color="{ThemeResource WbsStatusInProgressColor}" />
+        <SolidColorBrush x:Key="Complete"   Color="{ThemeResource WbsStatusCompleteColor}" />
+        <SolidColorBrush x:Key="Blocked"    Color="{ThemeResource WbsStatusBlockedColor}" />
+    </UserControl.Resources>
+
+    <Viewbox>
+        <PathIcon x:Name="Icon" Width="24" Height="24" />
+    </Viewbox>
+</UserControl>

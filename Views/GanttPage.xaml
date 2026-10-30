@@ -2,7 +2,8 @@
 <Page
     x:Class="iscWBS.Views.GanttPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:iscWBS.Views.Controls">
 
     <!-- The chart is drawn in code; these proxies give it brushes that follow the theme. -->
     <Page.Resources>
@@ -11,7 +12,14 @@
         <SolidColorBrush x:Key="GanttHeaderBottomBackground" Color="{ThemeResource GanttHeaderBottomBackgroundColor}" />
         <SolidColorBrush x:Key="GanttRowBand"                Color="{ThemeResource GanttRowBandColor}" />
         <SolidColorBrush x:Key="GanttAssigneeForeground"     Color="{ThemeResource TextFillColorSecondary}" />
-        <SolidColorBrush x:Key="GanttTodayForeground"        Color="{ThemeResource WbsStatusBlockedColor}" />
+        <SolidColorBrush x:Key="GanttToday"                  Color="{ThemeResource IscTextMutedColor}" />
+        <SolidColorBrush x:Key="GanttConnector"              Color="{ThemeResource IscConnectorColor}" />
+        <SolidColorBrush x:Key="GanttMilestone"              Color="{ThemeResource IscAccentColor}" />
+        <SolidColorBrush x:Key="GanttOnStatus"               Color="{ThemeResource WbsStatusOnFillColor}" />
+        <SolidColorBrush x:Key="GanttNotStarted"             Color="{ThemeResource WbsStatusNotStartedColor}" />
+        <SolidColorBrush x:Key="GanttInProgress"             Color="{ThemeResource WbsStatusInProgressColor}" />
+        <SolidColorBrush x:Key="GanttComplete"               Color="{ThemeResource WbsStatusCompleteColor}" />
+        <SolidColorBrush x:Key="GanttBlocked"                Color="{ThemeResource WbsStatusBlockedColor}" />
     </Page.Resources>
 
     <Grid>
@@ -26,20 +34,16 @@
             Grid.Row="0"
             Orientation="Horizontal"
             Spacing="16"
-            Padding="16,8">
+            Padding="16,12,16,8">
             <TextBlock
                 x:Uid="GanttPage_Title"
-                FontFamily="{StaticResource IscFontFamily}"
                 Text="Gantt Chart"
-                Style="{ThemeResource SubtitleTextBlockStyle}"
-                VerticalAlignment="Center" />
+                Style="{StaticResource IscPageTitleTextBlockStyle}" />
             <Border
-                Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
-                CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                Style="{StaticResource IscBadgeBorderStyle}">
                 <TextBlock
                     x:Uid="GanttPage_BetaFeature"
-                    Text="BETA" FontSize="11" FontWeight="SemiBold"
-                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                    Text="BETA" Style="{StaticResource IscBadgeTextBlockStyle}"
                     AutomationProperties.Name="Beta feature" />
             </Border>
             <TextBlock
@@ -104,6 +108,14 @@
                 ViewChanged="GanttScrollViewer_ViewChanged">
                 <Canvas x:Name="ChartCanvas" HorizontalAlignment="Left" VerticalAlignment="Top" />
             </ScrollViewer>
+        </Grid>
+
+        <Grid Grid.Row="1" Grid.RowSpan="2" Background="{ThemeResource NavigationViewContentBackground}" Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
+            <controls:IscEmptyState
+                x:Uid="GanttPage_Empty"
+                Illustration="NothingScheduled"
+                Title="Nothing scheduled yet"
+                Body="Give work packages start and end dates to see them on the timeline." />
         </Grid>
     </Grid>
 </Page>

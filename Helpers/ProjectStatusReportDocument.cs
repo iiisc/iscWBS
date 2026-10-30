@@ -15,11 +15,17 @@ internal sealed class ProjectStatusReportDocument : IDocument
     private static readonly string _green = StatusPalette.Hex(WbsStatus.Complete);
     private static readonly string _red   = StatusPalette.Hex(WbsStatus.Blocked);
     private const string _amber      = "#C47D0E";
-    private const string _headerBg   = "#F3F4F6";
-    private const string _border     = "#E5E7EB";
-    private const string _textDark   = "#111827";
-    private const string _textMuted  = "#6B7280";
-    private const string _sectionFg  = "#374151";
+    // The brand's light theme: background, border, text, muted text and connector purple.
+    private const string _headerBg   = "#F6F4FD";
+    private const string _border     = "#DDD8F2";
+    private const string _textDark   = "#1E1838";
+    private const string _textMuted  = "#5A4F96";
+    private const string _sectionFg  = "#5A4F96";
+    private const string _brand      = "#7465C9";
+    private const string _rowAltBg   = "#FAF9FE";
+
+    private static readonly string _logoSvg =
+        new StreamReader(typeof(ProjectStatusReportDocument).Assembly.GetManifestResourceStream("Logo.svg")!).ReadToEnd();
 
     public ProjectStatusReportDocument(ProjectStatusReportData data, ReportOptions options)
     {
@@ -106,7 +112,8 @@ internal sealed class ProjectStatusReportDocument : IDocument
         {
             col.Item().Row(row =>
             {
-                row.RelativeItem().Column(inner =>
+                row.ConstantItem(40).Height(40).Svg(_logoSvg);
+                row.RelativeItem().PaddingLeft(10).Column(inner =>
                 {
                     inner.Item()
                         .Text(_data.ProjectName)
@@ -126,7 +133,7 @@ internal sealed class ProjectStatusReportDocument : IDocument
                     });
                 });
             });
-            col.Item().PaddingTop(8).LineHorizontal(2).LineColor(_blue);
+            col.Item().PaddingTop(8).LineHorizontal(2).LineColor(_brand);
         });
     }
 
@@ -267,7 +274,7 @@ internal sealed class ProjectStatusReportDocument : IDocument
                     int rowIdx = 0;
                     foreach ((string assignee, int nodes, double estH, double actH) in byAssignee)
                     {
-                        string rowBg = rowIdx++ % 2 == 0 ? "#FFFFFF" : "#F9FAFB";
+                        string rowBg = rowIdx++ % 2 == 0 ? "#FFFFFF" : _rowAltBg;
 
                         Cell(t, background: rowBg).Text(assignee).FontSize(8);
                         Cell(t, background: rowBg).Text(nodes.ToString()).FontSize(8).FontColor(_textMuted);
@@ -405,7 +412,7 @@ internal sealed class ProjectStatusReportDocument : IDocument
                 int rowIndex = 0;
                 foreach (WbsTreeEntry entry in _data.WbsTree)
                 {
-                    string rowBg = rowIndex++ % 2 == 0 ? "#FFFFFF" : "#F9FAFB";
+                    string rowBg = rowIndex++ % 2 == 0 ? "#FFFFFF" : _rowAltBg;
 
                     Cell(t, background: rowBg).Text(entry.Code).FontSize(8).FontColor(_textMuted);
                     TextBlockDescriptor title = Cell(t, background: rowBg).PaddingLeft(4 + entry.Depth * 10f)

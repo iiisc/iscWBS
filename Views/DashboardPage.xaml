@@ -8,6 +8,28 @@
     xmlns:vm="using:iscWBS.ViewModels"
     xmlns:models="using:iscWBS.Core.Models">
 
+    <Page.Resources>
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource IscCornerRadiusMedium}" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+        <Style x:Key="KpiCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
+            <Setter Property="Padding" Value="14,12" />
+        </Style>
+        <Style x:Key="KpiValueStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource IscFontFamily}" />
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style x:Key="KpiLabelStyle" TargetType="TextBlock" BasedOn="{StaticResource CaptionTextBlockStyle}">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Page.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -19,24 +41,20 @@
         <StackPanel
             Grid.Row="0"
             Orientation="Horizontal" Spacing="8"
-            Margin="12,12,12,0" VerticalAlignment="Center">
+            Margin="16,12,16,0">
             <TextBlock
                 x:Uid="DashboardPage_Title"
-                FontFamily="{StaticResource IscFontFamily}"
                 Text="Dashboard"
-                Style="{ThemeResource TitleLargeTextBlockStyle}" />
-            <Border
-                Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
-                CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                Style="{StaticResource IscPageTitleTextBlockStyle}" />
+            <Border Style="{StaticResource IscBadgeBorderStyle}">
                 <TextBlock
                     x:Uid="DashboardPage_BetaFeature"
-                    Text="BETA" FontSize="11" FontWeight="SemiBold"
-                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                    Text="BETA" Style="{StaticResource IscBadgeTextBlockStyle}"
                     AutomationProperties.Name="Beta feature" />
             </Border>
         </StackPanel>
 
-        <Grid Grid.Row="1" Margin="12,8" ColumnSpacing="12">
+        <Grid Grid.Row="1" Margin="16,12" ColumnSpacing="12" Visibility="{x:Bind ViewModel.HasNodes, Mode=OneWay}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -82,6 +100,14 @@
         </Grid>
 
         <controls:IscEmptyState
+            x:Uid="DashboardPage_Empty"
+            Grid.Row="1" Grid.RowSpan="3"
+            Illustration="EmptyBranch"
+            Title="Nothing to report yet"
+            Body="Add deliverables and work packages in the WBS Tree, and their progress shows up here."
+            Visibility="{x:Bind ViewModel.IsEmptyProject, Mode=OneWay}" />
+
+        <controls:IscEmptyState
             x:Uid="DashboardPage_NoMatches"
             Grid.Row="2" Grid.RowSpan="2"
             Illustration="NoResults"
@@ -91,7 +117,7 @@
             Command="{x:Bind ViewModel.ClearFiltersCommand}"
             Visibility="{x:Bind ViewModel.NothingMatchesFilters, Mode=OneWay}" />
 
-        <Grid Grid.Row="2" Margin="12,0,12,8" ColumnSpacing="8" Visibility="{x:Bind ViewModel.HasMatches, Mode=OneWay}">
+        <Grid Grid.Row="2" Margin="16,0,16,16" ColumnSpacing="12" Visibility="{x:Bind ViewModel.HasMatches, Mode=OneWay}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
@@ -101,242 +127,286 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" CornerRadius="8" Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                <StackPanel Spacing="4">
+            <Border Grid.Column="0" Style="{StaticResource KpiCardStyle}">
+                <StackPanel Spacing="6">
+                    <TextBlock x:Uid="DashboardPage_KpiCompletePercent" Text="% Complete" Style="{StaticResource KpiLabelStyle}" />
                     <TextBlock x:Uid="DashboardPage_OverallPercentComplete" Text="{x:Bind ViewModel.OverallPercentText, Mode=OneWay}"
-                               Style="{ThemeResource TitleTextBlockStyle}"
+                               Style="{StaticResource KpiValueStyle}"
                                AutomationProperties.Name="Overall percent complete" />
-                    <TextBlock x:Uid="DashboardPage_KpiCompletePercent" Text="% Complete" Style="{ThemeResource CaptionTextBlockStyle}" />
+                    <ProgressBar Value="{x:Bind ViewModel.Summary.PercentComplete, Mode=OneWay}" Maximum="100" AutomationProperties.AccessibilityView="Raw" />
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="1" CornerRadius="8" Padding="12"
-                    Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                <StackPanel Spacing="4">
+            <Border Grid.Column="1" Style="{StaticResource KpiCardStyle}">
+                <StackPanel Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <controls:StatusMarker Status="Complete" />
+                        <TextBlock x:Uid="DashboardPage_KpiComplete" Text="Complete" Style="{StaticResource KpiLabelStyle}" />
+                    </StackPanel>
                     <TextBlock x:Uid="DashboardPage_CompleteTaskCount" Text="{x:Bind ViewModel.Summary.CompleteCount, Mode=OneWay}"
-                               Style="{ThemeResource TitleTextBlockStyle}"
-                               Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                               Style="{StaticResource KpiValueStyle}"
                                AutomationProperties.Name="Complete task count" />
-                    <TextBlock x:Uid="DashboardPage_KpiComplete" Text="Complete" Style="{ThemeResource CaptionTextBlockStyle}" />
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="2" CornerRadius="8" Padding="12"
-                    Background="{ThemeResource SystemFillColorAttentionBackgroundBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                <StackPanel Spacing="4">
+            <Border Grid.Column="2" Style="{StaticResource KpiCardStyle}">
+                <StackPanel Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <controls:StatusMarker Status="InProgress" />
+                        <TextBlock x:Uid="DashboardPage_KpiInProgress" Text="In Progress" Style="{StaticResource KpiLabelStyle}" />
+                    </StackPanel>
                     <TextBlock x:Uid="DashboardPage_InProgressTaskCount" Text="{x:Bind ViewModel.Summary.InProgressCount, Mode=OneWay}"
-                               Style="{ThemeResource TitleTextBlockStyle}"
-                               Foreground="{ThemeResource SystemFillColorAttentionBrush}"
+                               Style="{StaticResource KpiValueStyle}"
                                AutomationProperties.Name="In progress task count" />
-                    <TextBlock x:Uid="DashboardPage_KpiInProgress" Text="In Progress" Style="{ThemeResource CaptionTextBlockStyle}" />
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="3" CornerRadius="8" Padding="12"
-                    Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                <StackPanel Spacing="4">
+            <Border Grid.Column="3" Style="{StaticResource KpiCardStyle}">
+                <StackPanel Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE823;" FontSize="14" Foreground="{ThemeResource IscTextMutedBrush}" />
+                        <TextBlock x:Uid="DashboardPage_KpiAtRisk" Text="At Risk" Style="{StaticResource KpiLabelStyle}" />
+                    </StackPanel>
                     <TextBlock x:Uid="DashboardPage_AtRiskTaskCount" Text="{x:Bind ViewModel.Summary.AtRiskCount, Mode=OneWay}"
-                               Style="{ThemeResource TitleTextBlockStyle}"
-                               Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                               Style="{StaticResource KpiValueStyle}"
                                AutomationProperties.Name="At risk task count" />
-                    <TextBlock x:Uid="DashboardPage_KpiAtRisk" Text="At Risk" Style="{ThemeResource CaptionTextBlockStyle}" />
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="4" CornerRadius="8" Padding="12"
-                    Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                <StackPanel Spacing="4">
+            <Border Grid.Column="4" Style="{StaticResource KpiCardStyle}">
+                <StackPanel Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE7BA;" FontSize="14" Foreground="{ThemeResource WbsStatusBlockedBrush}" />
+                        <TextBlock x:Uid="DashboardPage_KpiOverdue" Text="Overdue" Style="{StaticResource KpiLabelStyle}" />
+                    </StackPanel>
                     <TextBlock x:Uid="DashboardPage_OverdueTaskCount" Text="{x:Bind ViewModel.Summary.OverdueCount, Mode=OneWay}"
-                               Style="{ThemeResource TitleTextBlockStyle}"
-                               Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                               Style="{StaticResource KpiValueStyle}"
                                AutomationProperties.Name="Overdue task count" />
-                    <TextBlock x:Uid="DashboardPage_KpiOverdue" Text="Overdue" Style="{ThemeResource CaptionTextBlockStyle}" />
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="5" CornerRadius="8" Padding="12"
-                    Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                <StackPanel Spacing="4">
+            <Border Grid.Column="5" Style="{StaticResource KpiCardStyle}">
+                <StackPanel Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <controls:StatusMarker Status="Blocked" />
+                        <TextBlock x:Uid="DashboardPage_KpiBlocked" Text="Blocked" Style="{StaticResource KpiLabelStyle}" />
+                    </StackPanel>
                     <TextBlock x:Uid="DashboardPage_BlockedTaskCount" Text="{x:Bind ViewModel.Summary.BlockedCount, Mode=OneWay}"
-                               Style="{ThemeResource TitleTextBlockStyle}"
-                               Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                               Style="{StaticResource KpiValueStyle}"
                                AutomationProperties.Name="Blocked task count" />
-                    <TextBlock x:Uid="DashboardPage_KpiBlocked" Text="Blocked" Style="{ThemeResource CaptionTextBlockStyle}" />
                 </StackPanel>
             </Border>
         </Grid>
 
         <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" Visibility="{x:Bind ViewModel.HasMatches, Mode=OneWay}">
-            <Grid Margin="12,0,12,12" ColumnSpacing="16">
+            <Grid Margin="16,0,16,16" ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="3*" />
                     <ColumnDefinition Width="2*" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Spacing="8">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Viewbox Width="20" Height="20" VerticalAlignment="Center">
-                            <PathIcon helpers:IscIcon.Kind="Deliverable" Width="24" Height="24" />
-                        </Viewbox>
-                        <TextBlock x:Uid="DashboardPage_DeliverablesTitle" Text="Deliverables" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                    </StackPanel>
-                    <ListView
-                        x:Uid="DashboardPage_DeliverablesList"
-                        ItemsSource="{x:Bind ViewModel.DeliverableRows, Mode=OneWay}"
-                        SelectionMode="None"
-                        AutomationProperties.Name="Deliverables list">
-                        <ListView.ItemContainerStyle>
-                            <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                <Setter Property="Padding" Value="0" />
-                            </Style>
-                        </ListView.ItemContainerStyle>
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="models:DeliverableRow">
-                                <Border
-                                    Padding="4,10"
-                                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                                    BorderThickness="0,0,0,1">
-                                    <Grid RowSpacing="6" ColumnSpacing="12">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBlock
-                                            Grid.Row="0" Grid.Column="0"
-                                            Text="{x:Bind Code}"
-                                            FontWeight="SemiBold" FontSize="11"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            VerticalAlignment="Center" MinWidth="52" />
-                                        <TextBlock
-                                            Grid.Row="0" Grid.Column="1"
-                                            Text="{x:Bind Title}"
-                                            FontWeight="SemiBold"
-                                            TextTrimming="CharacterEllipsis"
-                                            VerticalAlignment="Center" />
-                                        <TextBlock
-                                            Grid.Row="0" Grid.Column="2"
-                                            Text="{x:Bind Status, Converter={StaticResource StatusToStringConverter}}"
-                                            Foreground="{x:Bind Status, Converter={StaticResource StatusToBrushConverter}}"
-                                            FontSize="11" FontWeight="SemiBold"
-                                            VerticalAlignment="Center" />
-                                        <TextBlock
-                                            Grid.Row="0" Grid.Column="3"
-                                            Text="{x:Bind DueDateText}"
-                                            FontSize="11"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            VerticalAlignment="Center" />
-
-                                        <Grid
-                                            Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"
-                                            ColumnSpacing="8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <ProgressBar
-                                                x:Uid="DashboardPage_DeliverableProgress"
-                                                Grid.Column="0"
-                                                Value="{x:Bind ProgressFraction}"
-                                                Minimum="0" Maximum="1"
-                                                Height="6"
-                                                AutomationProperties.Name="Deliverable progress" />
-                                            <TextBlock
-                                                Grid.Column="1"
-                                                Text="{x:Bind ProgressPercentText}"
-                                                FontSize="11"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                VerticalAlignment="Center" />
-                                        </Grid>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </StackPanel>
-
-                <StackPanel Grid.Column="1" Spacing="20">
-
-                    <StackPanel Spacing="8">
-                        <TextBlock x:Uid="DashboardPage_StatusBreakdownTitle" Text="Status Breakdown" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                        <StackPanel Orientation="Horizontal" Spacing="24" HorizontalAlignment="Center" Margin="0,8">
-                            <controls:StatusDonut
-                                x:Uid="DashboardPage_StatusBreakdownChart"
-                                Slices="{x:Bind ViewModel.StatusSlices, Mode=OneWay}"
-                                AutomationProperties.Name="Status breakdown chart" />
-                            <ItemsControl ItemsSource="{x:Bind ViewModel.StatusSlices, Mode=OneWay}" VerticalAlignment="Center">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:StatusSlice">
-                                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4">
-                                            <Rectangle Width="12" Height="12" RadiusX="2" RadiusY="2"
-                                                       Fill="{x:Bind Status, Converter={StaticResource StatusToBrushConverter}}" />
-                                            <TextBlock Text="{x:Bind Label}" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </StackPanel>
-
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}" VerticalAlignment="Top">
                     <StackPanel Spacing="8">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Viewbox Width="20" Height="20" VerticalAlignment="Center">
-                                <PathIcon helpers:IscIcon.Kind="Milestone" Width="24" Height="24" />
+                                <PathIcon helpers:IscIcon.Kind="Deliverable" Width="24" Height="24" />
                             </Viewbox>
-                            <TextBlock Text="{x:Bind ViewModel.MilestonesTitle, Mode=OneWay}" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                            <TextBlock x:Uid="DashboardPage_DeliverablesTitle" Text="Deliverables" Style="{StaticResource IscSectionTitleTextBlockStyle}" />
                         </StackPanel>
+                        <TextBlock
+                            x:Uid="DashboardPage_NoDeliverables"
+                            Text="Mark nodes as deliverables in the WBS Tree to follow their progress here."
+                            Style="{ThemeResource BodyTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Visibility="{x:Bind ViewModel.HasNoDeliverables, Mode=OneWay}" />
                         <ListView
-                            x:Uid="DashboardPage_UpcomingMilestonesList"
-                            ItemsSource="{x:Bind ViewModel.UpcomingMilestones, Mode=OneWay}"
+                            x:Uid="DashboardPage_DeliverablesList"
+                            ItemsSource="{x:Bind ViewModel.DeliverableRows, Mode=OneWay}"
                             SelectionMode="None"
-                            AutomationProperties.Name="Upcoming milestones list">
+                            AutomationProperties.Name="Deliverables list">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Padding" Value="0" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
                             <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="vm:MilestoneRowViewModel">
-                                    <Grid ColumnSpacing="8" Padding="0,6">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            Text="{x:Bind Milestone.Title}"
-                                            TextTrimming="CharacterEllipsis"
-                                            VerticalAlignment="Center" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            x:Uid="MilestonesPage_StatusOverdue"
-                                            Text="Overdue"
-                                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                                            FontWeight="SemiBold"
-                                            FontSize="11"
-                                            VerticalAlignment="Center"
-                                            Visibility="{x:Bind IsOverdue}" />
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            Text="{x:Bind DueDateLabel}"
-                                            FontSize="11"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            VerticalAlignment="Center" />
-                                    </Grid>
+                                <DataTemplate x:DataType="models:DeliverableRow">
+                                    <Border
+                                        Padding="4,10"
+                                        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid RowSpacing="6" ColumnSpacing="12">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock
+                                                Grid.Row="0" Grid.Column="0"
+                                                Text="{x:Bind Code}"
+                                                FontWeight="SemiBold" FontSize="11"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                VerticalAlignment="Center" MinWidth="52" />
+                                            <TextBlock
+                                                Grid.Row="0" Grid.Column="1"
+                                                Text="{x:Bind Title}"
+                                                FontWeight="SemiBold"
+                                                TextTrimming="CharacterEllipsis"
+                                                VerticalAlignment="Center" />
+                                            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                                                <controls:StatusMarker Status="{x:Bind Status}" Width="14" Height="14" />
+                                                <TextBlock
+                                                    Text="{x:Bind Status, Converter={StaticResource StatusToStringConverter}}"
+                                                    FontSize="11"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                Grid.Row="0" Grid.Column="3"
+                                                Text="{x:Bind DueDateText}"
+                                                FontSize="11"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                VerticalAlignment="Center" />
+
+                                            <Grid
+                                                Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"
+                                                ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="36" />
+                                                </Grid.ColumnDefinitions>
+                                                <ProgressBar
+                                                    x:Uid="DashboardPage_DeliverableProgress"
+                                                    Grid.Column="0"
+                                                    Value="{x:Bind ProgressFraction}"
+                                                    Minimum="0" Maximum="1"
+                                                    AutomationProperties.Name="Deliverable progress" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    Text="{x:Bind ProgressPercentText}"
+                                                    FontSize="11"
+                                                    TextAlignment="Right"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
                     </StackPanel>
+                </Border>
+
+                <StackPanel Grid.Column="1" Spacing="16">
+
+                    <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.IsAllDone, Mode=OneWay}">
+                        <StackPanel Spacing="4">
+                            <Image x:Name="AllDoneImage" Width="192" Height="120" AutomationProperties.AccessibilityView="Raw" />
+                            <TextBlock
+                                x:Uid="DashboardPage_AllDoneTitle"
+                                Text="Every branch is done"
+                                FontFamily="{StaticResource IscFontFamily}" FontSize="18" FontWeight="SemiBold"
+                                HorizontalAlignment="Center" />
+                            <TextBlock
+                                x:Uid="DashboardPage_AllDoneBody"
+                                Text="All work in this project is complete. Nicely done."
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="8">
+                            <TextBlock x:Uid="DashboardPage_StatusBreakdownTitle" Text="Status Breakdown" Style="{StaticResource IscSectionTitleTextBlockStyle}" />
+                            <StackPanel Orientation="Horizontal" Spacing="24" HorizontalAlignment="Center" Margin="0,8">
+                                <controls:StatusDonut
+                                    x:Uid="DashboardPage_StatusBreakdownChart"
+                                    Slices="{x:Bind ViewModel.StatusSlices, Mode=OneWay}"
+                                    AutomationProperties.Name="Status breakdown chart" />
+                                <ItemsControl ItemsSource="{x:Bind ViewModel.StatusSlices, Mode=OneWay}" VerticalAlignment="Center">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:StatusSlice">
+                                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4">
+                                                <controls:StatusMarker Status="{x:Bind Status}" />
+                                                <TextBlock Text="{x:Bind Label}" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Viewbox Width="20" Height="20" VerticalAlignment="Center">
+                                    <PathIcon helpers:IscIcon.Kind="Milestone" Width="24" Height="24" />
+                                </Viewbox>
+                                <TextBlock Text="{x:Bind ViewModel.MilestonesTitle, Mode=OneWay}" Style="{StaticResource IscSectionTitleTextBlockStyle}" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <TextBlock
+                                x:Uid="DashboardPage_NoMilestones"
+                                Text="No open milestones in this period."
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Visibility="{x:Bind ViewModel.HasNoUpcomingMilestones, Mode=OneWay}" />
+                            <ListView
+                                x:Uid="DashboardPage_UpcomingMilestonesList"
+                                ItemsSource="{x:Bind ViewModel.UpcomingMilestones, Mode=OneWay}"
+                                SelectionMode="None"
+                                AutomationProperties.Name="Upcoming milestones list">
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        <Setter Property="Padding" Value="0" />
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                                <ListView.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:MilestoneRowViewModel">
+                                        <Grid ColumnSpacing="8" Padding="4,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock
+                                                Grid.Column="0"
+                                                Text="{x:Bind Milestone.Title}"
+                                                TextTrimming="CharacterEllipsis"
+                                                VerticalAlignment="Center" />
+                                            <StackPanel
+                                                Grid.Column="1"
+                                                Orientation="Horizontal" Spacing="4"
+                                                Visibility="{x:Bind IsOverdue}">
+                                                <controls:StatusMarker Status="Blocked" Width="12" Height="12" />
+                                                <TextBlock
+                                                    x:Uid="MilestonesPage_StatusOverdue"
+                                                    Text="Overdue"
+                                                    FontWeight="SemiBold"
+                                                    FontSize="11"
+                                                    VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                Grid.Column="2"
+                                                Text="{x:Bind DueDateLabel}"
+                                                FontSize="11"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                VerticalAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </StackPanel>
+                    </Border>
 
                 </StackPanel>
             </Grid>

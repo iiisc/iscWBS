@@ -10,22 +10,49 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- The banner art is always on Night, so its title stays white in both themes. -->
+        <Border
+            x:Name="Banner"
+            Grid.Row="0"
+            Margin="16,16,16,0"
+            MaxWidth="800"
+            Height="200"
+            CornerRadius="{StaticResource IscCornerRadiusLarge}"
+            Background="{StaticResource IscNightBrush}">
+            <Grid>
+                <Image x:Name="BannerImage" Stretch="UniformToFill" HorizontalAlignment="Right" AutomationProperties.AccessibilityView="Raw" />
+                <StackPanel Orientation="Horizontal" Spacing="12" Margin="32,0" VerticalAlignment="Center">
+                    <TextBlock
+                        x:Uid="ReportsPage_Title"
+                        Text="Reports"
+                        FontFamily="{StaticResource IscFontFamily}"
+                        FontWeight="SemiBold"
+                        FontSize="36"
+                        Foreground="White" />
+                    <Border Style="{StaticResource IscBadgeBorderStyle}">
+                        <TextBlock
+                            x:Uid="ReportsPage_BetaFeature"
+                            Text="BETA" Style="{StaticResource IscBadgeTextBlockStyle}"
+                            AutomationProperties.Name="Beta feature" />
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
         <StackPanel
+            x:Name="PlainHeader"
             Grid.Row="0"
             Orientation="Horizontal" Spacing="8"
-            Margin="12,12,12,0" VerticalAlignment="Center">
+            Margin="16,12,16,0"
+            Visibility="Collapsed">
             <TextBlock
                 x:Uid="ReportsPage_Title"
-                FontFamily="{StaticResource IscFontFamily}"
                 Text="Reports"
-                Style="{ThemeResource SubtitleTextBlockStyle}" />
-            <Border
-                Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
-                CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                Style="{StaticResource IscPageTitleTextBlockStyle}" />
+            <Border Style="{StaticResource IscBadgeBorderStyle}">
                 <TextBlock
                     x:Uid="ReportsPage_BetaFeature"
-                    Text="BETA" FontSize="11" FontWeight="SemiBold"
-                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                    Text="BETA" Style="{StaticResource IscBadgeTextBlockStyle}"
                     AutomationProperties.Name="Beta feature" />
             </Border>
         </StackPanel>
@@ -36,12 +63,6 @@
                 Padding="24,20,24,24"
                 MaxWidth="480"
                 HorizontalAlignment="Center">
-
-                <FontIcon
-                    Glyph="&#xE8A5;"
-                    FontSize="44"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    HorizontalAlignment="Center" />
 
                 <TextBlock
                     x:Uid="ReportsPage_Subtitle"
@@ -59,7 +80,7 @@
                         <TextBlock
                             x:Uid="ReportsPage_SectionsTitle"
                             Text="Sections to include"
-                            Style="{ThemeResource SubtitleTextBlockStyle}"
+                            Style="{StaticResource IscSectionTitleTextBlockStyle}"
                             Margin="0,0,0,8" />
 
                         <ToggleSwitch

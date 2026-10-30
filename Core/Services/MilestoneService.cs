@@ -21,6 +21,8 @@ public sealed class MilestoneService
 
     private SqliteConnection Db => _projectStateService.Connection;
 
+    private ProjectHistory History => _projectStateService.History;
+
     public async Task<IReadOnlyList<Milestone>> GetByProjectAsync(Guid projectId)
         => await Db.QueryAsync(
             $"SELECT {Columns} FROM Milestones m WHERE m.ProjectId = $1 ORDER BY m.DueDate",
@@ -43,6 +45,7 @@ public sealed class MilestoneService
             Title = title.Trim(),
             DueDate = dueDate
         };
+        await History.RecordAsync();
         await Db.ExecuteAsync(
             "INSERT INTO Milestones (Id, ProjectId, Title, DueDate, IsComplete) VALUES ($1, $2, $3, $4, $5)",
             milestone.Id, milestone.ProjectId, milestone.Title, milestone.DueDate, milestone.IsComplete);
@@ -50,18 +53,23 @@ public sealed class MilestoneService
     }
 
     public async Task UpdateAsync(Milestone milestone)
-        => await Db.ExecuteAsync(
+    {
+        await History.RecordAsync();
+        await Db.ExecuteAsync(
             "UPDATE Milestones SET Title = $1, DueDate = $2, IsComplete = $3 WHERE Id = $4",
             milestone.Title, milestone.DueDate, milestone.IsComplete, milestone.Id);
+    }
 
     public async Task DeleteAsync(Guid id)
     {
+        await History.RecordAsync();
         await Db.ExecuteAsync("DELETE FROM MilestoneNodeLinks WHERE MilestoneId = $1", id);
         await Db.ExecuteAsync("DELETE FROM Milestones WHERE Id = $1", id);
     }
 
     public async Task MarkCompleteAsync(Guid id)
     {
+        await History.RecordAsync();
         if (await Db.ExecuteAsync("UPDATE Milestones SET IsComplete = 1 WHERE Id = $1", id) == 0)
             throw WbsException.MilestoneNotFound(id);
     }
@@ -91,11 +99,15 @@ public sealed class MilestoneService
         if ((await GetLinkedNodeIdsAsync(milestoneId)).Contains(nodeId))
             return;
 
+        await History.RecordAsync();
         await Db.ExecuteAsync("INSERT INTO MilestoneNodeLinks (MilestoneId, NodeId) VALUES ($1, $2)", milestoneId, nodeId);
     }
 
     public async Task UnlinkNodeAsync(Guid milestoneId, Guid nodeId)
-        => await Db.ExecuteAsync("DELETE FROM MilestoneNodeLinks WHERE MilestoneId = $1 AND NodeId = $2", milestoneId, nodeId);
+    {
+        await History.RecordAsync();
+        await Db.ExecuteAsync("DELETE FROM MilestoneNodeLinks WHERE MilestoneId = $1 AND NodeId = $2", milestoneId, nodeId);
+    }
 
     private static Milestone Read(SqliteDataReader r) => new()
     {

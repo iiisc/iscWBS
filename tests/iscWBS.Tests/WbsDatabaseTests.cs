@@ -163,6 +163,30 @@ public sealed class WbsDatabaseTests : IDisposable
         }
     }
 
+    [Fact]
+    public async Task FileFromAnEarlierVersion_GetsTheBaselineColumnsAndNotes_KeepingItsData()
+    {
+        string path = _dir.File("v2.iscwbs");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "sqlite-net-v2.iscwbs"), path);
+        var state = new ProjectStateService(_settings);
+        var wbs = new WbsService(state);
+
+        await state.OpenProjectAsync(path);
+        try
+        {
+            Assert.Equal(3, await state.Connection.ScalarAsync<int>("SELECT MAX(Version) FROM SchemaVersion"));
+            IReadOnlyList<WbsNode> nodes = await wbs.GetAllByProjectAsync(state.ActiveProject!.Id);
+            Assert.Equal(3, nodes.Count);
+            await wbs.SetBaselineAsync(state.ActiveProject.Id);
+            Assert.Equal(new DateTime(2026, 11, 5), (await wbs.GetByIdAsync(nodes[1].Id))!.BaselineDue);
+            await wbs.AddNoteAsync(nodes[0].Id, "Upgraded");
+        }
+        finally
+        {
+            await state.CloseProjectAsync();
+        }
+    }
+
     // The fixture was written by sqlite-net, the data layer before Microsoft.Data.Sqlite.
     [Fact]
     public async Task FileWrittenBySqliteNet_OpensWithAllItsData_AndIsWrittenBackInTheSameFormat()

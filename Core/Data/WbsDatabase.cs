@@ -7,10 +7,17 @@ namespace iscWBS.Core.Data;
 public sealed class WbsDatabase
 {
     /// <summary>
-    /// Version 2 is the baseline: older layouts were never released. When the schema changes, bump this and
-    /// upgrade files whose SchemaVersion row is lower before the app reads them.
+    /// Version 2 is the first released layout; 3 adds baseline dates and notes. When the schema changes, bump this
+    /// and upgrade files whose SchemaVersion row is lower before the app reads them.
     /// </summary>
-    private const int _currentSchemaVersion = 2;
+    private const int _currentSchemaVersion = 3;
+
+    /// <summary>Columns added since version 2. Earlier versions of the app ignore them, so they can still open the file.</summary>
+    private static readonly (string Table, string Column)[] _addedColumns =
+    [
+        ("WbsNodes", "BaselineStart"),
+        ("WbsNodes", "BaselineDue"),
+    ];
 
     private const int _appId = 0x49534357; // "ISCW"
 
@@ -22,7 +29,8 @@ public sealed class WbsDatabase
         "CREATE TABLE IF NOT EXISTS \"WbsNodes\" (\"Id\" TEXT NOT NULL PRIMARY KEY, \"ProjectId\" TEXT, \"ParentId\" TEXT, " +
             "\"Code\" TEXT, \"Title\" TEXT, \"Description\" TEXT, \"AssignedTo\" TEXT, " +
             "\"Status\" INTEGER, \"EstimatedHours\" REAL, \"ActualHours\" REAL, " +
-            "\"StartDate\" TEXT, \"DueDate\" TEXT, \"SortOrder\" INTEGER, \"IsDeliverable\" INTEGER)",
+            "\"StartDate\" TEXT, \"DueDate\" TEXT, \"SortOrder\" INTEGER, \"IsDeliverable\" INTEGER, " +
+            "\"BaselineStart\" TEXT, \"BaselineDue\" TEXT)",
         "CREATE INDEX IF NOT EXISTS \"WbsNodes_ProjectId\" ON \"WbsNodes\" (\"ProjectId\")",
         "CREATE INDEX IF NOT EXISTS \"WbsNodes_ParentId\" ON \"WbsNodes\" (\"ParentId\")",
         "CREATE TABLE IF NOT EXISTS \"Milestones\" (\"Id\" TEXT NOT NULL PRIMARY KEY, \"ProjectId\" TEXT, \"Title\" TEXT, " +
@@ -36,6 +44,9 @@ public sealed class WbsDatabase
             "\"PredecessorId\" TEXT, \"SuccessorId\" TEXT, \"Type\" INTEGER)",
         "CREATE INDEX IF NOT EXISTS \"NodeDependencies_PredecessorId\" ON \"NodeDependencies\" (\"PredecessorId\")",
         "CREATE INDEX IF NOT EXISTS \"NodeDependencies_SuccessorId\" ON \"NodeDependencies\" (\"SuccessorId\")",
+        "CREATE TABLE IF NOT EXISTS \"NodeNotes\" (\"Id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " +
+            "\"NodeId\" TEXT, \"CreatedAt\" TEXT, \"Text\" TEXT)",
+        "CREATE INDEX IF NOT EXISTS \"NodeNotes_NodeId\" ON \"NodeNotes\" (\"NodeId\")",
     ];
 
     // Calling the bundle directly rather than letting Microsoft.Data.Sqlite find it by reflection keeps it AOT-safe.
@@ -90,7 +101,13 @@ public sealed class WbsDatabase
         foreach (string statement in _schema)
             await Connection.ExecuteAsync(statement);
 
-        if (await Connection.ScalarAsync<int>("SELECT COUNT(*) FROM SchemaVersion") == 0)
+        foreach ((string table, string column) in _addedColumns)
+        {
+            if (await Connection.ScalarAsync<int>($"SELECT COUNT(*) FROM pragma_table_info('{table}') WHERE name = '{column}'") == 0)
+                await Connection.ExecuteAsync($"ALTER TABLE \"{table}\" ADD COLUMN \"{column}\" TEXT");
+        }
+
+        if (await Connection.ScalarAsync<int>("SELECT IFNULL(MAX(Version), 0) FROM SchemaVersion") < _currentSchemaVersion)
             await Connection.ExecuteAsync(
                 "INSERT INTO SchemaVersion (Version, AppliedAt) VALUES ($1, $2)", _currentSchemaVersion, DateTime.UtcNow.ToString("o"));
 

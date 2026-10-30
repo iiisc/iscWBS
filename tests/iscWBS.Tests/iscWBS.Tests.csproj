@@ -13,7 +13,7 @@
     <Compile Include="..\..\Core\Exceptions\*.cs" LinkBase="Linked\Exceptions" />
     <Compile Include="..\..\Core\Data\*.cs" LinkBase="Linked\Data" />
     <Compile Include="..\..\Core\Models\*.cs" LinkBase="Linked\Models" />
-    <Compile Include="..\..\Core\Services\WbsService.cs;..\..\Core\Services\MilestoneService.cs;..\..\Core\Services\ProjectStateService.cs;..\..\Core\Services\SettingsService.cs;..\..\Core\Services\UpdateService.cs" LinkBase="Linked\Services" />
+    <Compile Include="..\..\Core\Services\WbsService.cs;..\..\Core\Services\MilestoneService.cs;..\..\Core\Services\ProjectStateService.cs;..\..\Core\Services\SettingsService.cs;..\..\Core\Services\UpdateService.cs;..\..\Core\Services\ProjectHistory.cs" LinkBase="Linked\Services" />
     <Compile Include="..\..\Helpers\SettingsKeys.cs" LinkBase="Linked\Helpers" />
   </ItemGroup>
 

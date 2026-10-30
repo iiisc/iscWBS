@@ -10,7 +10,7 @@ public sealed class WbsService
 {
     private const string Columns =
         "Id, ProjectId, ParentId, Code, Title, Description, AssignedTo, Status, " +
-        "EstimatedHours, ActualHours, StartDate, DueDate, SortOrder, IsDeliverable";
+        "EstimatedHours, ActualHours, StartDate, DueDate, SortOrder, IsDeliverable, BaselineStart, BaselineDue";
 
     private readonly ProjectStateService _projectStateService;
 
@@ -20,6 +20,8 @@ public sealed class WbsService
     }
 
     private SqliteConnection Db => _projectStateService.Connection;
+
+    private ProjectHistory History => _projectStateService.History;
 
     public async Task<WbsNode?> GetByIdAsync(Guid id)
         => (await Db.QueryAsync($"SELECT {Columns} FROM WbsNodes WHERE Id = $1", Read, id)).FirstOrDefault();
@@ -57,15 +59,17 @@ public sealed class WbsService
             Title = title,
             SortOrder = insertAt ?? int.MaxValue
         };
+        await History.RecordAsync();
         await Db.InTransactionAsync(async () =>
         {
             // First in the list, so the stable sort puts it ahead of the sibling whose position it takes.
             List<WbsNode> nodes = [node, .. await GetAllByProjectAsync(projectId)];
             List<WbsNode> changed = Renumber(nodes);
             await Db.ExecuteAsync(
-                $"INSERT INTO WbsNodes ({Columns}) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
+                $"INSERT INTO WbsNodes ({Columns}) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
                 node.Id, node.ProjectId, node.ParentId, node.Code, node.Title, node.Description, node.AssignedTo, node.Status,
-                node.EstimatedHours, node.ActualHours, node.StartDate, node.DueDate, node.SortOrder, node.IsDeliverable);
+                node.EstimatedHours, node.ActualHours, node.StartDate, node.DueDate, node.SortOrder, node.IsDeliverable,
+                node.BaselineStart, node.BaselineDue);
             foreach (WbsNode n in changed.Where(n => n != node))
                 await SavePositionAsync(n);
         });
@@ -73,17 +77,81 @@ public sealed class WbsService
     }
 
     /// <summary>
-    /// Saves the user-editable fields only. Code, SortOrder and the tree links belong to inserts and deletes,
-    /// and the caller's copy may predate the last renumber.
+    /// Saves the user-editable fields only. Code, SortOrder and the tree links belong to inserts, moves and deletes,
+    /// and the caller's copy may predate the last renumber. When the dates change, work that depends on the node
+    /// moves later as far as its dependencies need; returns what moved.
     /// </summary>
-    public async Task UpdateNodeAsync(WbsNode node)
-        => await Db.ExecuteAsync(
-            "UPDATE WbsNodes SET Title = $1, Description = $2, AssignedTo = $3, Status = $4, EstimatedHours = $5, " +
-            "ActualHours = $6, StartDate = $7, DueDate = $8, IsDeliverable = $9 WHERE Id = $10",
-            node.Title, node.Description, node.AssignedTo, node.Status, node.EstimatedHours,
-            node.ActualHours, node.StartDate, node.DueDate, node.IsDeliverable, node.Id);
+    public async Task<IReadOnlyList<WbsNode>> UpdateNodeAsync(WbsNode node)
+    {
+        WbsNode? before = await GetByIdAsync(node.Id);
+        await History.RecordAsync();
+        IReadOnlyList<WbsNode> moved = [];
+        await Db.InTransactionAsync(async () =>
+        {
+            await Db.ExecuteAsync(
+                "UPDATE WbsNodes SET Title = $1, Description = $2, AssignedTo = $3, Status = $4, EstimatedHours = $5, " +
+                "ActualHours = $6, StartDate = $7, DueDate = $8, IsDeliverable = $9 WHERE Id = $10",
+                node.Title, node.Description, node.AssignedTo, node.Status, node.EstimatedHours,
+                node.ActualHours, node.StartDate, node.DueDate, node.IsDeliverable, node.Id);
+            if (before is not null && (before.StartDate != node.StartDate || before.DueDate != node.DueDate))
+                moved = await PushSuccessorsAsync(before.ProjectId, node.Id);
+        });
+        return moved;
+    }
 
-    /// <summary>Deletes the node with its whole subtree, their dependencies and milestone links, then renumbers.</summary>
+    /// <summary>
+    /// Moves <paramref name="id"/>'s branch to position <paramref name="index"/> among the children of
+    /// <paramref name="newParentId"/> (the top level when null), then renumbers.
+    /// </summary>
+    public async Task MoveNodeAsync(Guid id, Guid? newParentId, int index)
+    {
+        WbsNode node = await GetByIdAsync(id)
+            ?? throw WbsException.NodeNotFound(id);
+        IReadOnlyList<WbsNode> nodes = await GetAllByProjectAsync(node.ProjectId);
+        var hierarchy = new WbsHierarchy(nodes);
+        WbsNode moving = nodes.First(n => n.Id == id);
+        if (newParentId is { } target && hierarchy.CollectSubtree(moving).Any(n => n.Id == target))
+            throw new WbsException("A node can't move into its own branch.").WithMessageKey("Error_MoveIntoOwnBranch");
+
+        Dictionary<Guid, (string Code, int SortOrder)> original = nodes.ToDictionary(n => n.Id, n => (n.Code, n.SortOrder));
+        IEnumerable<WbsNode> children = newParentId is { } parent
+            ? hierarchy.ChildrenOf(parent)
+            : nodes.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder);
+        List<WbsNode> siblings = children
+            .Where(n => n.Id != id)
+            .ToList();
+        siblings.Insert(Math.Clamp(index, 0, siblings.Count), moving);
+        moving.ParentId = newParentId;
+        for (int i = 0; i < siblings.Count; i++)
+            siblings[i].SortOrder = i;
+        Renumber(nodes);
+
+        await History.RecordAsync();
+        await Db.InTransactionAsync(async () =>
+        {
+            await Db.ExecuteAsync("UPDATE WbsNodes SET ParentId = $1 WHERE Id = $2", newParentId, id);
+            foreach (WbsNode n in nodes.Where(n => original[n.Id] != (n.Code, n.SortOrder)))
+                await SavePositionAsync(n);
+        });
+    }
+
+    /// <summary>Saves every node's current dates as its baseline, to measure later changes against.</summary>
+    public async Task SetBaselineAsync(Guid projectId)
+    {
+        await History.RecordAsync();
+        await Db.ExecuteAsync("UPDATE WbsNodes SET BaselineStart = StartDate, BaselineDue = DueDate WHERE ProjectId = $1", projectId);
+    }
+
+    private async Task<IReadOnlyList<WbsNode>> PushSuccessorsAsync(Guid projectId, Guid changedId)
+    {
+        IReadOnlyList<WbsNode> moved = Scheduler.PushSuccessors(
+            await GetAllByProjectAsync(projectId), await GetAllDependenciesByProjectAsync(projectId), [changedId]);
+        foreach (WbsNode n in moved)
+            await Db.ExecuteAsync("UPDATE WbsNodes SET StartDate = $1, DueDate = $2 WHERE Id = $3", n.StartDate, n.DueDate, n.Id);
+        return moved;
+    }
+
+    /// <summary>Deletes the node with its whole subtree, their dependencies, milestone links and notes, then renumbers.</summary>
     public async Task DeleteNodeAsync(Guid id)
     {
         WbsNode node = await GetByIdAsync(id)
@@ -94,11 +162,13 @@ public sealed class WbsService
         object?[] ids = subtreeIds.Select(subtreeId => (object?)subtreeId).ToArray();
         string placeholders = string.Join(", ", ids.Select((_, i) => $"${i + 1}"));
 
+        await History.RecordAsync();
         await Db.InTransactionAsync(async () =>
         {
             await Db.ExecuteAsync(
                 $"DELETE FROM NodeDependencies WHERE PredecessorId IN ({placeholders}) OR SuccessorId IN ({placeholders})", ids);
             await Db.ExecuteAsync($"DELETE FROM MilestoneNodeLinks WHERE NodeId IN ({placeholders})", ids);
+            await Db.ExecuteAsync($"DELETE FROM NodeNotes WHERE NodeId IN ({placeholders})", ids);
             await Db.ExecuteAsync($"DELETE FROM WbsNodes WHERE Id IN ({placeholders})", ids);
             foreach (WbsNode n in Renumber(nodes.Where(other => !subtreeIds.Contains(other.Id)).ToList()))
                 await SavePositionAsync(n);
@@ -147,7 +217,8 @@ public sealed class WbsService
             },
             projectId);
 
-    public async Task AddDependencyAsync(NodeDependency dependency)
+    /// <summary>Adds the dependency and moves the successor's not-yet-started work later if it needs to; returns what moved.</summary>
+    public async Task<IReadOnlyList<WbsNode>> AddDependencyAsync(NodeDependency dependency)
     {
         if (dependency.PredecessorId == dependency.SuccessorId)
             throw new WbsException("A node cannot depend on itself.").WithMessageKey("Error_SelfDependency");
@@ -165,13 +236,63 @@ public sealed class WbsService
             throw new WbsException(
                 "Adding this dependency would create a circular dependency.").WithMessageKey("Error_CircularDependency");
 
-        await Db.ExecuteAsync(
-            "INSERT INTO NodeDependencies (PredecessorId, SuccessorId, Type) VALUES ($1, $2, $3)",
-            dependency.PredecessorId, dependency.SuccessorId, dependency.Type);
+        await History.RecordAsync();
+        IReadOnlyList<WbsNode> moved = [];
+        await Db.InTransactionAsync(async () =>
+        {
+            await Db.ExecuteAsync(
+                "INSERT INTO NodeDependencies (PredecessorId, SuccessorId, Type) VALUES ($1, $2, $3)",
+                dependency.PredecessorId, dependency.SuccessorId, dependency.Type);
+            moved = await PushSuccessorsAsync(successor.ProjectId, dependency.PredecessorId);
+        });
+        return moved;
     }
 
     public async Task RemoveDependencyAsync(int id)
-        => await Db.ExecuteAsync("DELETE FROM NodeDependencies WHERE Id = $1", id);
+    {
+        await History.RecordAsync();
+        await Db.ExecuteAsync("DELETE FROM NodeDependencies WHERE Id = $1", id);
+    }
+
+    /// <summary>The node's notes, newest first.</summary>
+    public async Task<IReadOnlyList<NodeNote>> GetNotesAsync(Guid nodeId)
+        => await Db.QueryAsync(
+            "SELECT Id, NodeId, CreatedAt, Text FROM NodeNotes WHERE NodeId = $1 ORDER BY CreatedAt DESC, Id DESC",
+            ReadNote, nodeId);
+
+    /// <summary>Notes on the project's nodes written since <paramref name="since"/>, newest first, with the node each belongs to.</summary>
+    public async Task<IReadOnlyList<(NodeNote Note, string Code, string Title)>> GetNotesSinceAsync(Guid projectId, DateTime since)
+        => await Db.QueryAsync(
+            "SELECT nn.Id, nn.NodeId, nn.CreatedAt, nn.Text, n.Code, n.Title FROM NodeNotes nn " +
+            "INNER JOIN WbsNodes n ON nn.NodeId = n.Id WHERE n.ProjectId = $1 AND nn.CreatedAt >= $2 " +
+            "ORDER BY nn.CreatedAt DESC, nn.Id DESC",
+            r => (ReadNote(r), r.GetText(4), r.GetText(5)), projectId, since);
+
+    public async Task<NodeNote> AddNoteAsync(Guid nodeId, string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            throw new WbsException("A note needs some text.").WithMessageKey("Error_NoteTextRequired");
+
+        var note = new NodeNote { NodeId = nodeId, CreatedAt = DateTime.Now, Text = text.Trim() };
+        await History.RecordAsync();
+        await Db.ExecuteAsync("INSERT INTO NodeNotes (NodeId, CreatedAt, Text) VALUES ($1, $2, $3)", note.NodeId, note.CreatedAt, note.Text);
+        note.Id = await Db.ScalarAsync<int>("SELECT last_insert_rowid()");
+        return note;
+    }
+
+    public async Task DeleteNoteAsync(int id)
+    {
+        await History.RecordAsync();
+        await Db.ExecuteAsync("DELETE FROM NodeNotes WHERE Id = $1", id);
+    }
+
+    private static NodeNote ReadNote(SqliteDataReader r) => new()
+    {
+        Id = r.GetInt32(0),
+        NodeId = r.GetGuidText(1),
+        CreatedAt = r.GetNullableDateTime(2) ?? default,
+        Text = r.GetText(3)
+    };
 
     /// <summary>Whether <paramref name="predecessorId"/> is already reachable from <paramref name="successorId"/>, so the new edge would close a loop.</summary>
     private static bool WouldCreateCycle(
@@ -219,6 +340,8 @@ public sealed class WbsService
         StartDate = r.GetNullableDateTime(10),
         DueDate = r.GetNullableDateTime(11),
         SortOrder = r.GetInt32(12),
-        IsDeliverable = r.GetBoolean(13)
+        IsDeliverable = r.GetBoolean(13),
+        BaselineStart = r.GetNullableDateTime(14),
+        BaselineDue = r.GetNullableDateTime(15)
     };
 }

@@ -16,6 +16,9 @@ public class WbsNode
     public DateTime? DueDate { get; set; }
     public int SortOrder { get; set; }
     public bool IsDeliverable { get; set; }
+    /// <summary>The dates when the baseline was last saved; null before that, or when the node had none then.</summary>
+    public DateTime? BaselineStart { get; set; }
+    public DateTime? BaselineDue { get; set; }
 
     // Screen readers announce list and picker items by their ToString.
     public override string ToString() => $"{Code} {Title}";

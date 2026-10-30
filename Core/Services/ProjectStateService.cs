@@ -19,11 +19,15 @@ public sealed class ProjectStateService
 
     public SqliteConnection Connection => _database?.Connection ?? throw WbsException.NoProjectOpen();
 
+    /// <summary>Undo and redo for the open project; emptied whenever another project opens.</summary>
+    public ProjectHistory History { get; }
+
     public event EventHandler<Project?>? ActiveProjectChanged;
 
     public ProjectStateService(SettingsService settingsService)
     {
         _settingsService = settingsService;
+        History = new ProjectHistory(() => Connection);
     }
 
     public async Task OpenProjectAsync(string filePath)
@@ -118,6 +122,7 @@ public sealed class ProjectStateService
         await CloseInternalAsync();
         _database = database;
         _activeProject = project;
+        History.Clear();
         _settingsService.AddRecentProject(filePath);
         ActiveProjectChanged?.Invoke(this, project);
     }
@@ -125,6 +130,7 @@ public sealed class ProjectStateService
     private async Task CloseInternalAsync()
     {
         _activeProject = null;
+        History.Clear();
         if (_database is null) return;
 
         WbsDatabase database = _database;

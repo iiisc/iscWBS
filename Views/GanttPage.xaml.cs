@@ -198,7 +198,6 @@ public sealed partial class GanttPage : Page, IReloadablePage
         {
             double barTop = row.RowTop + _barOffsetY;
 
-            // The saved plan, as a thin line just above where the bar is now.
             if (row.HasBaseline)
             {
                 var baseline = new Rectangle
@@ -295,6 +294,9 @@ public sealed partial class GanttPage : Page, IReloadablePage
 
     private BarDrag? _drag;
 
+    private static readonly InputSystemCursor _moveCursor   = InputSystemCursor.Create(InputSystemCursorShape.SizeAll);
+    private static readonly InputSystemCursor _resizeCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeWestEast);
+
     private bool OnResizeGrip(Rectangle bar, double x) => x >= Canvas.GetLeft(bar) + bar.Width - _resizeGrip;
 
     private void Bar_PointerPressed(object sender, PointerRoutedEventArgs e)
@@ -313,19 +315,22 @@ public sealed partial class GanttPage : Page, IReloadablePage
         double x = e.GetCurrentPoint(ChartCanvas).Position.X;
         if (_drag is null)
         {
-            ProtectedCursor = InputSystemCursor.Create(OnResizeGrip(bar, x) ? InputSystemCursorShape.SizeWestEast : InputSystemCursorShape.SizeAll);
+            InputSystemCursor cursor = OnResizeGrip(bar, x) ? _resizeCursor : _moveCursor;
+            if (ProtectedCursor != cursor)
+                ProtectedCursor = cursor;
             return;
         }
 
         double ppd = ViewModel.Layout.PixelsPerDay;
+        int days = (int)Math.Round((x - _drag.StartX) / ppd);
+        if (days == _drag.Days) return;
+        _drag.Days = days;
         (GanttRow row, List<UIElement> parts) = _bars[bar];
-        _drag.Days = (int)Math.Round((x - _drag.StartX) / ppd);
-        double dx = _drag.Days * ppd;
         if (_drag.ResizeOnly)
-            bar.Width = Math.Max(4, row.BarWidth + dx);
+            bar.Width = Math.Max(4, row.BarWidth + days * ppd);
         else
             foreach (UIElement part in parts)
-                part.RenderTransform = new TranslateTransform { X = dx };
+                part.RenderTransform = new TranslateTransform { X = days * ppd };
     }
 
     private void Bar_PointerReleased(object sender, PointerRoutedEventArgs e)

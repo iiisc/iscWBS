@@ -15,6 +15,9 @@ public sealed class WbsHierarchy
             .ToDictionary(g => g.Key, g => g.OrderBy(n => n.SortOrder).ToList());
     }
 
+    /// <summary>The top-level nodes, in order.</summary>
+    public IReadOnlyList<WbsNode> Roots => _roots;
+
     public bool HasChildren(Guid id) => _children.ContainsKey(id);
 
     public IReadOnlyList<WbsNode> ChildrenOf(Guid id)

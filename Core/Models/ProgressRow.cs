@@ -33,15 +33,19 @@ public sealed record ProgressRow(
         WbsHierarchy hierarchy = new(allNodes);
         return hierarchy.DepthFirst()
             .Where(entry => include(entry.Node))
-            .Select(entry => new ProgressRow(
-                entry.Node.Code,
-                entry.Node.Title,
-                hierarchy.Progress(entry.Node),
-                DependencyConstraints.EffectiveStatus(entry.Node, blockedIds),
-                hierarchy.CollectSubtree(entry.Node).Max(n => n.DueDate),
-                entry.Depth,
-                entry.Node.IsDeliverable,
-                hierarchy.CollectSubtree(entry.Node).Max(n => n.BaselineDue)))
+            .Select(entry =>
+            {
+                List<WbsNode> subtree = hierarchy.CollectSubtree(entry.Node);
+                return new ProgressRow(
+                    entry.Node.Code,
+                    entry.Node.Title,
+                    hierarchy.Progress(entry.Node),
+                    DependencyConstraints.EffectiveStatus(entry.Node, blockedIds),
+                    subtree.Max(n => n.DueDate),
+                    entry.Depth,
+                    entry.Node.IsDeliverable,
+                    subtree.Max(n => n.BaselineDue));
+            })
             .ToList();
     }
 }

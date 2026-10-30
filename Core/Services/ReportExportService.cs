@@ -34,8 +34,8 @@ public sealed class ReportExportService
             await _wbsService.GetAllDependenciesByProjectAsync(projectId);
         IReadOnlySet<Guid> blockedIds =
             DependencyConstraints.BlockedNodeIds(nodes, dependencies);
-        IReadOnlyList<Milestone> milestones =
-            await _milestoneService.GetUpcomingAsync(projectId);
+        List<Milestone> milestones =
+            [.. (await _milestoneService.GetByProjectAsync(projectId)).Where(m => m.IsDueSoon(DateTime.Today))];
         var notes = await _wbsService.GetNotesSinceAsync(projectId, DateTime.Today.AddDays(-RecentNoteDays));
 
         var data = new ProjectStatusReportData(

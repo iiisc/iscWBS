@@ -1,7 +1,7 @@
 using System.Windows.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Imaging;
+using iscWBS.Helpers;
 
 namespace iscWBS.Views.Controls;
 
@@ -19,18 +19,9 @@ public sealed partial class IscEmptyState : UserControl
         set
         {
             _illustration = value;
-            IllustrationImage.Source = LoadIllustration(value);
+            IllustrationImage.Source = EmbeddedAssets.Png($"{value}.png");
             IllustrationImage.Visibility = IllustrationImage.Source is null ? Visibility.Collapsed : Visibility.Visible;
         }
-    }
-
-    public static BitmapImage? LoadIllustration(string name)
-    {
-        if (typeof(IscEmptyState).Assembly.GetManifestResourceStream($"{name}.png") is not { } stream)
-            return null;
-        var image = new BitmapImage();
-        _ = image.SetSourceAsync(stream.AsRandomAccessStream());
-        return image;
     }
 
     public string Title

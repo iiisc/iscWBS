@@ -25,7 +25,8 @@ public sealed class BackupService(string folder, Action<Exception>? onError = nu
             Directory.CreateDirectory(folder);
             List<string> existing = Backups(folder);
             // A project opened and closed without changes would otherwise fill the folder with identical copies.
-            if (existing.Count > 0 && File.ReadAllBytes(existing[0]).AsSpan().SequenceEqual(File.ReadAllBytes(projectPath)))
+            if (existing.Count > 0 && new FileInfo(existing[0]).Length == new FileInfo(projectPath).Length
+                && File.ReadAllBytes(existing[0]).AsSpan().SequenceEqual(File.ReadAllBytes(projectPath)))
                 return;
 
             File.Copy(projectPath, Path.Combine(folder, $"{DateTime.Now:yyyy-MM-dd_HHmmss}.iscwbs"), overwrite: true);

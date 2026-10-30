@@ -127,7 +127,7 @@ public sealed class ProjectStateService
         _activeProject = project;
         _filePath = filePath;
         History.Clear();
-        _backups?.BackUp(filePath);
+        await BackUpAsync(filePath);
         _settingsService.AddRecentProject(filePath);
         ActiveProjectChanged?.Invoke(this, project);
     }
@@ -141,8 +141,12 @@ public sealed class ProjectStateService
         WbsDatabase database = _database;
         _database = null;
         await database.CloseAsync();
-        _backups?.BackUp(_filePath!);
+        await BackUpAsync(_filePath!);
     }
+
+    // Off the UI thread: a project on a USB stick can be slow to read.
+    private Task BackUpAsync(string filePath)
+        => _backups is { } backups ? Task.Run(() => backups.BackUp(filePath)) : Task.CompletedTask;
 
     /// <summary>Closes the project and takes its closing backup without waiting, for when the app is exiting.</summary>
     public void CloseOnExit()

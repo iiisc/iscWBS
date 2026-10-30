@@ -136,6 +136,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
 
     partial void OnDiagramNodesChanged(IReadOnlyList<WbsNode>? value)
     {
+        _hierarchy = new WbsHierarchy(value ?? []);
         OnPropertyChanged(nameof(HasNoNodes));
         NotifyMoveCommands();
     }
@@ -162,7 +163,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     private void ReportRescheduled(IReadOnlyList<WbsNode> moved)
     {
         if (moved.Count > 0)
-            RescheduleNotice = string.Join(", ", moved.Select(n => $"{n.Code} {n.Title}"));
+            RescheduleNotice = string.Join(", ", moved);
     }
 
     /// <summary>Nodes whose code or title contains the search text, for the search box's suggestions.</summary>
@@ -253,15 +254,17 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         _ = LoadNotesAsync(value.Id);
     }
 
-    /// <summary>The selected node's siblings in order, and its place among them.</summary>
-    private (List<WbsNode> Siblings, int Index) Position(WbsNode node)
+    private WbsHierarchy _hierarchy = new([]);
+
+    /// <summary>The node's siblings in order, and its place among them.</summary>
+    private (IReadOnlyList<WbsNode> Siblings, int Index) Position(WbsNode node)
     {
-        List<WbsNode> siblings = (DiagramNodes ?? []).Where(n => n.ParentId == node.ParentId).OrderBy(n => n.SortOrder).ToList();
-        return (siblings, siblings.FindIndex(n => n.Id == node.Id));
+        IReadOnlyList<WbsNode> siblings = node.ParentId is { } parent ? _hierarchy.ChildrenOf(parent) : _hierarchy.Roots;
+        return (siblings, siblings.TakeWhile(n => n.Id != node.Id).Count());
     }
 
     private bool CanMoveEarlier => SelectedNode is { } node && Position(node).Index > 0;
-    private bool CanMoveLater => SelectedNode is { } node && Position(node) is var (siblings, index) && index >= 0 && index < siblings.Count - 1;
+    private bool CanMoveLater => SelectedNode is { } node && Position(node) is var (siblings, index) && index < siblings.Count - 1;
     private bool CanOutdent => SelectedNode?.ParentId is not null;
 
     [RelayCommand(CanExecute = nameof(CanMoveEarlier))]
@@ -274,7 +277,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanMoveEarlier))]
     private Task IndentAsync() => MoveSelectedAsync(node =>
     {
-        (List<WbsNode> siblings, int index) = Position(node);
+        (IReadOnlyList<WbsNode> siblings, int index) = Position(node);
         return (siblings[index - 1].Id, int.MaxValue);
     });
 

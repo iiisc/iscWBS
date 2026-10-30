@@ -42,11 +42,9 @@ public sealed partial class DashboardViewModel : ObservableObject
     private readonly string _allAssignees;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(OverallPercentText), nameof(IsAllDone), nameof(NotStartedCount))]
+    [NotifyPropertyChangedFor(nameof(OverallPercentText), nameof(IsAllDone))]
     public partial ProjectSummary Summary { get; set; } = ProjectSummary.Compute([], new HashSet<Guid>());
 
-    // Blocked only covers work that hasn't started, so the four statuses add up to the total.
-    public int NotStartedCount => Summary.TotalNodes - Summary.CompleteCount - Summary.InProgressCount - Summary.BlockedCount;
 
     public bool IsAllDone => Summary.TotalNodes > 0 && Summary.CompleteCount == Summary.TotalNodes;
 
@@ -59,7 +57,6 @@ public sealed partial class DashboardViewModel : ObservableObject
     public ObservableCollection<ProgressRow> Rows { get; } = new();
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasNoDeliverables))]
     public partial bool OnlyDeliverables { get; set; }
 
     public bool HasNoDeliverables => OnlyDeliverables && !_allNodes.Any(n => n.IsDeliverable);
@@ -72,7 +69,7 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     public string MilestonesTitle => FilterStartDate.HasValue || FilterEndDate.HasValue
         ? Strings.Get("Dashboard_MilestonesInDates")
-        : Strings.Format("Dashboard_UpcomingMilestones", MilestoneService.UpcomingDays);
+        : Strings.Format("Dashboard_UpcomingMilestones", Milestone.UpcomingDays);
 
     public DashboardViewModel(
         ProjectStateService projectStateService,
@@ -186,7 +183,7 @@ public sealed partial class DashboardViewModel : ObservableObject
     {
         StatusSlices = summary.TotalNodes == 0 ? [] :
         [
-            new(WbsStatus.NotStarted, NotStartedCount),
+            new(WbsStatus.NotStarted, summary.NotStartedCount),
             new(WbsStatus.InProgress, summary.InProgressCount),
             new(WbsStatus.Complete,   summary.CompleteCount),
             new(WbsStatus.Blocked,    summary.BlockedCount),
@@ -221,7 +218,7 @@ public sealed partial class DashboardViewModel : ObservableObject
         if (FilterEndDate.HasValue)
             filtered = filtered.Where(m => m.DueDate.Date <= FilterEndDate.Value.Date);
         else if (!FilterStartDate.HasValue)
-            filtered = filtered.Where(m => m.DueDate.Date <= DateTime.Today.AddDays(MilestoneService.UpcomingDays));
+            filtered = filtered.Where(m => m.IsDueSoon(DateTime.Today));
 
         foreach (Milestone m in filtered)
             UpcomingMilestones.Add(new MilestoneRowViewModel { Milestone = m });

@@ -10,6 +10,9 @@ public sealed record ProjectSummary(
     int AtRiskCount,
     double PercentComplete)
 {
+    // Blocked only covers work that hasn't started, so the four statuses add up to the total.
+    public int NotStartedCount => TotalNodes - CompleteCount - InProgressCount - BlockedCount;
+
     public static ProjectSummary Compute(IReadOnlyList<WbsNode> nodes, IReadOnlySet<Guid> blockedNodeIds)
     {
         int total    = nodes.Count;

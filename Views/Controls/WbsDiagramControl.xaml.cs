@@ -123,6 +123,8 @@ public sealed partial class WbsDiagramControl : UserControl
     public event EventHandler<(Guid NodeId, Guid NewParentId)>? NodeDropped;
 
     private Guid _draggedId;
+    // The dragged node's branch and parent, where it can't be dropped.
+    private HashSet<Guid> _noDropIds = [];
 
     private sealed class DiagramNode
     {
@@ -230,7 +232,7 @@ public sealed partial class WbsDiagramControl : UserControl
             node.Children.AddRange(hierarchy.ChildrenOf(n.Id).Select(Build));
             return node;
         }
-        List<DiagramNode> roots = AllNodes.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder).Select(Build).ToList();
+        List<DiagramNode> roots = hierarchy.Roots.Select(Build).ToList();
 
         foreach (DiagramNode root in roots)
             MeasureSubtree(root);
@@ -746,24 +748,22 @@ public sealed partial class WbsDiagramControl : UserControl
 
     private void Card_DragStarting(UIElement sender, DragStartingEventArgs args)
     {
-        if (sender is not Border { Tag: WbsNode node }) return;
+        if (sender is not Border { Tag: WbsNode node } || _hierarchy is null) return;
         _draggedId = node.Id;
-        args.Data.SetText($"{node.Code} {node.Title}");
+        _noDropIds = [.. _hierarchy.CollectSubtree(node).Select(n => n.Id)];
+        if (node.ParentId is { } parent)
+            _noDropIds.Add(parent);
+        args.Data.SetText(node.ToString());
         args.Data.RequestedOperation = DataPackageOperation.Move;
     }
 
-    // A card can't go under itself, anything in its own branch, or the parent it already has.
-    private bool CanDropOn(WbsNode target)
-        => _draggedId != Guid.Empty && _hierarchy is not null
-           && AllNodes?.FirstOrDefault(n => n.Id == _draggedId) is { } dragged
-           && dragged.ParentId != target.Id
-           && !_hierarchy.CollectSubtree(dragged).Any(n => n.Id == target.Id);
+    private bool CanDropOn(WbsNode target) => _draggedId != Guid.Empty && !_noDropIds.Contains(target.Id);
 
     private void Card_DragOver(object sender, DragEventArgs e)
     {
         if (sender is not Border { Tag: WbsNode target } || !CanDropOn(target)) return;
         e.AcceptedOperation = DataPackageOperation.Move;
-        e.DragUIOverride.Caption = Strings.Format("Diagram_DropUnder", $"{target.Code} {target.Title}");
+        e.DragUIOverride.Caption = Strings.Format("Diagram_DropUnder", target);
     }
 
     private void Card_Drop(object sender, DragEventArgs e)
@@ -791,7 +791,7 @@ public sealed partial class WbsDiagramControl : UserControl
         {
             IReadOnlyList<WbsNode> siblings = current.ParentId is { } parentId
                 ? _hierarchy.ChildrenOf(parentId)
-                : AllNodes.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder).ToList();
+                : _hierarchy.Roots;
             int index = siblings.Select(n => n.Id).ToList().IndexOf(current.Id);
             target = e.Key switch
             {

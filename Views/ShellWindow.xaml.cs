@@ -57,7 +57,7 @@ public sealed partial class ShellWindow : Window
         // Text in the WBS detail panel is saved on blur, which closing the window skips.
         Closed += (_, _) =>
         {
-            (ContentFrame.Content as WbsTreePage)?.ViewModel.SaveIfDirty();
+            (ContentFrame.Content as IReloadablePage)?.FlushAsync();
             _projectStateService.CloseOnExit();
         };
     }

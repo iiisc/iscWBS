@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using iscWBS.Helpers;
 using iscWBS.ViewModels;
-using iscWBS.Views.Controls;
 
 namespace iscWBS.Views;
 
@@ -15,7 +14,7 @@ public sealed partial class DashboardPage : Page, IReloadablePage
     {
         InitializeComponent();
         ViewModel = App.Services.CreateDashboardViewModel();
-        AllDoneImage.Source = IscEmptyState.LoadIllustration("AllDone");
+        AllDoneImage.Source = EmbeddedAssets.Png("AllDone.png");
     }
 
     public static Thickness Indent(int depth) => new(depth * 16, 0, 0, 0);

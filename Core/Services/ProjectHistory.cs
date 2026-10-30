@@ -23,10 +23,15 @@ public sealed class ProjectHistory(Func<SqliteConnection> connection)
 
     public event EventHandler? Changed;
 
-    /// <summary>Call just before a change; undoing it brings the project back to how it is now.</summary>
-    public async Task RecordAsync()
+    /// <summary>
+    /// Runs <paramref name="change"/> in one transaction as an undoable step. A change that fails is rolled back
+    /// and leaves no step behind.
+    /// </summary>
+    public async Task ChangeAsync(Func<Task> change)
     {
-        _undo.AddLast(await TakeAsync());
+        Snapshot before = await TakeAsync();
+        await connection().InTransactionAsync(change);
+        _undo.AddLast(before);
         if (_undo.Count > Depth)
             _undo.RemoveFirst();
         _redo.Clear();

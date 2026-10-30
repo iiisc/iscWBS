@@ -59,8 +59,7 @@ public sealed class WbsService
             Title = title,
             SortOrder = insertAt ?? int.MaxValue
         };
-        await History.RecordAsync();
-        await Db.InTransactionAsync(async () =>
+        await History.ChangeAsync(async () =>
         {
             // First in the list, so the stable sort puts it ahead of the sibling whose position it takes.
             List<WbsNode> nodes = [node, .. await GetAllByProjectAsync(projectId)];
@@ -84,9 +83,8 @@ public sealed class WbsService
     public async Task<IReadOnlyList<WbsNode>> UpdateNodeAsync(WbsNode node)
     {
         WbsNode? before = await GetByIdAsync(node.Id);
-        await History.RecordAsync();
         IReadOnlyList<WbsNode> moved = [];
-        await Db.InTransactionAsync(async () =>
+        await History.ChangeAsync(async () =>
         {
             await Db.ExecuteAsync(
                 "UPDATE WbsNodes SET Title = $1, Description = $2, AssignedTo = $3, Status = $4, EstimatedHours = $5, " +
@@ -114,10 +112,7 @@ public sealed class WbsService
             throw new WbsException("A node can't move into its own branch.").WithMessageKey("Error_MoveIntoOwnBranch");
 
         Dictionary<Guid, (string Code, int SortOrder)> original = nodes.ToDictionary(n => n.Id, n => (n.Code, n.SortOrder));
-        IEnumerable<WbsNode> children = newParentId is { } parent
-            ? hierarchy.ChildrenOf(parent)
-            : nodes.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder);
-        List<WbsNode> siblings = children
+        List<WbsNode> siblings = (newParentId is { } parent ? hierarchy.ChildrenOf(parent) : hierarchy.Roots)
             .Where(n => n.Id != id)
             .ToList();
         siblings.Insert(Math.Clamp(index, 0, siblings.Count), moving);
@@ -126,8 +121,7 @@ public sealed class WbsService
             siblings[i].SortOrder = i;
         Renumber(nodes);
 
-        await History.RecordAsync();
-        await Db.InTransactionAsync(async () =>
+        await History.ChangeAsync(async () =>
         {
             await Db.ExecuteAsync("UPDATE WbsNodes SET ParentId = $1 WHERE Id = $2", newParentId, id);
             foreach (WbsNode n in nodes.Where(n => original[n.Id] != (n.Code, n.SortOrder)))
@@ -138,8 +132,7 @@ public sealed class WbsService
     /// <summary>Saves every node's current dates as its baseline, to measure later changes against.</summary>
     public async Task SetBaselineAsync(Guid projectId)
     {
-        await History.RecordAsync();
-        await Db.ExecuteAsync("UPDATE WbsNodes SET BaselineStart = StartDate, BaselineDue = DueDate WHERE ProjectId = $1", projectId);
+        await History.ChangeAsync(() => Db.ExecuteAsync("UPDATE WbsNodes SET BaselineStart = StartDate, BaselineDue = DueDate WHERE ProjectId = $1", projectId));
     }
 
     private async Task<IReadOnlyList<WbsNode>> PushSuccessorsAsync(Guid projectId, Guid changedId)
@@ -162,8 +155,7 @@ public sealed class WbsService
         object?[] ids = subtreeIds.Select(subtreeId => (object?)subtreeId).ToArray();
         string placeholders = string.Join(", ", ids.Select((_, i) => $"${i + 1}"));
 
-        await History.RecordAsync();
-        await Db.InTransactionAsync(async () =>
+        await History.ChangeAsync(async () =>
         {
             await Db.ExecuteAsync(
                 $"DELETE FROM NodeDependencies WHERE PredecessorId IN ({placeholders}) OR SuccessorId IN ({placeholders})", ids);
@@ -200,7 +192,7 @@ public sealed class WbsService
             }
         }
 
-        Walk(nodes.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder).ToList(), string.Empty);
+        Walk(hierarchy.Roots, string.Empty);
         return changed;
     }
 
@@ -236,9 +228,8 @@ public sealed class WbsService
             throw new WbsException(
                 "Adding this dependency would create a circular dependency.").WithMessageKey("Error_CircularDependency");
 
-        await History.RecordAsync();
         IReadOnlyList<WbsNode> moved = [];
-        await Db.InTransactionAsync(async () =>
+        await History.ChangeAsync(async () =>
         {
             await Db.ExecuteAsync(
                 "INSERT INTO NodeDependencies (PredecessorId, SuccessorId, Type) VALUES ($1, $2, $3)",
@@ -250,8 +241,7 @@ public sealed class WbsService
 
     public async Task RemoveDependencyAsync(int id)
     {
-        await History.RecordAsync();
-        await Db.ExecuteAsync("DELETE FROM NodeDependencies WHERE Id = $1", id);
+        await History.ChangeAsync(() => Db.ExecuteAsync("DELETE FROM NodeDependencies WHERE Id = $1", id));
     }
 
     /// <summary>The node's notes, newest first.</summary>
@@ -274,16 +264,17 @@ public sealed class WbsService
             throw new WbsException("A note needs some text.").WithMessageKey("Error_NoteTextRequired");
 
         var note = new NodeNote { NodeId = nodeId, CreatedAt = DateTime.Now, Text = text.Trim() };
-        await History.RecordAsync();
-        await Db.ExecuteAsync("INSERT INTO NodeNotes (NodeId, CreatedAt, Text) VALUES ($1, $2, $3)", note.NodeId, note.CreatedAt, note.Text);
-        note.Id = await Db.ScalarAsync<int>("SELECT last_insert_rowid()");
+        await History.ChangeAsync(async () =>
+        {
+            await Db.ExecuteAsync("INSERT INTO NodeNotes (NodeId, CreatedAt, Text) VALUES ($1, $2, $3)", note.NodeId, note.CreatedAt, note.Text);
+            note.Id = await Db.ScalarAsync<int>("SELECT last_insert_rowid()");
+        });
         return note;
     }
 
     public async Task DeleteNoteAsync(int id)
     {
-        await History.RecordAsync();
-        await Db.ExecuteAsync("DELETE FROM NodeNotes WHERE Id = $1", id);
+        await History.ChangeAsync(() => Db.ExecuteAsync("DELETE FROM NodeNotes WHERE Id = $1", id));
     }
 
     private static NodeNote ReadNote(SqliteDataReader r) => new()

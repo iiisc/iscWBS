@@ -10,7 +10,6 @@ public sealed class MilestoneService
 {
     private const string Columns = "m.Id, m.ProjectId, m.Title, m.DueDate, m.IsComplete";
 
-    public const int UpcomingDays = 60;
 
     private readonly ProjectStateService _projectStateService;
 
@@ -28,12 +27,6 @@ public sealed class MilestoneService
             $"SELECT {Columns} FROM Milestones m WHERE m.ProjectId = $1 ORDER BY m.DueDate",
             Read, projectId);
 
-    /// <summary>Incomplete milestones due within <see cref="UpcomingDays"/> from today, overdue ones included.</summary>
-    public async Task<IReadOnlyList<Milestone>> GetUpcomingAsync(Guid projectId)
-        => await Db.QueryAsync(
-            $"SELECT {Columns} FROM Milestones m WHERE m.ProjectId = $1 AND m.IsComplete = 0 AND m.DueDate <= $2 ORDER BY m.DueDate",
-            Read, projectId, DateTime.Today.AddDays(UpcomingDays));
-
     public async Task<Milestone> CreateAsync(Guid projectId, string title, DateTime dueDate)
     {
         if (string.IsNullOrWhiteSpace(title))
@@ -45,33 +38,35 @@ public sealed class MilestoneService
             Title = title.Trim(),
             DueDate = dueDate
         };
-        await History.RecordAsync();
-        await Db.ExecuteAsync(
+        await History.ChangeAsync(() => Db.ExecuteAsync(
             "INSERT INTO Milestones (Id, ProjectId, Title, DueDate, IsComplete) VALUES ($1, $2, $3, $4, $5)",
-            milestone.Id, milestone.ProjectId, milestone.Title, milestone.DueDate, milestone.IsComplete);
+            milestone.Id, milestone.ProjectId, milestone.Title, milestone.DueDate, milestone.IsComplete));
         return milestone;
     }
 
     public async Task UpdateAsync(Milestone milestone)
     {
-        await History.RecordAsync();
-        await Db.ExecuteAsync(
+        await History.ChangeAsync(() => Db.ExecuteAsync(
             "UPDATE Milestones SET Title = $1, DueDate = $2, IsComplete = $3 WHERE Id = $4",
-            milestone.Title, milestone.DueDate, milestone.IsComplete, milestone.Id);
+            milestone.Title, milestone.DueDate, milestone.IsComplete, milestone.Id));
     }
 
     public async Task DeleteAsync(Guid id)
     {
-        await History.RecordAsync();
-        await Db.ExecuteAsync("DELETE FROM MilestoneNodeLinks WHERE MilestoneId = $1", id);
-        await Db.ExecuteAsync("DELETE FROM Milestones WHERE Id = $1", id);
+        await History.ChangeAsync(async () =>
+        {
+            await Db.ExecuteAsync("DELETE FROM MilestoneNodeLinks WHERE MilestoneId = $1", id);
+            await Db.ExecuteAsync("DELETE FROM Milestones WHERE Id = $1", id);
+        });
     }
 
     public async Task MarkCompleteAsync(Guid id)
     {
-        await History.RecordAsync();
-        if (await Db.ExecuteAsync("UPDATE Milestones SET IsComplete = 1 WHERE Id = $1", id) == 0)
-            throw WbsException.MilestoneNotFound(id);
+        await History.ChangeAsync(async () =>
+        {
+            if (await Db.ExecuteAsync("UPDATE Milestones SET IsComplete = 1 WHERE Id = $1", id) == 0)
+                throw WbsException.MilestoneNotFound(id);
+        });
     }
 
     public async Task<IReadOnlyList<Guid>> GetLinkedNodeIdsAsync(Guid milestoneId)
@@ -99,14 +94,12 @@ public sealed class MilestoneService
         if ((await GetLinkedNodeIdsAsync(milestoneId)).Contains(nodeId))
             return;
 
-        await History.RecordAsync();
-        await Db.ExecuteAsync("INSERT INTO MilestoneNodeLinks (MilestoneId, NodeId) VALUES ($1, $2)", milestoneId, nodeId);
+        await History.ChangeAsync(() => Db.ExecuteAsync("INSERT INTO MilestoneNodeLinks (MilestoneId, NodeId) VALUES ($1, $2)", milestoneId, nodeId));
     }
 
     public async Task UnlinkNodeAsync(Guid milestoneId, Guid nodeId)
     {
-        await History.RecordAsync();
-        await Db.ExecuteAsync("DELETE FROM MilestoneNodeLinks WHERE MilestoneId = $1 AND NodeId = $2", milestoneId, nodeId);
+        await History.ChangeAsync(() => Db.ExecuteAsync("DELETE FROM MilestoneNodeLinks WHERE MilestoneId = $1 AND NodeId = $2", milestoneId, nodeId));
     }
 
     private static Milestone Read(SqliteDataReader r) => new()

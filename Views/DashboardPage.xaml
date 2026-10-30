@@ -116,7 +116,6 @@
             Visibility="{x:Bind ViewModel.NothingMatchesFilters, Mode=OneWay}" />
 
         <Grid Grid.Row="2" Margin="16,0,16,16" ColumnSpacing="12" Visibility="{x:Bind ViewModel.HasMatches, Mode=OneWay}">
-            <!-- The status cards are toggle buttons that filter the list below; the selected one is outlined in the accent. -->
             <Grid.Resources>
                 <SolidColorBrush x:Key="ToggleButtonBackgroundPointerOver" Color="{ThemeResource IscSurfaceColor}" />
                 <SolidColorBrush x:Key="ToggleButtonBackgroundPressed" Color="{ThemeResource SystemAccentColor}" Opacity="0.12" />
@@ -167,7 +166,7 @@
                         <controls:StatusMarker Status="NotStarted" />
                         <TextBlock x:Uid="DashboardPage_KpiNotStarted" Text="Not Started" Style="{StaticResource KpiLabelStyle}" />
                     </StackPanel>
-                    <TextBlock x:Uid="DashboardPage_NotStartedTaskCount" Text="{x:Bind ViewModel.NotStartedCount, Mode=OneWay}"
+                    <TextBlock x:Uid="DashboardPage_NotStartedTaskCount" Text="{x:Bind ViewModel.Summary.NotStartedCount, Mode=OneWay}"
                                Style="{StaticResource KpiValueStyle}"
                                AutomationProperties.Name="Not started task count" />
                 </StackPanel>
@@ -316,7 +315,6 @@
                                         Padding="4,10"
                                         BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                                         BorderThickness="0,0,0,1">
-                                        <!-- Indented by depth, so the outline reads as in the tree -->
                                         <Grid RowSpacing="6" ColumnSpacing="12" Margin="{x:Bind local:DashboardPage.Indent(Depth)}">
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto" />

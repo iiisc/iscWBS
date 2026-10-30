@@ -1,7 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.UI.ViewManagement;
+using iscWBS.Helpers;
 using iscWBS.ViewModels;
 
 namespace iscWBS.Views;
@@ -27,9 +27,6 @@ public sealed partial class ReportsPage : Page
         Banner.Visibility = highContrast ? Visibility.Collapsed : Visibility.Visible;
         PlainHeader.Visibility = highContrast ? Visibility.Visible : Visibility.Collapsed;
 
-        string name = ActualTheme == ElementTheme.Light ? "ReportsHeaderLight.svg" : "ReportsHeader.svg";
-        var banner = new SvgImageSource();
-        _ = banner.SetSourceAsync(typeof(ReportsPage).Assembly.GetManifestResourceStream(name)!.AsRandomAccessStream());
-        BannerImage.Source = banner;
+        BannerImage.Source = EmbeddedAssets.Svg(ActualTheme == ElementTheme.Light ? "ReportsHeaderLight.svg" : "ReportsHeader.svg");
     }
 }

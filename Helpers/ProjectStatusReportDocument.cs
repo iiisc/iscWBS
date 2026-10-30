@@ -15,17 +15,15 @@ internal sealed class ProjectStatusReportDocument : IDocument
     private static readonly string _green = StatusPalette.Hex(WbsStatus.Complete);
     private static readonly string _red   = StatusPalette.Hex(WbsStatus.Blocked);
     private const string _amber      = "#C47D0E";
-    // The brand's light theme: background, border, text, muted text and connector purple.
+    // The brand's light-theme colours.
     private const string _headerBg   = "#F6F4FD";
     private const string _border     = "#DDD8F2";
     private const string _textDark   = "#1E1838";
     private const string _textMuted  = "#5A4F96";
-    private const string _sectionFg  = "#5A4F96";
     private const string _brand      = "#7465C9";
     private const string _rowAltBg   = "#FAF9FE";
 
-    private static readonly string _logoSvg =
-        new StreamReader(typeof(ProjectStatusReportDocument).Assembly.GetManifestResourceStream("Logo.svg")!).ReadToEnd();
+    private static readonly string _logoSvg = EmbeddedAssets.Text("Logo.svg");
 
     public ProjectStatusReportDocument(ProjectStatusReportData data, ReportOptions options)
     {
@@ -44,10 +42,10 @@ internal sealed class ProjectStatusReportDocument : IDocument
     public DocumentSettings GetSettings() => DocumentSettings.Default;
 
     private static void SectionTitle(ColumnDescriptor col, string key, string? color = null)
-        => col.Item().Text(Strings.Get(key)).FontSize(9).Bold().FontColor(color ?? _sectionFg).LetterSpacing(0.05f);
+        => col.Item().Text(Strings.Get(key)).FontSize(9).Bold().FontColor(color ?? _textMuted).LetterSpacing(0.05f);
 
     private static void HeaderRow(TableDescriptor t, float padding, params string[] keys)
-        => HeaderRow(t, _headerBg, _sectionFg, padding, keys);
+        => HeaderRow(t, _headerBg, _textMuted, padding, keys);
 
     private static void HeaderRow(TableDescriptor t, string background, string color, float padding, params string[] keys)
         => t.Header(h =>

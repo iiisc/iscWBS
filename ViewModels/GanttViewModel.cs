@@ -103,7 +103,7 @@ public sealed partial class GanttViewModel : ObservableObject
         {
             IReadOnlyList<WbsNode> moved = await _wbsService.UpdateNodeAsync(node);
             if (moved.Count > 0)
-                RescheduleNotice = string.Join(", ", moved.Select(n => $"{n.Code} {n.Title}"));
+                RescheduleNotice = string.Join(", ", moved);
         }
         catch (Exception ex)
         {

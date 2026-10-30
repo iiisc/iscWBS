@@ -10,33 +10,6 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border
-            x:Name="Banner"
-            Grid.Row="0"
-            Margin="16,16,16,0"
-            MaxWidth="800"
-            Height="200"
-            CornerRadius="{StaticResource IscCornerRadiusLarge}">
-            <Grid>
-                <Image x:Name="BannerImage" Stretch="UniformToFill" HorizontalAlignment="Right" AutomationProperties.AccessibilityView="Raw" />
-                <StackPanel Orientation="Horizontal" Spacing="12" Margin="32,0" VerticalAlignment="Center">
-                    <TextBlock
-                        x:Uid="ReportsPage_Title"
-                        Text="Reports"
-                        FontFamily="{StaticResource IscFontFamily}"
-                        FontWeight="SemiBold"
-                        FontSize="36"
-                        Foreground="{ThemeResource IscTextBrush}" />
-                    <Border Style="{StaticResource IscBadgeBorderStyle}">
-                        <TextBlock
-                            x:Uid="ReportsPage_BetaFeature"
-                            Text="BETA" Style="{StaticResource IscBadgeTextBlockStyle}"
-                            AutomationProperties.Name="Beta feature" />
-                    </Border>
-                </StackPanel>
-            </Grid>
-        </Border>
-
         <StackPanel
             x:Name="PlainHeader"
             Grid.Row="0"
@@ -62,6 +35,31 @@
                 MaxWidth="480"
                 HorizontalAlignment="Center">
 
+                <!-- As wide as the settings below it; the height keeps the art's 4:1 shape. -->
+                <Border
+                    x:Name="Banner"
+                    Height="108"
+                    CornerRadius="{StaticResource IscCornerRadiusMedium}">
+                    <Grid>
+                        <Image x:Name="BannerImage" Stretch="UniformToFill" HorizontalAlignment="Right" AutomationProperties.AccessibilityView="Raw" />
+                        <StackPanel Orientation="Horizontal" Spacing="10" Margin="24,0" VerticalAlignment="Center">
+                            <TextBlock
+                                x:Uid="ReportsPage_Title"
+                                Text="Reports"
+                                FontFamily="{StaticResource IscFontFamily}"
+                                FontWeight="SemiBold"
+                                FontSize="28"
+                                Foreground="{ThemeResource IscTextBrush}" />
+                            <Border Style="{StaticResource IscBadgeBorderStyle}">
+                                <TextBlock
+                                    x:Uid="ReportsPage_BetaFeature"
+                                    Text="BETA" Style="{StaticResource IscBadgeTextBlockStyle}"
+                                    AutomationProperties.Name="Beta feature" />
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
                 <TextBlock
                     x:Uid="ReportsPage_Subtitle"
                     Text="Customise and generate a PDF snapshot of the current project status."
@@ -72,7 +70,7 @@
                 <Border
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
-                    CornerRadius="8" Padding="16,14">
+                    CornerRadius="{StaticResource IscCornerRadiusMedium}" Padding="16,14">
                     <StackPanel Spacing="4">
 
                         <TextBlock

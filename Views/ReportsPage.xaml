@@ -123,6 +123,13 @@
                             OnContent="Included" OffContent="Excluded"
                             AutomationProperties.Name="Include WBS tree outline section" />
 
+                        <ToggleSwitch
+                            x:Uid="ReportsPage_ToggleNotes"
+                            IsOn="{x:Bind ViewModel.IncludeNotes, Mode=TwoWay}"
+                            Header="Notes from the last 30 days"
+                            OnContent="Included" OffContent="Excluded"
+                            AutomationProperties.Name="Include recent notes section" />
+
                     </StackPanel>
                 </Border>
 

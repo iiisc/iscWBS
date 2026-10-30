@@ -1,6 +1,8 @@
+using Microsoft.UI.Input;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
@@ -12,7 +14,7 @@ using Color = Windows.UI.Color;
 
 namespace iscWBS.Views;
 
-public sealed partial class GanttPage : Page
+public sealed partial class GanttPage : Page, IReloadablePage
 {
     private const double _rowHeight    = GanttLayout.RowHeight;
     private const double _barHeight    = GanttLayout.BarHeight;
@@ -37,7 +39,7 @@ public sealed partial class GanttPage : Page
         _statusBrushes = Enum.GetValues<WbsStatus>().ToDictionary(s => s, s => (SolidColorBrush)Resources[$"Gantt{s}"]);
         ViewModel.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(GanttViewModel.Layout))
+            if (e.PropertyName is nameof(GanttViewModel.Layout) or nameof(GanttViewModel.ShowCriticalPath))
                 DrawGantt();
         };
         // Canvas content is drawn with theme-dependent colours, so it must be redrawn on a theme switch.
@@ -77,6 +79,7 @@ public sealed partial class GanttPage : Page
         ChartCanvas.Width  = chartW;
         ChartCanvas.Height = rowsH;
         ChartCanvas.Children.Clear();
+        _bars.Clear();
 
         var labelFg     = (Brush)Resources["GanttLabelForeground"];
         var headerBrush = (Brush)Resources["GanttHeaderBackground"];
@@ -190,9 +193,25 @@ public sealed partial class GanttPage : Page
     {
         var assigneeFg = (Brush)Resources["GanttAssigneeForeground"];
         var onStatus   = (Brush)Resources["GanttOnStatus"];
+        var labelFg    = (Brush)Resources["GanttLabelForeground"];
         foreach (GanttRow row in ViewModel.Layout.Rows)
         {
             double barTop = row.RowTop + _barOffsetY;
+
+            // The saved plan, as a thin line just above where the bar is now.
+            if (row.HasBaseline)
+            {
+                var baseline = new Rectangle
+                {
+                    Width   = row.BaselineWidth,
+                    Height  = 4,
+                    Fill    = labelFg,
+                    Opacity = 0.45,
+                    RadiusX = 2,
+                    RadiusY = 2
+                };
+                Place(ChartCanvas, baseline, row.BaselineLeft, barTop - 6);
+            }
 
             if (!row.HasBar)
             {
@@ -208,7 +227,19 @@ public sealed partial class GanttPage : Page
                 RadiusX = _barRadius,
                 RadiusY = _barRadius
             };
+            if (ViewModel.ShowCriticalPath && row.IsCritical)
+            {
+                bar.Stroke = labelFg;
+                bar.StrokeThickness = 2;
+            }
             Place(ChartCanvas, bar, row.BarLeft, barTop);
+            var parts = new List<UIElement> { bar };
+            _bars[bar] = (row, parts);
+            bar.PointerPressed  += Bar_PointerPressed;
+            bar.PointerMoved    += Bar_PointerMoved;
+            bar.PointerReleased += Bar_PointerReleased;
+            bar.PointerExited   += (_, _) => { if (_drag is null) ProtectedCursor = null; };
+            bar.PointerCaptureLost += (_, _) => { if (_drag is not null) { _drag = null; DrawGantt(); } };
 
             // The part still to do is darker: the bar under a veil of the colour its text uses.
             double done = row.BarWidth * row.PercentComplete;
@@ -224,6 +255,7 @@ public sealed partial class GanttPage : Page
                     RadiusY = _barRadius
                 };
                 Place(ChartCanvas, remaining, row.BarLeft + done, barTop);
+                parts.Add(remaining);
             }
 
             if (row.PercentComplete > 0 && row.BarWidth > 36)
@@ -236,14 +268,74 @@ public sealed partial class GanttPage : Page
                     Foreground = onStatus
                 };
                 Place(ChartCanvas, percent, row.BarLeft + 6, barTop + (_barHeight - 12) / 2.0);
+                parts.Add(percent);
             }
 
-            if (!string.IsNullOrEmpty(row.AssignedTo) && row.BarWidth > 30)
+            // After the bar rather than under it, where the next row's baseline would cross it.
+            if (!string.IsNullOrEmpty(row.AssignedTo))
             {
-                var assignee = new TextBlock { Text = row.AssignedTo, FontSize = 9, Foreground = assigneeFg };
-                Place(ChartCanvas, assignee, row.BarLeft, barTop + _barHeight + 1);
+                var assignee = new TextBlock { Text = row.AssignedTo, FontSize = 10, Foreground = assigneeFg };
+                Place(ChartCanvas, assignee, row.BarLeft + row.BarWidth + 6, barTop + (_barHeight - 14) / 2.0);
+                parts.Add(assignee);
             }
         }
+    }
+
+    // Dragging a bar moves the task; dragging its right end moves only the due date. Both snap to whole days.
+    private const double _resizeGrip = 8.0;
+    private readonly Dictionary<Rectangle, (GanttRow Row, List<UIElement> Parts)> _bars = [];
+
+    private sealed class BarDrag
+    {
+        public required Rectangle Bar { get; init; }
+        public required double StartX { get; init; }
+        public required bool ResizeOnly { get; init; }
+        public int Days { get; set; }
+    }
+
+    private BarDrag? _drag;
+
+    private bool OnResizeGrip(Rectangle bar, double x) => x >= Canvas.GetLeft(bar) + bar.Width - _resizeGrip;
+
+    private void Bar_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        var bar = (Rectangle)sender;
+        if (!e.GetCurrentPoint(bar).Properties.IsLeftButtonPressed) return;
+        double x = e.GetCurrentPoint(ChartCanvas).Position.X;
+        _drag = new BarDrag { Bar = bar, StartX = x, ResizeOnly = OnResizeGrip(bar, x) };
+        bar.CapturePointer(e.Pointer);
+        e.Handled = true;
+    }
+
+    private void Bar_PointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        var bar = (Rectangle)sender;
+        double x = e.GetCurrentPoint(ChartCanvas).Position.X;
+        if (_drag is null)
+        {
+            ProtectedCursor = InputSystemCursor.Create(OnResizeGrip(bar, x) ? InputSystemCursorShape.SizeWestEast : InputSystemCursorShape.SizeAll);
+            return;
+        }
+
+        double ppd = ViewModel.Layout.PixelsPerDay;
+        (GanttRow row, List<UIElement> parts) = _bars[bar];
+        _drag.Days = (int)Math.Round((x - _drag.StartX) / ppd);
+        double dx = _drag.Days * ppd;
+        if (_drag.ResizeOnly)
+            bar.Width = Math.Max(4, row.BarWidth + dx);
+        else
+            foreach (UIElement part in parts)
+                part.RenderTransform = new TranslateTransform { X = dx };
+    }
+
+    private void Bar_PointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (_drag is not { } drag) return;
+        _drag = null;
+        drag.Bar.ReleasePointerCapture(e.Pointer);
+        Guid nodeId = _bars[drag.Bar].Row.NodeId;
+        if (drag.Days != 0)
+            _ = ViewModel.ShiftDatesAsync(nodeId, drag.ResizeOnly ? 0 : drag.Days, drag.Days);
     }
 
     private void DrawMilestones(double rowsH)
@@ -355,4 +447,6 @@ public sealed partial class GanttPage : Page
         canvas.Children.Add(line);
         return line;
     }
+
+    public void Reload() => ViewModel.OnNavigatedTo();
 }

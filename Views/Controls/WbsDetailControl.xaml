@@ -298,6 +298,60 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
+            <Rectangle
+                Height="1"
+                Fill="{ThemeResource DividerStrokeColorDefaultBrush}"
+                Margin="0,8,0,4" />
+
+            <TextBlock
+                x:Uid="WbsDetail_NotesTitle"
+                Text="Notes"
+                Style="{StaticResource IscSectionTitleTextBlockStyle}" />
+
+            <TextBox
+                x:Uid="WbsDetail_NewNote"
+                Text="{x:Bind ViewModel.NewNoteText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                PlaceholderText="What happened, or what was decided?"
+                AcceptsReturn="True"
+                TextWrapping="Wrap"
+                MinHeight="60"
+                AutomationProperties.Name="New note" />
+            <Button
+                x:Uid="WbsDetail_AddNoteBtn"
+                Content="Add Note"
+                Command="{x:Bind ViewModel.AddNoteCommand}"
+                AutomationProperties.Name="Add note" />
+
+            <ItemsControl ItemsSource="{x:Bind ViewModel.Notes, Mode=OneWay}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:NodeNote">
+                        <Grid ColumnSpacing="8" Padding="0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="32" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Spacing="2">
+                                <TextBlock
+                                    Text="{x:Bind local:WbsDetailControl.NoteDate(CreatedAt)}"
+                                    Style="{ThemeResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{x:Bind Text}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                            </StackPanel>
+                            <Button
+                                x:Uid="WbsDetail_DeleteNote"
+                                Grid.Column="1"
+                                VerticalAlignment="Top"
+                                Content="&#xE74D;"
+                                FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                FontSize="12"
+                                Padding="4"
+                                Click="DeleteNote_Click"
+                                AutomationProperties.Name="Delete note" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

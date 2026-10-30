@@ -1198,4 +1198,163 @@
   <data name="DashboardPage_NoMatchingRows.Text" xml:space="preserve">
     <value>Nothing here with these filters.</value>
   </data>
+  <data name="ErrorTitle_Undo" xml:space="preserve">
+    <value>Undo failed</value>
+  </data>
+  <data name="ErrorTitle_Move" xml:space="preserve">
+    <value>Move failed</value>
+  </data>
+  <data name="Error_MoveIntoOwnBranch" xml:space="preserve">
+    <value>A node can't move into its own branch.</value>
+  </data>
+  <data name="Error_NoteTextRequired" xml:space="preserve">
+    <value>A note needs some text.</value>
+  </data>
+  <data name="Diagram_DropUnder" xml:space="preserve">
+    <value>Move under {0}</value>
+  </data>
+  <data name="UndoRedo_Undo.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="UndoRedo_Undo.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Undo (Ctrl+Z)</value>
+  </data>
+  <data name="UndoRedo_Redo.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="UndoRedo_Redo.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Redo (Ctrl+Y)</value>
+  </data>
+  <data name="WbsTreePage_MoveEarlierBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Move earlier</value>
+  </data>
+  <data name="WbsTreePage_MoveEarlierBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Move earlier (Alt+Left)</value>
+  </data>
+  <data name="WbsTreePage_MoveLaterBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Move later</value>
+  </data>
+  <data name="WbsTreePage_MoveLaterBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Move later (Alt+Right)</value>
+  </data>
+  <data name="WbsTreePage_OutdentBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Move up a level</value>
+  </data>
+  <data name="WbsTreePage_OutdentBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Move up a level (Alt+Up)</value>
+  </data>
+  <data name="WbsTreePage_IndentBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Move under the node before it</value>
+  </data>
+  <data name="WbsTreePage_IndentBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Move under the node before it (Alt+Down)</value>
+  </data>
+  <data name="WbsTreePage_ContextMoveEarlier.Text" xml:space="preserve">
+    <value>Move Earlier</value>
+  </data>
+  <data name="WbsTreePage_ContextMoveLater.Text" xml:space="preserve">
+    <value>Move Later</value>
+  </data>
+  <data name="WbsTreePage_ContextOutdent.Text" xml:space="preserve">
+    <value>Move Up a Level</value>
+  </data>
+  <data name="WbsTreePage_ContextIndent.Text" xml:space="preserve">
+    <value>Move Under the Node Before It</value>
+  </data>
+  <data name="WbsTreePage_Search.PlaceholderText" xml:space="preserve">
+    <value>Find a node (Ctrl+F)</value>
+  </data>
+  <data name="WbsTreePage_Search.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Find a node</value>
+  </data>
+  <data name="WbsTreePage_Rescheduled.Title" xml:space="preserve">
+    <value>Moved later to keep dependencies</value>
+  </data>
+  <data name="WbsDetail_NotesTitle.Text" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="WbsDetail_NewNote.PlaceholderText" xml:space="preserve">
+    <value>What happened, or what was decided?</value>
+  </data>
+  <data name="WbsDetail_NewNote.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>New note</value>
+  </data>
+  <data name="WbsDetail_AddNoteBtn.Content" xml:space="preserve">
+    <value>Add Note</value>
+  </data>
+  <data name="WbsDetail_AddNoteBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Add note</value>
+  </data>
+  <data name="WbsDetail_DeleteNote.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Delete note</value>
+  </data>
+  <data name="Dashboard_DaysLate" xml:space="preserve">
+    <value>{0} d late</value>
+  </data>
+  <data name="Report_DaysLate" xml:space="preserve">
+    <value>+{0} d</value>
+  </data>
+  <data name="Report_RecentNotes" xml:space="preserve">
+    <value>RECENT NOTES</value>
+  </data>
+  <data name="Report_ColDate" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Report_ColTask" xml:space="preserve">
+    <value>Task</value>
+  </data>
+  <data name="Report_ColNote" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="ReportsPage_ToggleNotes.Header" xml:space="preserve">
+    <value>Notes from the last 30 days</value>
+  </data>
+  <data name="ReportsPage_ToggleNotes.OnContent" xml:space="preserve">
+    <value>Included</value>
+  </data>
+  <data name="ReportsPage_ToggleNotes.OffContent" xml:space="preserve">
+    <value>Excluded</value>
+  </data>
+  <data name="ReportsPage_ToggleNotes.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Include recent notes section</value>
+  </data>
+  <data name="GanttPage_CriticalPathText.Text" xml:space="preserve">
+    <value>Critical Path</value>
+  </data>
+  <data name="GanttPage_CriticalPath.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Show the critical path</value>
+  </data>
+  <data name="GanttPage_CriticalPath.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Outline the work that sets the finish date</value>
+  </data>
+  <data name="GanttPage_SetBaselineText.Text" xml:space="preserve">
+    <value>Save Baseline</value>
+  </data>
+  <data name="GanttPage_SetBaseline.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Save baseline</value>
+  </data>
+  <data name="GanttPage_SetBaseline.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Save today's dates as the plan; each bar then shows it as a thin line above</value>
+  </data>
+  <data name="GanttPage_Rescheduled.Title" xml:space="preserve">
+    <value>Moved later to keep dependencies</value>
+  </data>
+  <data name="Gantt_ReplaceBaselineTitle" xml:space="preserve">
+    <value>Replace the baseline?</value>
+  </data>
+  <data name="Gantt_ReplaceBaselineConfirm" xml:space="preserve">
+    <value>The saved plan will be replaced with the dates as they are now.</value>
+  </data>
+  <data name="SettingsPage_BackupSection.Text" xml:space="preserve">
+    <value>Backups</value>
+  </data>
+  <data name="SettingsPage_BackupInfo.Text" xml:space="preserve">
+    <value>Each time a project opens or closes, a copy is kept on this computer, the latest 20 for each project. To go back to one, copy it to where you keep your projects and open it from there.</value>
+  </data>
+  <data name="SettingsPage_OpenBackupFolderBtn.Content" xml:space="preserve">
+    <value>Open Backup Folder</value>
+  </data>
+  <data name="SettingsPage_OpenBackupFolderBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Open the backup folder</value>
+  </data>
 </root>

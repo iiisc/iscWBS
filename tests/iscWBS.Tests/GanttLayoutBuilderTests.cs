@@ -215,4 +215,22 @@ public class GanttLayoutBuilderTests
         Assert.Null(Build([Bar(DateTime.Today.AddDays(-100), DateTime.Today.AddDays(-90))], Day).TodayX);
         Assert.Equal(40.0, Build([Bar(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(30))], Day).TodayX);
     }
+
+    [Fact]
+    public void Rows_CarryTheirBaselineAndCriticalPath_AndTheChartMakesRoomForTheBaseline()
+    {
+        WbsNode a = Bar(Start, Start.AddDays(5));
+        WbsNode b = Bar(Start.AddDays(5), Start.AddDays(10), sortOrder: 1);
+        b.BaselineStart = Start.AddDays(-2);
+        b.BaselineDue = Start.AddDays(3);
+
+        GanttLayout layout = Build([a, b], Day, dependencies: [Dep(a, b)]);
+
+        Assert.Equal([a.Id, b.Id], layout.Rows.Select(r => r.NodeId));
+        Assert.Equal([true, true], layout.Rows.Select(r => r.IsCritical));
+        GanttRow row = layout.Rows[1];
+        Assert.Equal((true, 0.0, 5 * 40.0), (row.HasBaseline, row.BaselineLeft, row.BaselineWidth));
+        Assert.Equal(7 * 40.0, row.BarLeft);
+        Assert.Equal(40.0, layout.PixelsPerDay);
+    }
 }

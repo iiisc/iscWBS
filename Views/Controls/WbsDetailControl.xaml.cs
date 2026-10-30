@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using iscWBS.Core.Models;
 using iscWBS.ViewModels;
 
 namespace iscWBS.Views.Controls;
@@ -25,6 +26,14 @@ public sealed partial class WbsDetailControl : UserControl
     public WbsDetailControl()
     {
         InitializeComponent();
+    }
+
+    public static string NoteDate(DateTime createdAt) => createdAt.ToString("d MMM yyyy, HH:mm");
+
+    private void DeleteNote_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: NodeNote note })
+            ViewModel?.DeleteNoteCommand.Execute(note);
     }
 
     private void RemoveDependency_Click(object sender, RoutedEventArgs e)

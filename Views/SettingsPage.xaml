@@ -293,6 +293,36 @@
                 </Border>
             </StackPanel>
 
+            <StackPanel Spacing="8">
+                <TextBlock
+                    x:Uid="SettingsPage_BackupSection"
+                    Text="Backups"
+                    Style="{StaticResource IscSectionTitleTextBlockStyle}" />
+
+                <Border
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="16">
+                    <StackPanel Spacing="12">
+                        <TextBlock
+                            x:Uid="SettingsPage_BackupInfo"
+                            Style="{ThemeResource BodyTextBlockStyle}" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.BackupFolder}"
+                            Style="{ThemeResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            IsTextSelectionEnabled="True"
+                            TextWrapping="Wrap" />
+                        <Button
+                            x:Uid="SettingsPage_OpenBackupFolderBtn"
+                            Command="{x:Bind ViewModel.OpenBackupFolderCommand}"
+                            AutomationProperties.Name="Open the backup folder" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
         </StackPanel>
     </ScrollViewer>
 </Page>

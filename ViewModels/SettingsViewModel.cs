@@ -253,4 +253,20 @@ public sealed partial class SettingsViewModel : ObservableObject
         _localizationService.SetLanguage(SelectedLanguage.Code);
         RestartRequired = true;
     }
+
+    public string BackupFolder => BackupService.DefaultFolder;
+
+    [RelayCommand]
+    private void OpenBackupFolder()
+    {
+        try
+        {
+            Directory.CreateDirectory(BackupFolder);
+            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{BackupFolder}\"") { UseShellExecute = false });
+        }
+        catch (Exception ex)
+        {
+            Logger.Write(ex);
+        }
+    }
 }

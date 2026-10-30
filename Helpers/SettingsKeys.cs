@@ -13,4 +13,5 @@ public static class SettingsKeys
     public const string ReportIncludeEffortSummary     = "Report.IncludeEffortSummary";
     public const string ReportIncludeMilestones        = "Report.IncludeMilestones";
     public const string ReportIncludeWbsTree           = "Report.IncludeWbsTree";
+    public const string ReportIncludeNotes             = "Report.IncludeNotes";
 }

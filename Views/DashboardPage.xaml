@@ -361,14 +361,23 @@
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                     VerticalAlignment="Center" />
                                             </StackPanel>
-                                            <TextBlock
-                                                Grid.Row="0" Grid.Column="3"
-                                                Text="{x:Bind DueDateText}"
-                                                FontSize="11"
-                                                MinWidth="72"
-                                                TextAlignment="Right"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                VerticalAlignment="Center" />
+                                            <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                                                <StackPanel Orientation="Horizontal" Spacing="3" Visibility="{x:Bind IsLate}">
+                                                    <FontIcon Glyph="&#xE7BA;" FontSize="11" Foreground="{ThemeResource WbsStatusBlockedBrush}" />
+                                                    <TextBlock
+                                                        Text="{x:Bind local:DashboardPage.DaysLateText(DaysLate)}"
+                                                        FontSize="11"
+                                                        FontWeight="SemiBold"
+                                                        VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <TextBlock
+                                                    Text="{x:Bind DueDateText}"
+                                                    FontSize="11"
+                                                    MinWidth="72"
+                                                    TextAlignment="Right"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    VerticalAlignment="Center" />
+                                            </StackPanel>
 
                                             <Grid
                                                 Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"

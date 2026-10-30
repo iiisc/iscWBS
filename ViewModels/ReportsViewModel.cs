@@ -39,12 +39,16 @@ public sealed partial class ReportsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IncludeWbsTree { get; set; }
 
+    [ObservableProperty]
+    public partial bool IncludeNotes { get; set; }
+
     partial void OnIncludeSummaryChanged(bool value)           => _settingsService.Set(SettingsKeys.ReportIncludeSummary,           value);
     partial void OnIncludeAttentionRequiredChanged(bool value) => _settingsService.Set(SettingsKeys.ReportIncludeAttentionRequired, value);
     partial void OnIncludeDeliverablesChanged(bool value)      => _settingsService.Set(SettingsKeys.ReportIncludeDeliverables,      value);
     partial void OnIncludeEffortSummaryChanged(bool value)     => _settingsService.Set(SettingsKeys.ReportIncludeEffortSummary,     value);
     partial void OnIncludeMilestonesChanged(bool value)        => _settingsService.Set(SettingsKeys.ReportIncludeMilestones,        value);
     partial void OnIncludeWbsTreeChanged(bool value)           => _settingsService.Set(SettingsKeys.ReportIncludeWbsTree,           value);
+    partial void OnIncludeNotesChanged(bool value)             => _settingsService.Set(SettingsKeys.ReportIncludeNotes,             value);
 
     public ReportsViewModel(
         ReportExportService reportExportService,
@@ -61,6 +65,7 @@ public sealed partial class ReportsViewModel : ObservableObject
         IncludeEffortSummary     = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeEffortSummary)     ?? true;
         IncludeMilestones        = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeMilestones)        ?? true;
         IncludeWbsTree           = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeWbsTree)           ?? true;
+        IncludeNotes             = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeNotes)             ?? true;
     }
 
     [RelayCommand]
@@ -78,6 +83,7 @@ public sealed partial class ReportsViewModel : ObservableObject
                 IncludeEffortSummary     = IncludeEffortSummary,
                 IncludeMilestones        = IncludeMilestones,
                 IncludeWbsTree           = IncludeWbsTree,
+                IncludeNotes             = IncludeNotes,
             };
             await _reportExportService.ExportAsync(path, options);
         }

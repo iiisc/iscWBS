@@ -13,11 +13,12 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- Left-aligned and kept short, so nothing sits under the window's caption buttons -->
         <StackPanel
             Grid.Row="0"
+            Padding="12,8"
             Orientation="Horizontal"
-            Spacing="8"
-            Padding="12,8">
+            Spacing="8">
             <Button
                 x:Uid="WbsTreePage_AddRootNodeBtn"
                 Command="{x:Bind ViewModel.AddRootNodeCommand}"
@@ -64,6 +65,52 @@
                 </Button.KeyboardAccelerators>
             </Button>
             <AppBarSeparator />
+            <!-- Alt+arrows follow the diagram's layout: siblings run left to right, children below. -->
+            <Button
+                x:Uid="WbsTreePage_MoveEarlierBtn"
+                Command="{x:Bind ViewModel.MoveEarlierCommand}"
+                ToolTipService.ToolTip="Move earlier (Alt+Left)"
+                AutomationProperties.Name="Move earlier">
+                <FontIcon Glyph="&#xE76B;" FontSize="16" />
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="Left" ScopeOwner="{x:Bind WbsDiagram}" />
+                </Button.KeyboardAccelerators>
+            </Button>
+            <Button
+                x:Uid="WbsTreePage_MoveLaterBtn"
+                Command="{x:Bind ViewModel.MoveLaterCommand}"
+                ToolTipService.ToolTip="Move later (Alt+Right)"
+                AutomationProperties.Name="Move later">
+                <FontIcon Glyph="&#xE76C;" FontSize="16" />
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="Right" ScopeOwner="{x:Bind WbsDiagram}" />
+                </Button.KeyboardAccelerators>
+            </Button>
+            <Button
+                x:Uid="WbsTreePage_OutdentBtn"
+                Command="{x:Bind ViewModel.OutdentCommand}"
+                ToolTipService.ToolTip="Move up a level (Alt+Up)"
+                AutomationProperties.Name="Move up a level">
+                <Viewbox Width="16" Height="16">
+                    <PathIcon helpers:IscIcon.Kind="Outdent" Width="24" Height="24" />
+                </Viewbox>
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="Up" ScopeOwner="{x:Bind WbsDiagram}" />
+                </Button.KeyboardAccelerators>
+            </Button>
+            <Button
+                x:Uid="WbsTreePage_IndentBtn"
+                Command="{x:Bind ViewModel.IndentCommand}"
+                ToolTipService.ToolTip="Move under the node before it (Alt+Down)"
+                AutomationProperties.Name="Move under the node before it">
+                <Viewbox Width="16" Height="16">
+                    <PathIcon helpers:IscIcon.Kind="Indent" Width="24" Height="24" />
+                </Viewbox>
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="Down" ScopeOwner="{x:Bind WbsDiagram}" />
+                </Button.KeyboardAccelerators>
+            </Button>
+            <AppBarSeparator />
             <Button
                 x:Uid="WbsTreePage_CollapseAllBtn"
                 Click="CollapseAll_Click"
@@ -86,6 +133,23 @@
                     <TextBlock x:Uid="WbsTreePage_ExpandAllText" Text="Expand All" />
                 </StackPanel>
             </Button>
+            <AppBarSeparator />
+            <controls:UndoRedoButtons />
+            <AppBarSeparator />
+            <AutoSuggestBox
+                x:Name="SearchBox"
+                x:Uid="WbsTreePage_Search"
+                Width="200"
+                PlaceholderText="Find a node (Ctrl+F)"
+                QueryIcon="Find"
+                ItemsSource="{x:Bind ViewModel.SearchResults, Mode=OneWay}"
+                TextChanged="SearchBox_TextChanged"
+                QuerySubmitted="SearchBox_QuerySubmitted"
+                AutomationProperties.Name="Find a node">
+                <AutoSuggestBox.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Control" Key="F" Invoked="FocusSearch_Invoked" />
+                </AutoSuggestBox.KeyboardAccelerators>
+            </AutoSuggestBox>
         </StackPanel>
 
         <Grid Grid.Row="1">
@@ -128,6 +192,39 @@
                             </MenuFlyoutItem>
                             <MenuFlyoutSeparator />
                             <MenuFlyoutItem
+                                x:Uid="WbsTreePage_ContextMoveEarlier"
+                                Text="Move Earlier"
+                                Command="{x:Bind ViewModel.MoveEarlierCommand}">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE76B;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem
+                                x:Uid="WbsTreePage_ContextMoveLater"
+                                Text="Move Later"
+                                Command="{x:Bind ViewModel.MoveLaterCommand}">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE76C;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem
+                                x:Uid="WbsTreePage_ContextOutdent"
+                                Text="Move Up a Level"
+                                Command="{x:Bind ViewModel.OutdentCommand}">
+                                <MenuFlyoutItem.Icon>
+                                    <PathIcon helpers:IscIcon.Kind="Outdent" Width="24" Height="24" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem
+                                x:Uid="WbsTreePage_ContextIndent"
+                                Text="Move Under the Node Before It"
+                                Command="{x:Bind ViewModel.IndentCommand}">
+                                <MenuFlyoutItem.Icon>
+                                    <PathIcon helpers:IscIcon.Kind="Indent" Width="24" Height="24" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem
                                 x:Uid="WbsTreePage_ContextDelete"
                                 Text="Delete"
                                 Command="{x:Bind ViewModel.DeleteNodeCommand}"
@@ -140,6 +237,15 @@
                         </MenuFlyout>
                     </FlyoutBase.AttachedFlyout>
                 </controls:WbsDiagramControl>
+
+                <InfoBar
+                    x:Uid="WbsTreePage_Rescheduled"
+                    Margin="12"
+                    VerticalAlignment="Bottom"
+                    Severity="Informational"
+                    Title="Moved later to keep dependencies"
+                    Message="{x:Bind ViewModel.RescheduleNotice, Mode=OneWay}"
+                    IsOpen="{x:Bind ViewModel.HasRescheduleNotice, Mode=TwoWay}" />
 
                 <controls:IscEmptyState
                     x:Uid="WbsTreePage_Empty"

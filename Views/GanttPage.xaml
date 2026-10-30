@@ -60,6 +60,21 @@
                 <ComboBoxItem x:Uid="GanttPage_ZoomWeek" Content="Week" />
                 <ComboBoxItem x:Uid="GanttPage_ZoomMonth" Content="Month" />
             </ComboBox>
+            <ToggleButton
+                x:Uid="GanttPage_CriticalPath"
+                IsChecked="{x:Bind ViewModel.ShowCriticalPath, Mode=TwoWay}"
+                ToolTipService.ToolTip="Outline the work that sets the finish date"
+                AutomationProperties.Name="Show the critical path">
+                <TextBlock x:Uid="GanttPage_CriticalPathText" Text="Critical Path" />
+            </ToggleButton>
+            <Button
+                x:Uid="GanttPage_SetBaseline"
+                Command="{x:Bind ViewModel.SetBaselineCommand}"
+                ToolTipService.ToolTip="Save today's dates as the plan; each bar then shows it as a thin line above"
+                AutomationProperties.Name="Save baseline">
+                <TextBlock x:Uid="GanttPage_SetBaselineText" Text="Save Baseline" />
+            </Button>
+            <controls:UndoRedoButtons />
         </StackPanel>
 
         <Grid Grid.Row="1">
@@ -108,6 +123,16 @@
                 ViewChanged="GanttScrollViewer_ViewChanged">
                 <Canvas x:Name="ChartCanvas" HorizontalAlignment="Left" VerticalAlignment="Top" />
             </ScrollViewer>
+
+            <InfoBar
+                x:Uid="GanttPage_Rescheduled"
+                Grid.ColumnSpan="2"
+                Margin="12"
+                VerticalAlignment="Bottom"
+                Severity="Informational"
+                Title="Moved later to keep dependencies"
+                Message="{x:Bind ViewModel.RescheduleNotice, Mode=OneWay}"
+                IsOpen="{x:Bind ViewModel.HasRescheduleNotice, Mode=TwoWay}" />
         </Grid>
 
         <Grid Grid.Row="1" Grid.RowSpan="2" Background="{ThemeResource NavigationViewContentBackground}" Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">

@@ -3,6 +3,7 @@ namespace iscWBS.Core.Models;
 /// <summary>Display data for a single row in the Gantt canvas.</summary>
 public sealed class GanttRow
 {
+    public Guid NodeId { get; init; }
     public string Label { get; init; } = string.Empty;
     public double RowTop { get; init; }
     public bool HasBar { get; init; }
@@ -15,4 +16,9 @@ public sealed class GanttRow
     public bool IsParent { get; init; }
     public string AssignedTo { get; init; } = string.Empty;
     public double PercentComplete { get; init; }
+    /// <summary>On the chain of work that sets the project's finish (see <see cref="Scheduler.CriticalPath"/>).</summary>
+    public bool IsCritical { get; init; }
+    public bool HasBaseline { get; init; }
+    public double BaselineLeft { get; init; }
+    public double BaselineWidth { get; init; }
 }

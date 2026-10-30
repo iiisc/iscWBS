@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Dispatching;
@@ -16,6 +17,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
 
     private bool _isLoadingEditFields;
     private bool _hasPendingEdit;
+    private Task _saveTask = Task.CompletedTask;
     private Guid _pendingSelectNodeId;
     private CancellationTokenSource? _pageCts;
 
@@ -133,7 +135,55 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     public bool HasNoNodes => DiagramNodes is null || DiagramNodes.Count == 0;
 
     partial void OnDiagramNodesChanged(IReadOnlyList<WbsNode>? value)
-        => OnPropertyChanged(nameof(HasNoNodes));
+    {
+        OnPropertyChanged(nameof(HasNoNodes));
+        NotifyMoveCommands();
+    }
+
+    private void NotifyMoveCommands()
+    {
+        MoveEarlierCommand.NotifyCanExecuteChanged();
+        MoveLaterCommand.NotifyCanExecuteChanged();
+        IndentCommand.NotifyCanExecuteChanged();
+        OutdentCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>Shown after an edit moved other work later to keep its dependencies; null when there is nothing to tell.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRescheduleNotice))]
+    public partial string? RescheduleNotice { get; set; }
+
+    public bool HasRescheduleNotice
+    {
+        get => RescheduleNotice is not null;
+        set { if (!value) RescheduleNotice = null; }
+    }
+
+    private void ReportRescheduled(IReadOnlyList<WbsNode> moved)
+    {
+        if (moved.Count > 0)
+            RescheduleNotice = string.Join(", ", moved.Select(n => $"{n.Code} {n.Title}"));
+    }
+
+    /// <summary>Nodes whose code or title contains the search text, for the search box's suggestions.</summary>
+    [ObservableProperty]
+    public partial List<WbsNode> SearchResults { get; private set; } = [];
+
+    public void Search(string text)
+    {
+        string query = text.Trim();
+        SearchResults = query.Length == 0 ? [] : (DiagramNodes ?? [])
+            .Where(n => n.Code.StartsWith(query, StringComparison.OrdinalIgnoreCase)
+                     || n.Title.Contains(query, StringComparison.CurrentCultureIgnoreCase))
+            .Take(12)
+            .ToList();
+    }
+
+    public ObservableCollection<NodeNote> Notes { get; } = new();
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AddNoteCommand))]
+    public partial string NewNoteText { get; set; } = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(AddDependencyCommand))]
@@ -190,12 +240,125 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         _hasPendingEdit = false;
         OnPropertyChanged(nameof(IsDetailVisible));
         OnPropertyChanged(nameof(SelectedNodeId));
+        NotifyMoveCommands();
+        AddNoteCommand.NotifyCanExecuteChanged();
         NewDepPredecessor = null;
+        NewNoteText = string.Empty;
         RefreshSelectionLists();
         LinkedMilestones = [];
+        Notes.Clear();
         if (value is null) return;
         LoadEditFieldsFromNode(value);
         _ = LoadLinkedMilestonesAsync(value.Id);
+        _ = LoadNotesAsync(value.Id);
+    }
+
+    /// <summary>The selected node's siblings in order, and its place among them.</summary>
+    private (List<WbsNode> Siblings, int Index) Position(WbsNode node)
+    {
+        List<WbsNode> siblings = (DiagramNodes ?? []).Where(n => n.ParentId == node.ParentId).OrderBy(n => n.SortOrder).ToList();
+        return (siblings, siblings.FindIndex(n => n.Id == node.Id));
+    }
+
+    private bool CanMoveEarlier => SelectedNode is { } node && Position(node).Index > 0;
+    private bool CanMoveLater => SelectedNode is { } node && Position(node) is var (siblings, index) && index >= 0 && index < siblings.Count - 1;
+    private bool CanOutdent => SelectedNode?.ParentId is not null;
+
+    [RelayCommand(CanExecute = nameof(CanMoveEarlier))]
+    private Task MoveEarlierAsync() => MoveSelectedAsync(node => (node.ParentId, Position(node).Index - 1));
+
+    [RelayCommand(CanExecute = nameof(CanMoveLater))]
+    private Task MoveLaterAsync() => MoveSelectedAsync(node => (node.ParentId, Position(node).Index + 1));
+
+    /// <summary>Makes the node the last child of the sibling before it.</summary>
+    [RelayCommand(CanExecute = nameof(CanMoveEarlier))]
+    private Task IndentAsync() => MoveSelectedAsync(node =>
+    {
+        (List<WbsNode> siblings, int index) = Position(node);
+        return (siblings[index - 1].Id, int.MaxValue);
+    });
+
+    /// <summary>Makes the node the sibling right after its parent.</summary>
+    [RelayCommand(CanExecute = nameof(CanOutdent))]
+    private Task OutdentAsync() => MoveSelectedAsync(node =>
+    {
+        WbsNode parent = DiagramNodes!.First(n => n.Id == node.ParentId);
+        return (parent.ParentId, Position(parent).Index + 1);
+    });
+
+    private async Task MoveSelectedAsync(Func<WbsNode, (Guid? Parent, int Index)> target)
+    {
+        if (SelectedNode is not { } node) return;
+        SaveIfDirty();
+        await _saveTask;
+        (Guid? parent, int index) = target(node);
+        await MoveAsync(node.Id, parent, index);
+    }
+
+    /// <summary>Moves a node, dragged in the diagram, to be the last child of <paramref name="newParentId"/>.</summary>
+    public Task MoveIntoAsync(Guid nodeId, Guid newParentId) => MoveAsync(nodeId, newParentId, int.MaxValue);
+
+    private async Task MoveAsync(Guid nodeId, Guid? parent, int index)
+    {
+        try
+        {
+            await _wbsService.MoveNodeAsync(nodeId, parent, index);
+            _pendingSelectNodeId = nodeId;
+            await LoadDiagramNodesAsync(PageToken);
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync("ErrorTitle_Move", ex);
+        }
+    }
+
+    private bool CanAddNote => SelectedNode is not null && !string.IsNullOrWhiteSpace(NewNoteText);
+
+    [RelayCommand(CanExecute = nameof(CanAddNote))]
+    private async Task AddNoteAsync()
+    {
+        if (SelectedNode is not { } node) return;
+        try
+        {
+            NodeNote note = await _wbsService.AddNoteAsync(node.Id, NewNoteText);
+            Notes.Insert(0, note);
+            NewNoteText = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync("ErrorTitle_Save", ex);
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteNoteAsync(NodeNote? note)
+    {
+        if (note is null) return;
+        try
+        {
+            await _wbsService.DeleteNoteAsync(note.Id);
+            Notes.Remove(note);
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync("ErrorTitle_Delete", ex);
+        }
+    }
+
+    private async Task LoadNotesAsync(Guid nodeId)
+    {
+        try
+        {
+            IReadOnlyList<NodeNote> notes = await _wbsService.GetNotesAsync(nodeId);
+            if (SelectedNode?.Id != nodeId) return;
+            Notes.Clear();
+            foreach (NodeNote note in notes)
+                Notes.Add(note);
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync("ErrorTitle_Load", ex);
+        }
     }
 
     private CancellationToken PageToken => _pageCts?.Token ?? default;
@@ -287,8 +450,9 @@ public sealed partial class WbsTreeViewModel : ObservableObject
 
         try
         {
-            await _wbsService.UpdateNodeAsync(node);
+            IReadOnlyList<WbsNode> moved = await _wbsService.UpdateNodeAsync(node);
             await LoadDiagramNodesAsync(PageToken);
+            ReportRescheduled(moved);
 
             await WarnNewlyViolatedAsync(ViolatedCompleteNodeIds, completeBefore,
                 "Wbs_CompleteViolatedTitle", "Wbs_CompleteViolatedIntro", "Wbs_CompleteViolatedOutro");
@@ -333,9 +497,10 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         };
         try
         {
-            await _wbsService.AddDependencyAsync(dep);
+            IReadOnlyList<WbsNode> moved = await _wbsService.AddDependencyAsync(dep);
             NewDepPredecessor = null;
             await LoadDiagramNodesAsync(PageToken);
+            ReportRescheduled(moved);
         }
         catch (Exception ex)
         {
@@ -506,7 +671,14 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     {
         if (!_hasPendingEdit) return;
         _hasPendingEdit = false;
-        _ = SaveNodeAsync();
+        _saveTask = SaveNodeAsync();
+    }
+
+    /// <summary>Saves pending edits and waits until they are written.</summary>
+    public Task FlushAsync()
+    {
+        SaveIfDirty();
+        return _saveTask;
     }
 
     private async Task LoadLinkedMilestonesAsync(Guid nodeId)

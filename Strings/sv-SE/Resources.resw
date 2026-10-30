@@ -1198,4 +1198,163 @@
   <data name="DashboardPage_NoMatchingRows.Text" xml:space="preserve">
     <value>Inget här med de här filtren.</value>
   </data>
+  <data name="ErrorTitle_Undo" xml:space="preserve">
+    <value>Det gick inte att ångra</value>
+  </data>
+  <data name="ErrorTitle_Move" xml:space="preserve">
+    <value>Det gick inte att flytta</value>
+  </data>
+  <data name="Error_MoveIntoOwnBranch" xml:space="preserve">
+    <value>En nod kan inte flyttas in i sin egen gren.</value>
+  </data>
+  <data name="Error_NoteTextRequired" xml:space="preserve">
+    <value>En anteckning behöver text.</value>
+  </data>
+  <data name="Diagram_DropUnder" xml:space="preserve">
+    <value>Flytta under {0}</value>
+  </data>
+  <data name="UndoRedo_Undo.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ångra</value>
+  </data>
+  <data name="UndoRedo_Undo.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ångra (Ctrl+Z)</value>
+  </data>
+  <data name="UndoRedo_Redo.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Gör om</value>
+  </data>
+  <data name="UndoRedo_Redo.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Gör om (Ctrl+Y)</value>
+  </data>
+  <data name="WbsTreePage_MoveEarlierBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Flytta tidigare</value>
+  </data>
+  <data name="WbsTreePage_MoveEarlierBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Flytta tidigare (Alt+Vänster)</value>
+  </data>
+  <data name="WbsTreePage_MoveLaterBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Flytta senare</value>
+  </data>
+  <data name="WbsTreePage_MoveLaterBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Flytta senare (Alt+Höger)</value>
+  </data>
+  <data name="WbsTreePage_OutdentBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Flytta upp en nivå</value>
+  </data>
+  <data name="WbsTreePage_OutdentBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Flytta upp en nivå (Alt+Upp)</value>
+  </data>
+  <data name="WbsTreePage_IndentBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Flytta under noden före</value>
+  </data>
+  <data name="WbsTreePage_IndentBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Flytta under noden före (Alt+Ned)</value>
+  </data>
+  <data name="WbsTreePage_ContextMoveEarlier.Text" xml:space="preserve">
+    <value>Flytta tidigare</value>
+  </data>
+  <data name="WbsTreePage_ContextMoveLater.Text" xml:space="preserve">
+    <value>Flytta senare</value>
+  </data>
+  <data name="WbsTreePage_ContextOutdent.Text" xml:space="preserve">
+    <value>Flytta upp en nivå</value>
+  </data>
+  <data name="WbsTreePage_ContextIndent.Text" xml:space="preserve">
+    <value>Flytta under noden före</value>
+  </data>
+  <data name="WbsTreePage_Search.PlaceholderText" xml:space="preserve">
+    <value>Hitta en nod (Ctrl+F)</value>
+  </data>
+  <data name="WbsTreePage_Search.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Hitta en nod</value>
+  </data>
+  <data name="WbsTreePage_Rescheduled.Title" xml:space="preserve">
+    <value>Flyttade senare för att hålla beroenden</value>
+  </data>
+  <data name="WbsDetail_NotesTitle.Text" xml:space="preserve">
+    <value>Anteckningar</value>
+  </data>
+  <data name="WbsDetail_NewNote.PlaceholderText" xml:space="preserve">
+    <value>Vad hände, eller vad bestämdes?</value>
+  </data>
+  <data name="WbsDetail_NewNote.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ny anteckning</value>
+  </data>
+  <data name="WbsDetail_AddNoteBtn.Content" xml:space="preserve">
+    <value>Lägg till anteckning</value>
+  </data>
+  <data name="WbsDetail_AddNoteBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Lägg till anteckning</value>
+  </data>
+  <data name="WbsDetail_DeleteNote.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ta bort anteckning</value>
+  </data>
+  <data name="Dashboard_DaysLate" xml:space="preserve">
+    <value>{0} d sen</value>
+  </data>
+  <data name="Report_DaysLate" xml:space="preserve">
+    <value>+{0} d</value>
+  </data>
+  <data name="Report_RecentNotes" xml:space="preserve">
+    <value>SENASTE ANTECKNINGAR</value>
+  </data>
+  <data name="Report_ColDate" xml:space="preserve">
+    <value>Datum</value>
+  </data>
+  <data name="Report_ColTask" xml:space="preserve">
+    <value>Uppgift</value>
+  </data>
+  <data name="Report_ColNote" xml:space="preserve">
+    <value>Anteckning</value>
+  </data>
+  <data name="ReportsPage_ToggleNotes.Header" xml:space="preserve">
+    <value>Anteckningar från de senaste 30 dagarna</value>
+  </data>
+  <data name="ReportsPage_ToggleNotes.OnContent" xml:space="preserve">
+    <value>Ingår</value>
+  </data>
+  <data name="ReportsPage_ToggleNotes.OffContent" xml:space="preserve">
+    <value>Ingår inte</value>
+  </data>
+  <data name="ReportsPage_ToggleNotes.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Inkludera avsnittet senaste anteckningar</value>
+  </data>
+  <data name="GanttPage_CriticalPathText.Text" xml:space="preserve">
+    <value>Kritisk linje</value>
+  </data>
+  <data name="GanttPage_CriticalPath.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Visa kritisk linje</value>
+  </data>
+  <data name="GanttPage_CriticalPath.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ram runt arbetet som styr slutdatumet</value>
+  </data>
+  <data name="GanttPage_SetBaselineText.Text" xml:space="preserve">
+    <value>Spara baslinje</value>
+  </data>
+  <data name="GanttPage_SetBaseline.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Spara baslinje</value>
+  </data>
+  <data name="GanttPage_SetBaseline.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Spara dagens datum som plan; varje stapel visar den sedan som en tunn linje ovanför</value>
+  </data>
+  <data name="GanttPage_Rescheduled.Title" xml:space="preserve">
+    <value>Flyttade senare för att hålla beroenden</value>
+  </data>
+  <data name="Gantt_ReplaceBaselineTitle" xml:space="preserve">
+    <value>Ersätta baslinjen?</value>
+  </data>
+  <data name="Gantt_ReplaceBaselineConfirm" xml:space="preserve">
+    <value>Den sparade planen ersätts med datumen som de är nu.</value>
+  </data>
+  <data name="SettingsPage_BackupSection.Text" xml:space="preserve">
+    <value>Säkerhetskopior</value>
+  </data>
+  <data name="SettingsPage_BackupInfo.Text" xml:space="preserve">
+    <value>Varje gång ett projekt öppnas eller stängs sparas en kopia på den här datorn, de senaste 20 för varje projekt. För att gå tillbaka till en kopia, kopiera den dit du har dina projekt och öppna den därifrån.</value>
+  </data>
+  <data name="SettingsPage_OpenBackupFolderBtn.Content" xml:space="preserve">
+    <value>Öppna mappen med säkerhetskopior</value>
+  </data>
+  <data name="SettingsPage_OpenBackupFolderBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Öppna mappen med säkerhetskopior</value>
+  </data>
 </root>

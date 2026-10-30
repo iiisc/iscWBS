@@ -161,6 +161,9 @@ internal sealed class ProjectStatusReportDocument : IDocument
             if (_options.IncludeMilestones && _data.Milestones.Count > 0)
                 col.Item().PaddingTop(18).Element(ComposeMilestones);
 
+            if (_options.IncludeNotes && _data.Notes.Count > 0)
+                col.Item().PaddingTop(18).Element(ComposeNotes);
+
             if (_options.IncludeWbsTree && _data.WbsTree.Count > 0)
             {
                 col.Item().PageBreak();
@@ -357,7 +360,12 @@ internal sealed class ProjectStatusReportDocument : IDocument
                         ProgressBar(pc.Item().PaddingTop(3), row.ProgressFraction, 4);
                     });
                     Cell(t, 1, 5).Text(row.Status.ToDisplayString()).FontSize(9).FontColor(StatusPalette.Hex(row.Status));
-                    Cell(t, 1, 5).Text(row.DueDateText).FontSize(9).FontColor(_textMuted);
+                    Cell(t, 1, 5).Text(txt =>
+                    {
+                        txt.Span(row.DueDateText).FontSize(9).FontColor(_textMuted);
+                        if (row.IsLate)
+                            txt.Span($"  {Strings.Format("Report_DaysLate", row.DaysLate)}").FontSize(8).Bold().FontColor(_red);
+                    });
                 }
             });
         });
@@ -383,6 +391,33 @@ internal sealed class ProjectStatusReportDocument : IDocument
                 {
                     Cell(t, 1, 5).Text(title).FontSize(9);
                     Cell(t, 1, 5).Text(due.ToString("d MMM yyyy")).FontSize(9).FontColor(_textMuted);
+                }
+            });
+        });
+    }
+
+    private void ComposeNotes(IContainer c)
+    {
+        c.Column(col =>
+        {
+            SectionTitle(col, "Report_RecentNotes");
+
+            col.Item().PaddingTop(6).Table(t =>
+            {
+                t.ColumnsDefinition(cd =>
+                {
+                    cd.ConstantColumn(62);
+                    cd.ConstantColumn(120);
+                    cd.RelativeColumn();
+                });
+
+                HeaderRow(t, 5, "Report_ColDate", "Report_ColTask", "Report_ColNote");
+
+                foreach ((DateTime date, string node, string text) in _data.Notes)
+                {
+                    Cell(t, 1, 5).Text(date.ToString("d MMM yyyy")).FontSize(9).FontColor(_textMuted);
+                    Cell(t, 1, 5).Text(node).FontSize(9).SemiBold();
+                    Cell(t, 1, 5).Text(text).FontSize(9);
                 }
             });
         });

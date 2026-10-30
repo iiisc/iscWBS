@@ -4,7 +4,7 @@ using iscWBS.ViewModels;
 
 namespace iscWBS.Views;
 
-public sealed partial class WbsOutlinePage : Page
+public sealed partial class WbsOutlinePage : Page, IReloadablePage
 {
     public WbsOutlineViewModel ViewModel { get; }
 
@@ -25,5 +25,6 @@ public sealed partial class WbsOutlinePage : Page
         if (e.AddedItems.Count > 0 && e.AddedItems[0] is WbsOutlineRowViewModel row)
             ViewModel.SelectRowCommand.Execute(row);
     }
-}
 
+    public void Reload() => ViewModel.OnNavigatedTo();
+}

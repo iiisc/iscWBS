@@ -6,7 +6,7 @@ using iscWBS.ViewModels;
 
 namespace iscWBS.Views;
 
-public sealed partial class MilestonesPage : Page
+public sealed partial class MilestonesPage : Page, IReloadablePage
 {
     public MilestonesViewModel ViewModel { get; }
 
@@ -33,4 +33,6 @@ public sealed partial class MilestonesPage : Page
         if (sender is FrameworkElement { DataContext: WbsNode node })
             ViewModel.RemoveLinkedNodeCommand.Execute(node);
     }
+
+    public void Reload() => ViewModel.OnNavigatedTo();
 }

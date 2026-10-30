@@ -88,4 +88,19 @@ public class ProgressRowTests
 
         Assert.Equal([WbsStatus.Blocked, WbsStatus.InProgress], rows.Select(r => r.Status));
     }
+
+    [Fact]
+    public void DaysLate_ComparesTheLatestDueDateWithTheLatestBaseline()
+    {
+        WbsNode d = Deliverable("1", 0);
+        WbsNode task = Node(WbsStatus.InProgress, d);
+        (task.DueDate, task.BaselineDue) = (new DateTime(2026, 3, 20), new DateTime(2026, 3, 15));
+        WbsNode early = Node(WbsStatus.NotStarted, d);
+        (early.DueDate, early.BaselineDue) = (new DateTime(2026, 3, 1), new DateTime(2026, 3, 10));
+
+        IReadOnlyList<ProgressRow> rows = ProgressRow.Build([d, task, early], NoneBlocked, _ => true);
+
+        Assert.Equal([5, 5, 0], rows.Select(r => r.DaysLate));
+        Assert.Equal(0, new ProgressRow("1", "", 0, WbsStatus.NotStarted, new DateTime(2026, 3, 20)).DaysLate);
+    }
 }

@@ -11,7 +11,8 @@ public sealed record GanttLayout(
     IReadOnlyList<GanttDependencyArrow> DependencyArrows,
     double TotalWidth,
     double TotalHeight,
-    double? TodayX)
+    double? TodayX,
+    double PixelsPerDay = 40)
 {
     public const double RowHeight    = 40.0;
     public const double BarHeight    = 24.0;

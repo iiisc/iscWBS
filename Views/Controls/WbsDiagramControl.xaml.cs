@@ -1,3 +1,4 @@
+using Windows.ApplicationModel.DataTransfer;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -117,6 +118,11 @@ public sealed partial class WbsDiagramControl : UserControl
 
     /// <summary>Fired when the user right-taps a node card; position is relative to this control.</summary>
     public event EventHandler<(WbsNode Node, Point Position)>? NodeRightTapped;
+
+    /// <summary>Fired when a card is dragged onto another card, to become its last child.</summary>
+    public event EventHandler<(Guid NodeId, Guid NewParentId)>? NodeDropped;
+
+    private Guid _draggedId;
 
     private sealed class DiagramNode
     {
@@ -404,6 +410,12 @@ public sealed partial class WbsDiagramControl : UserControl
         card.PointerPressed += Card_PointerPressed;
         card.Tapped      += Card_Tapped;
         card.RightTapped += Card_RightTapped;
+        card.CanDrag     = true;
+        card.AllowDrop   = true;
+        card.DragStarting += Card_DragStarting;
+        card.DragOver    += Card_DragOver;
+        card.Drop        += Card_Drop;
+        card.DropCompleted += (_, _) => _draggedId = Guid.Empty;
 
         Canvas.SetLeft(card, node.X);
         Canvas.SetTop(card,  node.Y);
@@ -732,10 +744,40 @@ public sealed partial class WbsDiagramControl : UserControl
             NodeRightTapped?.Invoke(this, (node, e.GetPosition(this)));
     }
 
+    private void Card_DragStarting(UIElement sender, DragStartingEventArgs args)
+    {
+        if (sender is not Border { Tag: WbsNode node }) return;
+        _draggedId = node.Id;
+        args.Data.SetText($"{node.Code} {node.Title}");
+        args.Data.RequestedOperation = DataPackageOperation.Move;
+    }
+
+    // A card can't go under itself, anything in its own branch, or the parent it already has.
+    private bool CanDropOn(WbsNode target)
+        => _draggedId != Guid.Empty && _hierarchy is not null
+           && AllNodes?.FirstOrDefault(n => n.Id == _draggedId) is { } dragged
+           && dragged.ParentId != target.Id
+           && !_hierarchy.CollectSubtree(dragged).Any(n => n.Id == target.Id);
+
+    private void Card_DragOver(object sender, DragEventArgs e)
+    {
+        if (sender is not Border { Tag: WbsNode target } || !CanDropOn(target)) return;
+        e.AcceptedOperation = DataPackageOperation.Move;
+        e.DragUIOverride.Caption = Strings.Format("Diagram_DropUnder", $"{target.Code} {target.Title}");
+    }
+
+    private void Card_Drop(object sender, DragEventArgs e)
+    {
+        if (sender is not Border { Tag: WbsNode target } || !CanDropOn(target)) return;
+        NodeDropped?.Invoke(this, (_draggedId, target.Id));
+        _draggedId = Guid.Empty;
+    }
+
     /// <summary>Arrow keys move the selection: Up to the parent, Down to the first visible child, Left/Right between siblings.</summary>
     private void DiagramScroller_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (_hierarchy is null || AllNodes is null) return;
+        // Alt+arrows move the node itself; the toolbar's shortcuts handle those.
+        if (_hierarchy is null || AllNodes is null || e.KeyStatus.IsMenuKeyDown) return;
 
         WbsNode? current = AllNodes.FirstOrDefault(n => n.Id == SelectedNodeId);
         WbsNode? target;

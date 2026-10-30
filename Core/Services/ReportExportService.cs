@@ -6,6 +6,9 @@ namespace iscWBS.Core.Services;
 
 public sealed class ReportExportService
 {
+    /// <summary>How far back the report's notes go.</summary>
+    public const int RecentNoteDays = 30;
+
     private readonly ProjectStateService _projectStateService;
     private readonly WbsService _wbsService;
     private readonly MilestoneService _milestoneService;
@@ -33,6 +36,7 @@ public sealed class ReportExportService
             DependencyConstraints.BlockedNodeIds(nodes, dependencies);
         IReadOnlyList<Milestone> milestones =
             await _milestoneService.GetUpcomingAsync(projectId);
+        var notes = await _wbsService.GetNotesSinceAsync(projectId, DateTime.Today.AddDays(-RecentNoteDays));
 
         var data = new ProjectStatusReportData(
             projectName,
@@ -40,7 +44,8 @@ public sealed class ReportExportService
             ProjectSummary.Compute(nodes, blockedIds),
             ProgressRow.Build(nodes, blockedIds, n => n.IsDeliverable),
             milestones.Select(m => (m.Title, m.DueDate)).ToList(),
-            BuildWbsTree(nodes, blockedIds));
+            BuildWbsTree(nodes, blockedIds),
+            notes.Select(n => (n.Note.CreatedAt, $"{n.Code} {n.Title}", n.Note.Text)).ToList());
 
         var document = new ProjectStatusReportDocument(data, options);
         await Task.Run(() => document.GeneratePdf(filePath));

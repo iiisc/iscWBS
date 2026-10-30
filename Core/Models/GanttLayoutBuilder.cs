@@ -22,6 +22,7 @@ public static class GanttLayoutBuilder
         // Everything dated counts, so work before the project's start date or a milestone outside the bars can still be scrolled to.
         DateTime projectStart = nodes.Where(n => n.StartDate.HasValue)
             .Select(n => n.StartDate!.Value.Date)
+            .Concat(nodes.Where(n => n.BaselineStart.HasValue).Select(n => n.BaselineStart!.Value.Date))
             .Concat(milestones.Select(m => m.DueDate.Date))
             .Concat(projectStartDate is { } date ? [date.Date] : [])
             .DefaultIfEmpty(DateTime.Today)
@@ -32,6 +33,7 @@ public static class GanttLayoutBuilder
 
         WbsHierarchy hierarchy = new(nodes);
         Dictionary<Guid, int> levels = hierarchy.BranchLevels();
+        IReadOnlySet<Guid> critical = Scheduler.CriticalPath(nodes, dependencies);
         var barPositions = new Dictionary<Guid, (double Left, double Right, double MidY)>();
         var rows = new List<GanttRow>();
 
@@ -49,8 +51,18 @@ public static class GanttLayoutBuilder
                 barPositions[node.Id] = (barLeft, barLeft + barWidth, rowTop + _barOffsetY + _barHeight / 2.0);
             }
 
+            bool hasBaseline = node.BaselineStart.HasValue && node.BaselineDue.HasValue;
+            double baselineLeft = 0, baselineWidth = 0;
+            if (hasBaseline)
+            {
+                baselineLeft  = (node.BaselineStart!.Value.Date - projectStart).TotalDays * ppd;
+                baselineWidth = Math.Max(4, (node.BaselineDue!.Value.Date - node.BaselineStart.Value.Date).TotalDays * ppd);
+                maxRight = Math.Max(maxRight, baselineLeft + baselineWidth);
+            }
+
             rows.Add(new GanttRow
             {
+                NodeId          = node.Id,
                 Label           = $"{node.Code}  {node.Title}",
                 RowTop          = rowTop,
                 HasBar          = hasBar,
@@ -62,6 +74,10 @@ public static class GanttLayoutBuilder
                 IsParent        = hierarchy.HasChildren(node.Id),
                 AssignedTo      = node.AssignedTo,
                 PercentComplete = hierarchy.Progress(node),
+                IsCritical      = critical.Contains(node.Id),
+                HasBaseline     = hasBaseline,
+                BaselineLeft    = baselineLeft,
+                BaselineWidth   = baselineWidth,
             });
         }
 
@@ -79,7 +95,8 @@ public static class GanttLayoutBuilder
             BuildDependencyArrows(dependencies, barPositions),
             totalWidth,
             totalHeight,
-            todayX >= 0 && todayX <= totalWidth ? todayX : null);
+            todayX >= 0 && todayX <= totalWidth ? todayX : null,
+            ppd);
     }
 
     private static IReadOnlyList<GanttHeaderTick> BuildHeaderTicks(

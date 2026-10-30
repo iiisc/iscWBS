@@ -9,6 +9,8 @@ public sealed class NavigationService
 
     public void Initialize(Frame frame) => _frame = frame;
 
+    public object? CurrentPage => _frame?.Content;
+
     public void RegisterPage(string pageKey, Type pageType) => _pageRegistry[pageKey] = pageType;
 
     public void NavigateTo(string pageKey, object? parameter = null)

@@ -2,7 +2,10 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using System.Windows.Input;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Windows.System;
 using iscWBS.Core.Services;
 using iscWBS.Helpers;
 using iscWBS.ViewModels;
@@ -48,8 +51,15 @@ public sealed partial class ShellWindow : Window
         ContentFrame.Navigated += (_, e) => NavView.SelectedItem = NavView.MenuItems.Concat(NavView.FooterMenuItems)
             .OfType<NavigationViewItem>()
             .FirstOrDefault(item => item.Tag as string == e.SourcePageType.Name);
+        AddShortcut(VirtualKey.Z, VirtualKeyModifiers.Control, App.Services.Undo.UndoCommand);
+        AddShortcut(VirtualKey.Y, VirtualKeyModifiers.Control, App.Services.Undo.RedoCommand);
+        AddShortcut(VirtualKey.Z, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift, App.Services.Undo.RedoCommand);
         // Text in the WBS detail panel is saved on blur, which closing the window skips.
-        Closed += (_, _) => (ContentFrame.Content as WbsTreePage)?.ViewModel.SaveIfDirty();
+        Closed += (_, _) =>
+        {
+            (ContentFrame.Content as WbsTreePage)?.ViewModel.SaveIfDirty();
+            _projectStateService.CloseOnExit();
+        };
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -79,6 +89,20 @@ public sealed partial class ShellWindow : Window
         }
 
         _navigationService.NavigateTo("WelcomePage");
+    }
+
+    private void AddShortcut(VirtualKey key, VirtualKeyModifiers modifiers, ICommand command)
+    {
+        var accelerator = new KeyboardAccelerator { Key = key, Modifiers = modifiers };
+        accelerator.Invoked += (_, args) =>
+        {
+            // A text box keeps the shortcut for undoing its own typing.
+            if (FocusManager.GetFocusedElement(RootGrid.XamlRoot) is TextBox) return;
+            args.Handled = true;
+            if (command.CanExecute(null))
+                command.Execute(null);
+        };
+        RootGrid.KeyboardAccelerators.Add(accelerator);
     }
 
     private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)

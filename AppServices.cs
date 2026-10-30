@@ -1,4 +1,5 @@
 using iscWBS.Core.Services;
+using iscWBS.Helpers;
 using iscWBS.ViewModels;
 
 namespace iscWBS;
@@ -15,15 +16,17 @@ public sealed class AppServices
     public ReportExportService ReportExport { get; }
     public LocalizationService Localization { get; }
     public UpdateService Update { get; } = new();
+    public UndoViewModel Undo { get; }
 
     public AppServices(SettingsService settings)
     {
         Settings = settings;
-        ProjectState = new ProjectStateService(settings);
+        ProjectState = new ProjectStateService(settings, new BackupService(BackupService.DefaultFolder, Logger.Write));
         Wbs = new WbsService(ProjectState);
         Milestones = new MilestoneService(ProjectState);
         ReportExport = new ReportExportService(ProjectState, Wbs, Milestones);
         Localization = new LocalizationService(settings);
+        Undo = new UndoViewModel(ProjectState, Navigation, Dialog);
     }
 
     public ShellViewModel CreateShellViewModel() => new(ProjectState, Navigation);

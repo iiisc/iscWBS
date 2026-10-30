@@ -2,6 +2,8 @@
 
 The "Night sky · Bold crop" brand, packaged for an unpackaged WinUI 3 app that ships as a self-contained, Native AOT build with no installer. `HANDOFF_PROMPT.md` contains a prompt for Claude Code to wire it in.
 
+> **In this repository** the kit is already wired in, and the app's own copies are the ones in use: `Assets/` and `Themes/` at the project root. Those have moved on from the kit (a neutral dark theme, status colours, a light Reports banner), so the kit's duplicate `Assets/` and `Themes/` folders were removed. What remains here is source material: `source/` (SVG sources of the icons, illustrations and app icon), `marketing/` and `tokens/`. The two prompts describe the original integration.
+
 ## Folder map
 
 | Folder | What it is | Where it goes |

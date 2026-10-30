@@ -49,6 +49,10 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     public ObservableCollection<MilestoneRowViewModel> UpcomingMilestones { get; } = new();
 
+    public string MilestonesTitle => FilterStartDate.HasValue || FilterEndDate.HasValue
+        ? Strings.Get("Dashboard_MilestonesInDates")
+        : Strings.Format("Dashboard_UpcomingMilestones", MilestoneService.UpcomingDays);
+
     public DashboardViewModel(
         ProjectStateService projectStateService,
         WbsService wbsService,
@@ -98,7 +102,7 @@ public sealed partial class DashboardViewModel : ObservableObject
 
             RebuildAssigneeOptions();
             RebuildReport();
-            _allMilestones = await _milestoneService.GetUpcomingAsync(projectId);
+            _allMilestones = [.. (await _milestoneService.GetByProjectAsync(projectId)).Where(m => !m.IsComplete)];
             RebuildMilestones();
         }
         catch (Exception ex)
@@ -173,12 +177,16 @@ public sealed partial class DashboardViewModel : ObservableObject
     {
         UpcomingMilestones.Clear();
 
-        // Only date filters apply to milestones; they have no assignee or status field.
+        // Only date filters apply to milestones; they have no assignee or status field. Without them the list
+        // is the coming weeks, overdue ones included.
+        OnPropertyChanged(nameof(MilestonesTitle));
         IEnumerable<Milestone> filtered = _allMilestones;
         if (FilterStartDate.HasValue)
             filtered = filtered.Where(m => m.DueDate.Date >= FilterStartDate.Value.Date);
         if (FilterEndDate.HasValue)
             filtered = filtered.Where(m => m.DueDate.Date <= FilterEndDate.Value.Date);
+        else if (!FilterStartDate.HasValue)
+            filtered = filtered.Where(m => m.DueDate.Date <= DateTime.Today.AddDays(MilestoneService.UpcomingDays));
 
         foreach (Milestone m in filtered)
             UpcomingMilestones.Add(new MilestoneRowViewModel { Milestone = m });
@@ -192,10 +200,12 @@ public sealed class StatusSlice(WbsStatus status, int count)
     public WbsStatus Status { get; } = status;
     public int Count { get; } = count;
     public string Label => $"{Status.ToDisplayString()} ({Count})";
+    public override string ToString() => Label;
 }
 
 public sealed class StatusFilterOption(WbsStatus? status, string label)
 {
     public WbsStatus? Status { get; } = status;
     public string Label { get; } = label;
+    public override string ToString() => Label;
 }

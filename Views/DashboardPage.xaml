@@ -297,7 +297,7 @@
                             <Viewbox Width="20" Height="20" VerticalAlignment="Center">
                                 <PathIcon helpers:IscIcon.Kind="Milestone" Width="24" Height="24" />
                             </Viewbox>
-                            <TextBlock x:Uid="DashboardPage_UpcomingMilestonesTitle" Text="Upcoming Milestones &#x2014; Next 60 Days" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                            <TextBlock Text="{x:Bind ViewModel.MilestonesTitle, Mode=OneWay}" Style="{ThemeResource SubtitleTextBlockStyle}" />
                         </StackPanel>
                         <ListView
                             x:Uid="DashboardPage_UpcomingMilestonesList"

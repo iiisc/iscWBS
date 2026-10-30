@@ -129,9 +129,6 @@
   <data name="DashboardPage_StatusBreakdownTitle.Text" xml:space="preserve">
     <value>Status Breakdown</value>
   </data>
-  <data name="DashboardPage_UpcomingMilestonesTitle.Text" xml:space="preserve">
-    <value>Upcoming Milestones — Next 60 Days</value>
-  </data>
   <data name="DashboardPage_BetaFeature.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Beta feature</value>
   </data>
@@ -956,6 +953,12 @@
   </data>
   <data name="Dashboard_FilterAll" xml:space="preserve">
     <value>All</value>
+  </data>
+  <data name="Dashboard_UpcomingMilestones" xml:space="preserve">
+    <value>Upcoming Milestones — Next {0} Days</value>
+  </data>
+  <data name="Dashboard_MilestonesInDates" xml:space="preserve">
+    <value>Milestones in the Chosen Dates</value>
   </data>
   <data name="Gantt_TaskHeader" xml:space="preserve">
     <value>Task</value>

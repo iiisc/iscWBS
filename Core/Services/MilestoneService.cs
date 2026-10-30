@@ -10,6 +10,8 @@ public sealed class MilestoneService
 {
     private const string Columns = "m.Id, m.ProjectId, m.Title, m.DueDate, m.IsComplete";
 
+    public const int UpcomingDays = 60;
+
     private readonly ProjectStateService _projectStateService;
 
     public MilestoneService(ProjectStateService projectStateService)
@@ -24,11 +26,11 @@ public sealed class MilestoneService
             $"SELECT {Columns} FROM Milestones m WHERE m.ProjectId = $1 ORDER BY m.DueDate",
             Read, projectId);
 
-    /// <summary>Incomplete milestones due within 60 days from today, overdue ones included.</summary>
+    /// <summary>Incomplete milestones due within <see cref="UpcomingDays"/> from today, overdue ones included.</summary>
     public async Task<IReadOnlyList<Milestone>> GetUpcomingAsync(Guid projectId)
         => await Db.QueryAsync(
             $"SELECT {Columns} FROM Milestones m WHERE m.ProjectId = $1 AND m.IsComplete = 0 AND m.DueDate <= $2 ORDER BY m.DueDate",
-            Read, projectId, DateTime.Today.AddDays(60));
+            Read, projectId, DateTime.Today.AddDays(UpcomingDays));
 
     public async Task<Milestone> CreateAsync(Guid projectId, string title, DateTime dueDate)
     {

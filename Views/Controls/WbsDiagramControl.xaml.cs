@@ -34,7 +34,7 @@ public sealed partial class WbsDiagramControl : UserControl
             nameof(SelectedNodeId),
             typeof(Guid),
             typeof(WbsDiagramControl),
-            new PropertyMetadata(Guid.Empty, static (d, _) => ((WbsDiagramControl)d).UpdateSelectionHighlight()));
+            new PropertyMetadata(Guid.Empty, static (d, _) => ((WbsDiagramControl)d).OnSelectedNodeIdChanged()));
 
     public static readonly DependencyProperty BlockedNodeIdsProperty =
         DependencyProperty.Register(
@@ -672,11 +672,39 @@ public sealed partial class WbsDiagramControl : UserControl
         }
     }
 
+    private bool _bringSelectionIntoView;
+
+    // The selection can come from outside the diagram (the Outline, a newly added node), so its card may be
+    // scrolled away or inside a collapsed branch.
+    private void OnSelectedNodeIdChanged()
+    {
+        _bringSelectionIntoView = SelectedNodeId != Guid.Empty;
+        if (ExpandAncestors(SelectedNodeId))
+            ScheduleRebuild();
+        else
+            UpdateSelectionHighlight();
+    }
+
+    private bool ExpandAncestors(Guid id)
+    {
+        Dictionary<Guid, WbsNode> byId = AllNodes?.ToDictionary(n => n.Id) ?? [];
+        bool expanded = false;
+        for (Guid? parent = byId.GetValueOrDefault(id)?.ParentId; parent is { } p; parent = byId.GetValueOrDefault(p)?.ParentId)
+            expanded |= _collapsedNodes.Remove(p);
+        return expanded;
+    }
+
     private void UpdateSelectionHighlight()
     {
         SetHighlight(_highlightedId, false);
         SetHighlight(SelectedNodeId, true);
         _highlightedId = SelectedNodeId;
+        // The card of a node added a moment ago only exists after the queued rebuild.
+        if (_bringSelectionIntoView && _cards.TryGetValue(SelectedNodeId, out Border? card))
+        {
+            _bringSelectionIntoView = false;
+            card.StartBringIntoView();
+        }
         DrawDependencyArrows();
     }
 
@@ -733,9 +761,8 @@ public sealed partial class WbsDiagramControl : UserControl
             };
         }
 
-        if (target is null || !_cards.TryGetValue(target.Id, out Border? card)) return;
+        if (target is null || !_cards.ContainsKey(target.Id)) return;
         e.Handled = true;
-        card.StartBringIntoView();
         NodeSelected?.Invoke(this, target);
     }
 }

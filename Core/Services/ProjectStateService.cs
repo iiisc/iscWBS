@@ -11,7 +11,9 @@ namespace iscWBS.Core.Services;
 public sealed class ProjectStateService
 {
     private readonly SettingsService _settingsService;
+    private readonly BackupService? _backups;
     private WbsDatabase? _database;
+    private string? _filePath;
     private Project? _activeProject;
 
     public Project? ActiveProject => _activeProject;
@@ -24,9 +26,10 @@ public sealed class ProjectStateService
 
     public event EventHandler<Project?>? ActiveProjectChanged;
 
-    public ProjectStateService(SettingsService settingsService)
+    public ProjectStateService(SettingsService settingsService, BackupService? backups = null)
     {
         _settingsService = settingsService;
+        _backups = backups;
         History = new ProjectHistory(() => Connection);
     }
 
@@ -122,7 +125,9 @@ public sealed class ProjectStateService
         await CloseInternalAsync();
         _database = database;
         _activeProject = project;
+        _filePath = filePath;
         History.Clear();
+        _backups?.BackUp(filePath);
         _settingsService.AddRecentProject(filePath);
         ActiveProjectChanged?.Invoke(this, project);
     }
@@ -136,5 +141,15 @@ public sealed class ProjectStateService
         WbsDatabase database = _database;
         _database = null;
         await database.CloseAsync();
+        _backups?.BackUp(_filePath!);
+    }
+
+    /// <summary>Closes the project and takes its closing backup without waiting, for when the app is exiting.</summary>
+    public void CloseOnExit()
+    {
+        if (_database is null) return;
+        _database.Connection.Dispose();
+        _database = null;
+        _backups?.BackUp(_filePath!);
     }
 }

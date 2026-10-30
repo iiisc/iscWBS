@@ -7,7 +7,7 @@ The "Night sky · Bold crop" brand, packaged for an unpackaged WinUI 3 app that 
 | Folder | What it is | Where it goes |
 |---|---|---|
 | `Assets/AppIcon.ico` | App icon, 15 sizes from 16 to 256 px (covers every DPI step Windows uses) | Project `Assets/`; embedded in the exe and loaded for the title bar |
-| `Assets/Illustrations/` | 5 empty-state illustrations: `.png` (1280×800, displayed at 320×200, so sharp up to 400% DPI) and `.svg` | Project `Assets/Illustrations/` |
+| `Assets/Illustrations/` | 7 empty-state illustrations (`.png` 1280×800, displayed at 320×200, sharp up to 400% DPI) and the Reports header (`.png` 3200×800, displayed up to 800×200), each with an `.svg` | Project `Assets/Illustrations/` |
 | `Assets/Fonts/` | Outfit variable font, static Light/Regular/SemiBold instances, SIL Open Font License | Project `Assets/Fonts/` (the license must ship with the font) |
 | `Themes/IscBrand.xaml` | Theme-aware colors and brushes (Light, Dark, HighContrast), font families, corner radii | Merge into `App.xaml` |
 | `Themes/IscIcons.xaml` | 18 UI icons as `PathIcon` styles (filled geometry, follows `Foreground`) | Merge into `App.xaml` |
@@ -67,5 +67,13 @@ Everything in the kit is plain XAML resources and content files: no reflection, 
 | `NoResults` | Search/filter with no matches | **Nothing matches that search** — Try a different keyword, or clear your filters to see the whole tree. [Clear filters] |
 | `AllDone` | Every work package complete | **Every branch is done** — All work packages in this project are complete. Nicely done. [View summary] |
 | `NotFound` | Missing item (deleted node, broken link, file that can't open) | **This branch snapped off** — We couldn’t find that item. It may have been moved or deleted. [Back to projects] |
+| `EmptyMilestones` | Milestones view with no milestones | **No milestones yet** — Mark key dates and checkpoints so everyone can see what the project is building toward. [Add milestone] |
+| `NothingScheduled` | Timeline view with no dated work | **Nothing scheduled yet** — Give work packages start and end dates to see them on the timeline. [Schedule work] |
+
+## Reports header
+
+`ReportsHeader.png` is a 4:1 banner on the Night background (`#14112B`) with the artwork on the right and the left ~45% kept clear for the page title. Place it at the top of the Reports page at up to 800×200 (`Stretch="UniformToFill"`, aligned right, inside a `Border` with `IscCornerRadiusLarge`), and overlay the title in `IscFontFamily` SemiBold, white, on the left. Because the banner is always dark, the overlaid title stays white in both Light and Dark themes; in High Contrast, hide the image and show the plain title.
+
+## Showing illustrations
 
 Show them with `<Image Source="ms-appx:///Assets/Illustrations/EmptyProjects.png" Width="320" Height="200" />`. They're transparent and work on Light and Dark. All copy is a suggestion.

@@ -23,5 +23,15 @@
     "title": "This branch snapped off",
     "body": "We couldn’t find that item. It may have been moved or deleted.",
     "action": "Back to projects"
+  },
+  "empty-milestones": {
+    "title": "No milestones yet",
+    "body": "Mark key dates and checkpoints so everyone can see what the project is building toward.",
+    "action": "Add milestone"
+  },
+  "nothing-scheduled": {
+    "title": "Nothing scheduled yet",
+    "body": "Give work packages start and end dates to see them on the timeline.",
+    "action": "Schedule work"
   }
 }

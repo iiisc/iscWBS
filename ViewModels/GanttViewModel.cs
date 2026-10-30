@@ -63,7 +63,7 @@ public sealed partial class GanttViewModel : ObservableObject
 
     private void RebuildLayout()
     {
-        if (_nodes.Count == 0)
+        if (_nodes.Count == 0 && _milestones.Count == 0)
         {
             Layout = EmptyLayout;
             return;

@@ -328,8 +328,7 @@ public sealed partial class GanttPage : Page
 
     private void DrawTodayLine(double rowsH)
     {
-        double todayX = ViewModel.Layout.TodayX;
-        if (todayX < 0) return;
+        if (ViewModel.Layout.TodayX is not { } todayX) return;
 
         var todayBrush = new SolidColorBrush(Color.FromArgb(0xEE, 0xC5, 0x0F, 0x1F));
         AddVLine(HeaderCanvas, todayX, 0, _headerHeight, todayBrush, 2);

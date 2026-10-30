@@ -87,7 +87,7 @@ public class GanttLayoutBuilderTests
 
     [Fact]
     public void ProjectStart_FallsBackToToday_WhenNoNodeHasAStartDate()
-        => Assert.Equal(0, Build([Node()], Day, projectStart: null).TodayX);
+        => Assert.Equal(0.0, Build([Node()], Day, projectStart: null).TodayX);
 
     [Fact]
     public void TotalWidth_HasAMinimum_AndOtherwiseFitsTheRightmostBar()
@@ -195,5 +195,24 @@ public class GanttLayoutBuilderTests
 
         Assert.All(layout.MilestoneMarkers, m => Assert.InRange(m.X, 0, layout.TotalWidth));
         Assert.Contains(layout.HeaderTicks, t => t.X >= layout.MilestoneMarkers.Max(m => m.X));
+    }
+
+    [Fact]
+    public void WorkDatedBeforeTheProjectStart_StaysInsideTheChart()
+    {
+        WbsNode early = Bar(Start.AddDays(-10), Start.AddDays(5));
+        Milestone kickoff = new() { Title = "Kickoff", DueDate = Start.AddDays(-20) };
+
+        GanttLayout layout = Build([early], Day, Start, milestones: [kickoff]);
+
+        Assert.Equal(10 * 40.0, layout.Rows.Single().BarLeft);
+        Assert.Equal(0, layout.MilestoneMarkers.Single().X);
+    }
+
+    [Fact]
+    public void TodayLine_OnlyWhenTodayIsOnTheChart()
+    {
+        Assert.Null(Build([Bar(DateTime.Today.AddDays(-100), DateTime.Today.AddDays(-90))], Day).TodayX);
+        Assert.Equal(40.0, Build([Bar(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(30))], Day).TodayX);
     }
 }

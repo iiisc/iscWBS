@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
@@ -40,7 +42,11 @@ public sealed partial class UpdateService
     /// <summary>The latest release, or <see langword="null"/> when this version is already current.</summary>
     public async Task<UpdateInfo?> CheckForUpdateAsync()
     {
-        GitHubRelease? release = await _httpClient.GetFromJsonAsync(_gitHubApiUrl, GitHubJsonContext.Default.GitHubRelease);
+        using HttpResponseMessage response = await _httpClient.GetAsync(_gitHubApiUrl);
+        if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
+            throw new RateLimitedException(RateLimitReset(response.Headers, DateTimeOffset.Now));
+        response.EnsureSuccessStatusCode();
+        GitHubRelease? release = await response.Content.ReadFromJsonAsync(GitHubJsonContext.Default.GitHubRelease);
         if (release is null
             || !Version.TryParse(release.TagName.TrimStart('v'), out Version? latestVersion)
             || !Version.TryParse(CurrentVersion, out Version? currentVersion)
@@ -171,6 +177,12 @@ public sealed partial class UpdateService
         }
     }
 
+    /// <summary>When GitHub lets this network check again. Without its header, assume the limit's full hour.</summary>
+    internal static DateTimeOffset RateLimitReset(HttpResponseHeaders headers, DateTimeOffset now)
+        => headers.TryGetValues("X-RateLimit-Reset", out IEnumerable<string>? values) && long.TryParse(values.First(), out long seconds)
+            ? DateTimeOffset.FromUnixTimeSeconds(seconds)
+            : now.AddHours(1);
+
     internal static bool Sha256Matches(string filePath, string expectedHex)
     {
         using FileStream stream = File.OpenRead(filePath);
@@ -186,6 +198,12 @@ public sealed partial class UpdateService
             .Where(a => a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(a => a.Name.Contains("x64", StringComparison.OrdinalIgnoreCase))
             .FirstOrDefault();
+
+    /// <summary>GitHub allows 60 unauthenticated API requests an hour from each network address.</summary>
+    public sealed class RateLimitedException(DateTimeOffset resetsAt) : Exception("GitHub's API rate limit was reached.")
+    {
+        public DateTimeOffset ResetsAt { get; } = resetsAt;
+    }
 
     [JsonSerializable(typeof(GitHubRelease))]
     private sealed partial class GitHubJsonContext : JsonSerializerContext;

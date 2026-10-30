@@ -20,6 +20,22 @@ public class WbsNode
     public DateTime? BaselineStart { get; set; }
     public DateTime? BaselineDue { get; set; }
 
+    /// <summary>A copy of the planned work as not started: status, actual hours and the baseline aren't carried over.</summary>
+    public WbsNode CopyAsNotStarted() => new()
+    {
+        ProjectId = ProjectId,
+        ParentId = ParentId,
+        Code = Code,
+        Title = Title,
+        Description = Description,
+        AssignedTo = AssignedTo,
+        EstimatedHours = EstimatedHours,
+        StartDate = StartDate,
+        DueDate = DueDate,
+        SortOrder = SortOrder,
+        IsDeliverable = IsDeliverable
+    };
+
     // Screen readers announce list and picker items by their ToString.
     public override string ToString() => $"{Code} {Title}";
 }

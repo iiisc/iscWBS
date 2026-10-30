@@ -65,6 +65,13 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     public ObservableCollection<MilestoneRowViewModel> UpcomingMilestones { get; } = new();
 
+    /// <summary>Open work per person, under the date and assignee filters.</summary>
+    public ObservableCollection<WorkloadItem> Workload { get; } = new();
+
+    /// <summary>Hidden until someone is assigned work; a list holding only "Unassigned" says nothing.</summary>
+    [ObservableProperty]
+    public partial bool HasWorkload { get; private set; }
+
     public bool HasNoUpcomingMilestones => UpcomingMilestones.Count == 0;
 
     public string MilestonesTitle => FilterStartDate.HasValue || FilterEndDate.HasValue
@@ -176,7 +183,17 @@ public sealed partial class DashboardViewModel : ObservableObject
         Summary = ProjectSummary.Compute(nodes, _blockedIds);
         BuildStatusChart(Summary);
         BuildRows(nodes);
+        BuildWorkload(nodes);
         RebuildMilestones();
+    }
+
+    private void BuildWorkload(List<WbsNode> filteredNodes)
+    {
+        Workload.Clear();
+        List<WorkloadRow> rows = WorkloadRow.Build(_allNodes, filteredNodes);
+        foreach (WorkloadRow row in rows)
+            Workload.Add(new WorkloadItem(row));
+        HasWorkload = rows.Any(r => r.Person.Length > 0);
     }
 
     private void BuildStatusChart(ProjectSummary summary)
@@ -225,6 +242,13 @@ public sealed partial class DashboardViewModel : ObservableObject
         OnPropertyChanged(nameof(HasNoUpcomingMilestones));
     }
 
+}
+
+public sealed class WorkloadItem(WorkloadRow row)
+{
+    public string Person { get; } = row.Person.Length > 0 ? row.Person : Strings.Get("Dashboard_Unassigned");
+    public string Summary { get; } = Strings.Format("Dashboard_WorkloadSummary", row.OpenTasks, Math.Round(row.RemainingHours));
+    public override string ToString() => $"{Person}, {Summary}";
 }
 
 // Get-only properties: the XAML type metadata generator emits setters for init-only ones, which don't compile.

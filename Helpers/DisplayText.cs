@@ -8,6 +8,8 @@ public static class DisplayText
 {
     public static string ToDisplayString(this WbsStatus status) => Strings.Get($"Status_{status}");
 
+    public static string ToDisplayString(this RiskLevel level) => Strings.Get($"RiskLevel_{level}");
+
     /// <summary>Long label, e.g. "Finish → Start".</summary>
     public static string GetLabel(DependencyType type) => Strings.Get($"DependencyLabel_{type}");
 

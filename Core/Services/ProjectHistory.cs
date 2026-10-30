@@ -13,7 +13,7 @@ public sealed class ProjectHistory(Func<SqliteConnection> connection)
     public const int Depth = 50;
 
     private static readonly string[] _tables =
-        ["Projects", "WbsNodes", "NodeDependencies", "Milestones", "MilestoneNodeLinks", "NodeNotes"];
+        ["Projects", "WbsNodes", "NodeDependencies", "Milestones", "MilestoneNodeLinks", "NodeNotes", "Risks"];
 
     private readonly LinkedList<Snapshot> _undo = new();
     private readonly Stack<Snapshot> _redo = new();

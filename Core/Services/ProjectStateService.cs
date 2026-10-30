@@ -35,14 +35,19 @@ public sealed class ProjectStateService
 
     public async Task OpenProjectAsync(string filePath)
     {
+        (WbsDatabase database, Project project) = await OpenProjectFileAsync(filePath);
+        await ActivateAsync(database, project, filePath);
+    }
+
+    private static async Task<(WbsDatabase, Project)> OpenProjectFileAsync(string filePath)
+    {
         if (!File.Exists(filePath))
             throw WbsException.ProjectNotFound(filePath);
 
         WbsDatabase database = await OpenDatabaseAsync(filePath);
-        Project? project;
         try
         {
-            project = (await database.Connection.QueryAsync(
+            Project project = (await database.Connection.QueryAsync(
                 "SELECT Id, Name, Description, Owner, CreatedAt, UpdatedAt, StartDate FROM Projects LIMIT 1",
                 r => new Project
                 {
@@ -55,16 +60,16 @@ public sealed class ProjectStateService
                     StartDate = r.GetNullableDateTime(6)
                 })).FirstOrDefault()
                 ?? throw new WbsException($"'{filePath}' does not contain valid project data.").WithMessageKey("Error_InvalidProjectData", filePath);
+            return (database, project);
         }
         catch
         {
             await database.CloseAsync();
             throw;
         }
-        await ActivateAsync(database, project, filePath);
     }
 
-    public async Task CreateProjectAsync(string name, string filePath, string owner = "")
+    public async Task CreateProjectAsync(string name, string filePath, string owner = "", ProjectContent? content = null)
     {
         // The file would open as the existing project, and a second project in it is never shown again.
         if (File.Exists(filePath))
@@ -84,18 +89,39 @@ public sealed class ProjectStateService
         };
         try
         {
-            await database.Connection.ExecuteAsync(
-                "INSERT INTO Projects (Id, Name, Description, Owner, CreatedAt, UpdatedAt, StartDate) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-                project.Id, project.Name, project.Description, project.Owner, project.CreatedAt, project.UpdatedAt, project.StartDate);
+            await database.Connection.InTransactionAsync(async () =>
+            {
+                await database.Connection.ExecuteAsync(
+                    "INSERT INTO Projects (Id, Name, Description, Owner, CreatedAt, UpdatedAt, StartDate) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+                    project.Id, project.Name, project.Description, project.Owner, project.CreatedAt, project.UpdatedAt, project.StartDate);
+                if (content is not null)
+                    await content.WriteAsync(database.Connection, project.Id);
+            });
         }
         catch
         {
             await database.CloseAsync();
+            // The file didn't exist before, and left empty it would stop the user trying again with the same name.
+            File.Delete(filePath);
             throw;
         }
         await ActivateAsync(database, project, filePath);
         if (!string.IsNullOrEmpty(directory))
             _settingsService.Set(SettingsKeys.LastProjectFolder, directory);
+    }
+
+    /// <summary>The content of a project file without opening it as the active project.</summary>
+    public static async Task<ProjectContent> ReadContentAsync(string filePath)
+    {
+        (WbsDatabase database, Project project) = await OpenProjectFileAsync(filePath);
+        try
+        {
+            return await ProjectContent.ReadAsync(database.Connection, project.Id);
+        }
+        finally
+        {
+            await database.CloseAsync();
+        }
     }
 
     public async Task CloseProjectAsync()

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -111,11 +112,13 @@ public sealed partial class SettingsViewModel : ObservableObject
             RecentProjects.Add(path);
     }
 
-    public async Task CreateProjectAsync(string name, string filePath, string owner)
+    /// <param name="sourcePath">A project whose plan to copy, or a workbook to import; null for an empty project.</param>
+    public async Task CreateProjectAsync(string name, string filePath, string owner, string? sourcePath)
     {
         try
         {
-            await _projectStateService.CreateProjectAsync(name, filePath, owner);
+            ProjectContent? content = sourcePath is null ? null : await ProjectContent.FromFileAsync(sourcePath, Strings.Get);
+            await _projectStateService.CreateProjectAsync(name, filePath, owner, content);
         }
         catch (Exception ex)
         {
@@ -180,9 +183,9 @@ public sealed partial class SettingsViewModel : ObservableObject
             UpdateErrorMessage = Strings.Get("Settings_RepositoryNotFound");
             Logger.Write(ex);
         }
-        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
+        catch (UpdateService.RateLimitedException ex)
         {
-            UpdateErrorMessage = Strings.Get("Settings_RateLimited");
+            UpdateErrorMessage = Strings.Format("Settings_RateLimited", ex.ResetsAt.ToLocalTime().ToString("t", CultureInfo.CurrentCulture));
             Logger.Write(ex);
         }
         catch (Exception ex)

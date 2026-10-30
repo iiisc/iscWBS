@@ -159,6 +159,9 @@ internal sealed class ProjectStatusReportDocument : IDocument
             if (_options.IncludeMilestones && _data.Milestones.Count > 0)
                 col.Item().PaddingTop(18).Element(ComposeMilestones);
 
+            if (_options.IncludeRisks && _data.OpenRisks.Count > 0)
+                col.Item().PaddingTop(18).Element(ComposeRisks);
+
             if (_options.IncludeNotes && _data.Notes.Count > 0)
                 col.Item().PaddingTop(18).Element(ComposeNotes);
 
@@ -389,6 +392,39 @@ internal sealed class ProjectStatusReportDocument : IDocument
                 {
                     Cell(t, 1, 5).Text(title).FontSize(9);
                     Cell(t, 1, 5).Text(due.ToString("d MMM yyyy")).FontSize(9).FontColor(_textMuted);
+                }
+            });
+        });
+    }
+
+    private void ComposeRisks(IContainer c)
+    {
+        c.Column(col =>
+        {
+            SectionTitle(col, "Report_OpenRisks");
+
+            col.Item().PaddingTop(6).Table(t =>
+            {
+                t.ColumnsDefinition(cd =>
+                {
+                    cd.ConstantColumn(62);
+                    cd.RelativeColumn();
+                    cd.ConstantColumn(110);
+                });
+
+                HeaderRow(t, 5, "Report_ColSeverity", "Report_ColRisk", "Report_ColOwner");
+
+                foreach (Risk risk in _data.OpenRisks)
+                {
+                    string color = risk.Severity switch { RiskLevel.High => _red, RiskLevel.Medium => _amber, _ => _textMuted };
+                    Cell(t, 1, 5).Text(risk.Severity.ToDisplayString()).FontSize(9).Bold().FontColor(color);
+                    Cell(t, 1, 5).Column(cell =>
+                    {
+                        cell.Item().Text(risk.Title).FontSize(9);
+                        if (risk.Response.Length > 0)
+                            cell.Item().PaddingTop(2).Text(risk.Response).FontSize(8).FontColor(_textMuted);
+                    });
+                    Cell(t, 1, 5).Text(risk.Owner).FontSize(9).FontColor(_textMuted);
                 }
             });
         });

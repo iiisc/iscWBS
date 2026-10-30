@@ -129,6 +129,12 @@
                             Header="Notes from the last 30 days"
                             OnContent="Included" OffContent="Excluded"
                             AutomationProperties.Name="Include recent notes section" />
+                        <ToggleSwitch
+                            x:Uid="ReportsPage_ToggleRisks"
+                            IsOn="{x:Bind ViewModel.IncludeRisks, Mode=TwoWay}"
+                            Header="Open Risks"
+                            OnContent="Included" OffContent="Excluded"
+                            AutomationProperties.Name="Include open risks section" />
 
                     </StackPanel>
                 </Border>
@@ -148,6 +154,32 @@
                     </StackPanel>
                 </Button>
 
+                <Border
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                    CornerRadius="{StaticResource IscCornerRadiusMedium}" Padding="16,14">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            x:Uid="ReportsPage_ExcelTitle"
+                            Text="Excel"
+                            Style="{StaticResource IscSectionTitleTextBlockStyle}" />
+                        <TextBlock
+                            x:Uid="ReportsPage_ExcelBody"
+                            Text="The whole project as a workbook: tasks, dependencies, milestones, risks and notes. To bring an edited workbook back, choose it under Start From when creating a new project."
+                            Style="{ThemeResource BodyTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap" />
+                        <Button
+                            x:Uid="ReportsPage_ExportExcelButton"
+                            AutomationProperties.Name="Export to Excel"
+                            Command="{x:Bind ViewModel.ExportWorkbookCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE9F9;" FontSize="14" />
+                                <TextBlock x:Uid="ReportsPage_ExportExcelText" Text="Export to Excel" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
                 <TextBlock
                     Text="{x:Bind ViewModel.LastExportPath, Mode=OneWay}"
                     Style="{ThemeResource CaptionTextBlockStyle}"

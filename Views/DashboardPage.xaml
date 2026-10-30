@@ -447,6 +447,37 @@
                         </StackPanel>
                     </Border>
 
+                    <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.HasWorkload, Mode=OneWay}">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE716;" FontSize="18" VerticalAlignment="Center" />
+                                <TextBlock x:Uid="DashboardPage_WorkloadTitle" Text="Workload" Style="{StaticResource IscSectionTitleTextBlockStyle}" />
+                            </StackPanel>
+                            <ItemsControl
+                                x:Uid="DashboardPage_WorkloadList"
+                                ItemsSource="{x:Bind ViewModel.Workload, Mode=OneWay}"
+                                AutomationProperties.Name="Open work per person">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:WorkloadItem">
+                                        <Grid ColumnSpacing="8" Padding="4,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{x:Bind Person}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                Text="{x:Bind Summary}"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                VerticalAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
                     <Border Style="{StaticResource CardStyle}">
                         <StackPanel Spacing="8">
                             <StackPanel Orientation="Horizontal" Spacing="8">

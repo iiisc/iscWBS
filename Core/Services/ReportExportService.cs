@@ -12,15 +12,18 @@ public sealed class ReportExportService
     private readonly ProjectStateService _projectStateService;
     private readonly WbsService _wbsService;
     private readonly MilestoneService _milestoneService;
+    private readonly RiskService _riskService;
 
     public ReportExportService(
         ProjectStateService projectStateService,
         WbsService wbsService,
-        MilestoneService milestoneService)
+        MilestoneService milestoneService,
+        RiskService riskService)
     {
         _projectStateService = projectStateService;
         _wbsService = wbsService;
         _milestoneService = milestoneService;
+        _riskService = riskService;
     }
 
     public async Task ExportAsync(string filePath, ReportOptions options)
@@ -37,6 +40,7 @@ public sealed class ReportExportService
         List<Milestone> milestones =
             [.. (await _milestoneService.GetByProjectAsync(projectId)).Where(m => m.IsDueSoon(DateTime.Today))];
         var notes = await _wbsService.GetNotesSinceAsync(projectId, DateTime.Today.AddDays(-RecentNoteDays));
+        IReadOnlyList<Risk> risks = await _riskService.GetByProjectAsync(projectId);
 
         var data = new ProjectStatusReportData(
             projectName,
@@ -45,10 +49,20 @@ public sealed class ReportExportService
             ProgressRow.Build(nodes, blockedIds, n => n.IsDeliverable),
             milestones.Select(m => (m.Title, m.DueDate)).ToList(),
             BuildWbsTree(nodes, blockedIds),
-            notes.Select(n => (n.Note.CreatedAt, $"{n.Code} {n.Title}", n.Note.Text)).ToList());
+            notes.Select(n => (n.Note.CreatedAt, $"{n.Code} {n.Title}", n.Note.Text)).ToList(),
+            risks.Where(r => !r.IsClosed).ToList());
 
         var document = new ProjectStatusReportDocument(data, options);
         await Task.Run(() => document.GeneratePdf(filePath));
+    }
+
+    /// <summary>The whole project as an Excel workbook, which New Project can also start from.</summary>
+    public async Task ExportWorkbookAsync(string filePath)
+    {
+        if (_projectStateService.ActiveProject is not { Id: var projectId })
+            return;
+        ProjectContent content = await ProjectContent.ReadAsync(_projectStateService.Connection, projectId);
+        await Task.Run(() => ProjectWorkbook.Write(content, filePath, Strings.Get));
     }
 
     private static IReadOnlyList<WbsTreeEntry> BuildWbsTree(

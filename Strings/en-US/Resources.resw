@@ -972,7 +972,7 @@
     <value>The update repository could not be found. The project may have moved or been renamed.</value>
   </data>
   <data name="Settings_RateLimited" xml:space="preserve">
-    <value>GitHub API rate limit reached. Please wait a few minutes and try again.</value>
+    <value>GitHub is limiting update checks from this network. Try again after {0}.</value>
   </data>
   <data name="Settings_CheckFailed" xml:space="preserve">
     <value>Could not check for updates. Please check your internet connection.</value>
@@ -1356,5 +1356,344 @@
   </data>
   <data name="SettingsPage_OpenBackupFolderBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Open the backup folder</value>
+  </data>
+  <data name="WbsDetail_DependencyLag.Header" xml:space="preserve">
+    <value>Delay (days)</value>
+  </data>
+  <data name="WbsDetail_DependencyLag.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Delay in days</value>
+  </data>
+  <data name="Shell_NavRisks.Content" xml:space="preserve">
+    <value>Risks</value>
+  </data>
+  <data name="Shell_NavRisks.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Risks</value>
+  </data>
+  <data name="RiskLevel_Low" xml:space="preserve">
+    <value>Low</value>
+  </data>
+  <data name="RiskLevel_Medium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="RiskLevel_High" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="Risks_Closed" xml:space="preserve">
+    <value>Closed</value>
+  </data>
+  <data name="Risks_Rating" xml:space="preserve">
+    <value>Likelihood {0} · Impact {1}</value>
+  </data>
+  <data name="Risks_DeleteTitle" xml:space="preserve">
+    <value>Delete Risk</value>
+  </data>
+  <data name="Risks_DeleteConfirm" xml:space="preserve">
+    <value>Delete "{0}"?</value>
+  </data>
+  <data name="ErrorTitle_AddRisk" xml:space="preserve">
+    <value>Add Risk Error</value>
+  </data>
+  <data name="Error_RiskTitleRequired" xml:space="preserve">
+    <value>Risk title is required.</value>
+  </data>
+  <data name="RisksPage_NewTitleInput.PlaceholderText" xml:space="preserve">
+    <value>What could go wrong?</value>
+  </data>
+  <data name="RisksPage_NewTitleInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>New risk title</value>
+  </data>
+  <data name="RisksPage_AddRiskBtn.Content" xml:space="preserve">
+    <value>Add Risk</value>
+  </data>
+  <data name="RisksPage_AddRiskBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Add risk</value>
+  </data>
+  <data name="RisksPage_RiskList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Risks</value>
+  </data>
+  <data name="RisksPage_DeleteRisk.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Delete risk</value>
+  </data>
+  <data name="RisksPage_Empty.Title" xml:space="preserve">
+    <value>No risks logged</value>
+  </data>
+  <data name="RisksPage_Empty.Body" xml:space="preserve">
+    <value>Write down what could delay or derail the project, how likely it is, and what's being done about it.</value>
+  </data>
+  <data name="RisksPage_DetailTitle.Text" xml:space="preserve">
+    <value>Risk Details</value>
+  </data>
+  <data name="RisksPage_RiskTitle.Header" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="RisksPage_RiskTitle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Risk title</value>
+  </data>
+  <data name="RisksPage_RiskDescription.Header" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="RisksPage_RiskDescription.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Risk description</value>
+  </data>
+  <data name="RisksPage_Likelihood.Header" xml:space="preserve">
+    <value>Likelihood</value>
+  </data>
+  <data name="RisksPage_Likelihood.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Likelihood</value>
+  </data>
+  <data name="RisksPage_Impact.Header" xml:space="preserve">
+    <value>Impact</value>
+  </data>
+  <data name="RisksPage_Impact.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Impact</value>
+  </data>
+  <data name="RisksPage_RiskOwner.Header" xml:space="preserve">
+    <value>Owner</value>
+  </data>
+  <data name="RisksPage_RiskOwner.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Risk owner</value>
+  </data>
+  <data name="RisksPage_RiskResponse.Header" xml:space="preserve">
+    <value>Response</value>
+  </data>
+  <data name="RisksPage_RiskResponse.PlaceholderText" xml:space="preserve">
+    <value>What is being done to prevent it or soften it</value>
+  </data>
+  <data name="RisksPage_RiskResponse.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Risk response</value>
+  </data>
+  <data name="RisksPage_RiskClosed.Content" xml:space="preserve">
+    <value>Closed (no longer a risk)</value>
+  </data>
+  <data name="RisksPage_SaveBtn.Content" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="RisksPage_SaveBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Save risk</value>
+  </data>
+  <data name="Report_OpenRisks" xml:space="preserve">
+    <value>OPEN RISKS</value>
+  </data>
+  <data name="Report_ColSeverity" xml:space="preserve">
+    <value>Severity</value>
+  </data>
+  <data name="Report_ColRisk" xml:space="preserve">
+    <value>Risk</value>
+  </data>
+  <data name="Report_ColOwner" xml:space="preserve">
+    <value>Owner</value>
+  </data>
+  <data name="ReportsPage_ToggleRisks.Header" xml:space="preserve">
+    <value>Open Risks</value>
+  </data>
+  <data name="ReportsPage_ToggleRisks.OnContent" xml:space="preserve">
+    <value>Included</value>
+  </data>
+  <data name="ReportsPage_ToggleRisks.OffContent" xml:space="preserve">
+    <value>Excluded</value>
+  </data>
+  <data name="ReportsPage_ToggleRisks.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Include open risks section</value>
+  </data>
+  <data name="ReportsPage_ExcelTitle.Text" xml:space="preserve">
+    <value>Excel</value>
+  </data>
+  <data name="ReportsPage_ExcelBody.Text" xml:space="preserve">
+    <value>The whole project as a workbook: tasks, dependencies, milestones, risks and notes. To bring an edited workbook back, choose it under Start From when creating a new project.</value>
+  </data>
+  <data name="ReportsPage_ExportExcelButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Export to Excel</value>
+  </data>
+  <data name="ReportsPage_ExportExcelText.Text" xml:space="preserve">
+    <value>Export to Excel</value>
+  </data>
+  <data name="Picker_ExcelWorkbook" xml:space="preserve">
+    <value>Excel workbook</value>
+  </data>
+  <data name="NewProject_StartFrom.Text" xml:space="preserve">
+    <value>Start From</value>
+  </data>
+  <data name="NewProject_EmptyProject" xml:space="preserve">
+    <value>An empty project</value>
+  </data>
+  <data name="NewProject_SourceHint.Text" xml:space="preserve">
+    <value>Copy another project's plan, with progress cleared and dates moved to start today, or import a workbook exported from iscWBS.</value>
+  </data>
+  <data name="NewProject_BtnPickSource.Content" xml:space="preserve">
+    <value>Choose File...</value>
+  </data>
+  <data name="NewProject_BtnPickSource.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Choose a project or workbook to start from</value>
+  </data>
+  <data name="NewProject_BtnClearSource.Content" xml:space="preserve">
+    <value>Start Empty</value>
+  </data>
+  <data name="WbsTreePage_DuplicateText.Text" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="WbsTreePage_DuplicateBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Copy node with its branch</value>
+  </data>
+  <data name="WbsTreePage_DuplicateBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Copy the node and everything under it (Ctrl+D)</value>
+  </data>
+  <data name="WbsTreePage_ContextDuplicate.Text" xml:space="preserve">
+    <value>Copy with Branch</value>
+  </data>
+  <data name="ErrorTitle_Duplicate" xml:space="preserve">
+    <value>Copy Node Error</value>
+  </data>
+  <data name="DashboardPage_WorkloadTitle.Text" xml:space="preserve">
+    <value>Workload</value>
+  </data>
+  <data name="DashboardPage_WorkloadList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Open work per person</value>
+  </data>
+  <data name="Dashboard_Unassigned" xml:space="preserve">
+    <value>Unassigned</value>
+  </data>
+  <data name="Dashboard_WorkloadSummary" xml:space="preserve">
+    <value>{0} open · {1} h left</value>
+  </data>
+  <data name="Workbook_Tasks" xml:space="preserve">
+    <value>Tasks</value>
+  </data>
+  <data name="Workbook_Tasks_Code" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="Workbook_Tasks_Title" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="Workbook_Tasks_Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Workbook_Tasks_AssignedTo" xml:space="preserve">
+    <value>Assigned to</value>
+  </data>
+  <data name="Workbook_Tasks_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Workbook_Tasks_EstimatedHours" xml:space="preserve">
+    <value>Estimated hours</value>
+  </data>
+  <data name="Workbook_Tasks_ActualHours" xml:space="preserve">
+    <value>Actual hours</value>
+  </data>
+  <data name="Workbook_Tasks_Start" xml:space="preserve">
+    <value>Start date</value>
+  </data>
+  <data name="Workbook_Tasks_Due" xml:space="preserve">
+    <value>Due date</value>
+  </data>
+  <data name="Workbook_Tasks_Deliverable" xml:space="preserve">
+    <value>Deliverable</value>
+  </data>
+  <data name="Workbook_Tasks_BaselineStart" xml:space="preserve">
+    <value>Baseline start</value>
+  </data>
+  <data name="Workbook_Tasks_BaselineDue" xml:space="preserve">
+    <value>Baseline due</value>
+  </data>
+  <data name="Workbook_Dependencies" xml:space="preserve">
+    <value>Dependencies</value>
+  </data>
+  <data name="Workbook_Dependencies_Predecessor" xml:space="preserve">
+    <value>Predecessor</value>
+  </data>
+  <data name="Workbook_Dependencies_PredecessorTitle" xml:space="preserve">
+    <value>Predecessor title</value>
+  </data>
+  <data name="Workbook_Dependencies_Successor" xml:space="preserve">
+    <value>Successor</value>
+  </data>
+  <data name="Workbook_Dependencies_SuccessorTitle" xml:space="preserve">
+    <value>Successor title</value>
+  </data>
+  <data name="Workbook_Dependencies_Type" xml:space="preserve">
+    <value>Type (FS, SS, FF, SF)</value>
+  </data>
+  <data name="Workbook_Dependencies_Delay" xml:space="preserve">
+    <value>Delay (days)</value>
+  </data>
+  <data name="Workbook_Milestones" xml:space="preserve">
+    <value>Milestones</value>
+  </data>
+  <data name="Workbook_Milestones_Title" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="Workbook_Milestones_Due" xml:space="preserve">
+    <value>Due date</value>
+  </data>
+  <data name="Workbook_Milestones_Complete" xml:space="preserve">
+    <value>Complete</value>
+  </data>
+  <data name="Workbook_Milestones_Tasks" xml:space="preserve">
+    <value>Linked tasks</value>
+  </data>
+  <data name="Workbook_Risks" xml:space="preserve">
+    <value>Risks</value>
+  </data>
+  <data name="Workbook_Risks_Title" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="Workbook_Risks_Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Workbook_Risks_Likelihood" xml:space="preserve">
+    <value>Likelihood</value>
+  </data>
+  <data name="Workbook_Risks_Impact" xml:space="preserve">
+    <value>Impact</value>
+  </data>
+  <data name="Workbook_Risks_Severity" xml:space="preserve">
+    <value>Severity</value>
+  </data>
+  <data name="Workbook_Risks_Owner" xml:space="preserve">
+    <value>Owner</value>
+  </data>
+  <data name="Workbook_Risks_Response" xml:space="preserve">
+    <value>Response</value>
+  </data>
+  <data name="Workbook_Risks_Closed" xml:space="preserve">
+    <value>Closed</value>
+  </data>
+  <data name="Workbook_Notes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="Workbook_Notes_Code" xml:space="preserve">
+    <value>Task</value>
+  </data>
+  <data name="Workbook_Notes_TaskTitle" xml:space="preserve">
+    <value>Task title</value>
+  </data>
+  <data name="Workbook_Notes_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Workbook_Notes_Text" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="Error_ImportNotWorkbook" xml:space="preserve">
+    <value>The file couldn't be read as an Excel workbook.</value>
+  </data>
+  <data name="Error_ImportCode" xml:space="preserve">
+    <value>{0}, row {1}: "{2}" isn't an outline code like 1.2.3.</value>
+  </data>
+  <data name="Error_ImportDuplicateCode" xml:space="preserve">
+    <value>{0}, row {1}: there is already a task {2}.</value>
+  </data>
+  <data name="Error_ImportNoParent" xml:space="preserve">
+    <value>{0}, row {1}: task {2} has no task {3} to sit under.</value>
+  </data>
+  <data name="Error_ImportUnknownTask" xml:space="preserve">
+    <value>{0}, row {1}: there is no task {2}.</value>
+  </data>
+  <data name="Error_ImportCircular" xml:space="preserve">
+    <value>{0}, row {1}: this dependency would make a loop.</value>
+  </data>
+  <data name="Error_ImportValue" xml:space="preserve">
+    <value>{0}, row {1}, {2}: "{3}" couldn't be read.</value>
+  </data>
+  <data name="Error_ImportMissing" xml:space="preserve">
+    <value>{0}, row {1}, {2}: this can't be empty.</value>
   </data>
 </root>

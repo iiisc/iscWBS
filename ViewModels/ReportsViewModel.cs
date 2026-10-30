@@ -42,6 +42,9 @@ public sealed partial class ReportsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IncludeNotes { get; set; }
 
+    [ObservableProperty]
+    public partial bool IncludeRisks { get; set; }
+
     partial void OnIncludeSummaryChanged(bool value)           => _settingsService.Set(SettingsKeys.ReportIncludeSummary,           value);
     partial void OnIncludeAttentionRequiredChanged(bool value) => _settingsService.Set(SettingsKeys.ReportIncludeAttentionRequired, value);
     partial void OnIncludeDeliverablesChanged(bool value)      => _settingsService.Set(SettingsKeys.ReportIncludeDeliverables,      value);
@@ -49,6 +52,7 @@ public sealed partial class ReportsViewModel : ObservableObject
     partial void OnIncludeMilestonesChanged(bool value)        => _settingsService.Set(SettingsKeys.ReportIncludeMilestones,        value);
     partial void OnIncludeWbsTreeChanged(bool value)           => _settingsService.Set(SettingsKeys.ReportIncludeWbsTree,           value);
     partial void OnIncludeNotesChanged(bool value)             => _settingsService.Set(SettingsKeys.ReportIncludeNotes,             value);
+    partial void OnIncludeRisksChanged(bool value)             => _settingsService.Set(SettingsKeys.ReportIncludeRisks,             value);
 
     public ReportsViewModel(
         ReportExportService reportExportService,
@@ -66,6 +70,7 @@ public sealed partial class ReportsViewModel : ObservableObject
         IncludeMilestones        = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeMilestones)        ?? true;
         IncludeWbsTree           = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeWbsTree)           ?? true;
         IncludeNotes             = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeNotes)             ?? true;
+        IncludeRisks             = _settingsService.Get<bool?>(SettingsKeys.ReportIncludeRisks)             ?? true;
     }
 
     [RelayCommand]
@@ -84,6 +89,7 @@ public sealed partial class ReportsViewModel : ObservableObject
                 IncludeMilestones        = IncludeMilestones,
                 IncludeWbsTree           = IncludeWbsTree,
                 IncludeNotes             = IncludeNotes,
+                IncludeRisks             = IncludeRisks,
             };
             await _reportExportService.ExportAsync(path, options);
         }
@@ -94,5 +100,22 @@ public sealed partial class ReportsViewModel : ObservableObject
         }
         LastExportPath = path;
         await Launcher.LaunchFileAsync(await StorageFile.GetFileFromPathAsync(path));
+    }
+
+    [RelayCommand]
+    private async Task ExportWorkbookAsync()
+    {
+        string? path = await FilePickers.PickWorkbookSaveFileAsync();
+        if (path is null) return;
+        try
+        {
+            await _reportExportService.ExportWorkbookAsync(path);
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync("ErrorTitle_Export", ex);
+            return;
+        }
+        LastExportPath = path;
     }
 }

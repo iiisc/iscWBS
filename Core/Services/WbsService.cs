@@ -27,8 +27,10 @@ public sealed class WbsService
         => (await Db.QueryAsync($"SELECT {Columns} FROM WbsNodes WHERE Id = $1", Read, id)).FirstOrDefault();
 
     /// <summary>All nodes of the project, in outline order (1.9 before 1.10, which sorting the codes as text gets wrong).</summary>
-    public async Task<IReadOnlyList<WbsNode>> GetAllByProjectAsync(Guid projectId)
-        => new WbsHierarchy(await Db.QueryAsync($"SELECT {Columns} FROM WbsNodes WHERE ProjectId = $1", Read, projectId))
+    public async Task<IReadOnlyList<WbsNode>> GetAllByProjectAsync(Guid projectId) => await ReadNodesAsync(Db, projectId);
+
+    internal static async Task<List<WbsNode>> ReadNodesAsync(SqliteConnection db, Guid projectId)
+        => new WbsHierarchy(await db.QueryAsync($"SELECT {Columns} FROM WbsNodes WHERE ProjectId = $1", Read, projectId))
             .DepthFirst().Select(entry => entry.Node).ToList();
 
     public Task<WbsNode> AddRootNodeAsync(Guid projectId, string title)
@@ -64,16 +66,62 @@ public sealed class WbsService
             // First in the list, so the stable sort puts it ahead of the sibling whose position it takes.
             List<WbsNode> nodes = [node, .. await GetAllByProjectAsync(projectId)];
             List<WbsNode> changed = Renumber(nodes);
-            await Db.ExecuteAsync(
-                $"INSERT INTO WbsNodes ({Columns}) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
-                node.Id, node.ProjectId, node.ParentId, node.Code, node.Title, node.Description, node.AssignedTo, node.Status,
-                node.EstimatedHours, node.ActualHours, node.StartDate, node.DueDate, node.SortOrder, node.IsDeliverable,
-                node.BaselineStart, node.BaselineDue);
+            await InsertAsync(Db, node);
             foreach (WbsNode n in changed.Where(n => n != node))
                 await SavePositionAsync(n);
         });
         return node;
     }
+
+    /// <summary>
+    /// Copies the node's branch to just after it, with the dependencies inside the branch, as work not started:
+    /// progress, the baseline, notes and milestone links stay with the original.
+    /// </summary>
+    public async Task<WbsNode> DuplicateNodeAsync(Guid id)
+    {
+        WbsNode node = await GetByIdAsync(id)
+            ?? throw WbsException.NodeNotFound(id);
+        IReadOnlyList<WbsNode> nodes = await GetAllByProjectAsync(node.ProjectId);
+        Dictionary<Guid, WbsNode> copies = new WbsHierarchy(nodes).CollectSubtree(nodes.First(n => n.Id == id))
+            .ToDictionary(n => n.Id, n => n.CopyAsNotStarted());
+        foreach (WbsNode copy in copies.Values)
+        {
+            if (copy.ParentId is { } parentId && copies.TryGetValue(parentId, out WbsNode? copiedParent))
+                copy.ParentId = copiedParent.Id;
+        }
+        WbsNode root = copies[id];
+        root.SortOrder++;
+        List<NodeDependency> dependencies = (await GetAllDependenciesByProjectAsync(node.ProjectId))
+            .Where(d => copies.ContainsKey(d.PredecessorId) && copies.ContainsKey(d.SuccessorId))
+            .Select(d => new NodeDependency
+            {
+                PredecessorId = copies[d.PredecessorId].Id,
+                SuccessorId = copies[d.SuccessorId].Id,
+                Type = d.Type,
+                LagDays = d.LagDays
+            })
+            .ToList();
+
+        await History.ChangeAsync(async () =>
+        {
+            // The copy first, so the stable sort puts it ahead of the sibling whose position it takes.
+            List<WbsNode> changed = Renumber([root, .. nodes, .. copies.Values.Where(c => c != root)]);
+            foreach (WbsNode copy in copies.Values)
+                await InsertAsync(Db, copy);
+            foreach (WbsNode n in changed.Except(copies.Values))
+                await SavePositionAsync(n);
+            foreach (NodeDependency dependency in dependencies)
+                await InsertDependencyAsync(Db, dependency);
+        });
+        return root;
+    }
+
+    internal static Task<int> InsertAsync(SqliteConnection db, WbsNode node)
+        => db.ExecuteAsync(
+            $"INSERT INTO WbsNodes ({Columns}) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
+            node.Id, node.ProjectId, node.ParentId, node.Code, node.Title, node.Description, node.AssignedTo, node.Status,
+            node.EstimatedHours, node.ActualHours, node.StartDate, node.DueDate, node.SortOrder, node.IsDeliverable,
+            node.BaselineStart, node.BaselineDue);
 
     /// <summary>
     /// Saves the user-editable fields only. Code, SortOrder and the tree links belong to inserts, moves and deletes,
@@ -171,7 +219,7 @@ public sealed class WbsService
         => Db.ExecuteAsync("UPDATE WbsNodes SET Code = $1, SortOrder = $2 WHERE Id = $3", node.Code, node.SortOrder, node.Id);
 
     /// <summary>Rewrites <c>SortOrder</c> and the outline <c>Code</c> of every node from tree order; returns the nodes that changed.</summary>
-    private static List<WbsNode> Renumber(IReadOnlyList<WbsNode> nodes)
+    internal static List<WbsNode> Renumber(IReadOnlyList<WbsNode> nodes)
     {
         var hierarchy = new WbsHierarchy(nodes);
         var changed = new List<WbsNode>();
@@ -197,15 +245,19 @@ public sealed class WbsService
     }
 
     public async Task<IReadOnlyList<NodeDependency>> GetAllDependenciesByProjectAsync(Guid projectId)
-        => await Db.QueryAsync(
-            "SELECT d.Id, d.PredecessorId, d.SuccessorId, d.Type FROM NodeDependencies d " +
+        => await ReadDependenciesAsync(Db, projectId);
+
+    internal static Task<List<NodeDependency>> ReadDependenciesAsync(SqliteConnection db, Guid projectId)
+        => db.QueryAsync(
+            "SELECT d.Id, d.PredecessorId, d.SuccessorId, d.Type, d.LagDays FROM NodeDependencies d " +
             "INNER JOIN WbsNodes n ON d.SuccessorId = n.Id WHERE n.ProjectId = $1",
             r => new NodeDependency
             {
                 Id = r.GetInt32(0),
                 PredecessorId = r.GetGuidText(1),
                 SuccessorId = r.GetGuidText(2),
-                Type = (DependencyType)r.GetInt32(3)
+                Type = (DependencyType)r.GetInt32(3),
+                LagDays = r.GetInt32(4)
             },
             projectId);
 
@@ -224,20 +276,24 @@ public sealed class WbsService
                            && d.SuccessorId   == dependency.SuccessorId))
             throw new WbsException("This dependency already exists.").WithMessageKey("Error_DuplicateDependency");
 
-        if (WouldCreateCycle(dependency.PredecessorId, dependency.SuccessorId, existing))
+        ILookup<Guid, Guid> successorsOf = existing.ToLookup(d => d.PredecessorId, d => d.SuccessorId);
+        if (WouldCreateCycle(dependency.PredecessorId, dependency.SuccessorId, id => successorsOf[id]))
             throw new WbsException(
                 "Adding this dependency would create a circular dependency.").WithMessageKey("Error_CircularDependency");
 
         IReadOnlyList<WbsNode> moved = [];
         await History.ChangeAsync(async () =>
         {
-            await Db.ExecuteAsync(
-                "INSERT INTO NodeDependencies (PredecessorId, SuccessorId, Type) VALUES ($1, $2, $3)",
-                dependency.PredecessorId, dependency.SuccessorId, dependency.Type);
+            await InsertDependencyAsync(Db, dependency);
             moved = await PushSuccessorsAsync(successor.ProjectId, dependency.PredecessorId);
         });
         return moved;
     }
+
+    internal static Task<int> InsertDependencyAsync(SqliteConnection db, NodeDependency dependency)
+        => db.ExecuteAsync(
+            "INSERT INTO NodeDependencies (PredecessorId, SuccessorId, Type, LagDays) VALUES ($1, $2, $3, $4)",
+            dependency.PredecessorId, dependency.SuccessorId, dependency.Type, dependency.LagDays);
 
     public async Task RemoveDependencyAsync(int id)
     {
@@ -266,18 +322,21 @@ public sealed class WbsService
         var note = new NodeNote { NodeId = nodeId, CreatedAt = DateTime.Now, Text = text.Trim() };
         await History.ChangeAsync(async () =>
         {
-            await Db.ExecuteAsync("INSERT INTO NodeNotes (NodeId, CreatedAt, Text) VALUES ($1, $2, $3)", note.NodeId, note.CreatedAt, note.Text);
+            await InsertNoteAsync(Db, note);
             note.Id = await Db.ScalarAsync<int>("SELECT last_insert_rowid()");
         });
         return note;
     }
+
+    internal static Task<int> InsertNoteAsync(SqliteConnection db, NodeNote note)
+        => db.ExecuteAsync("INSERT INTO NodeNotes (NodeId, CreatedAt, Text) VALUES ($1, $2, $3)", note.NodeId, note.CreatedAt, note.Text);
 
     public async Task DeleteNoteAsync(int id)
     {
         await History.ChangeAsync(() => Db.ExecuteAsync("DELETE FROM NodeNotes WHERE Id = $1", id));
     }
 
-    private static NodeNote ReadNote(SqliteDataReader r) => new()
+    internal static NodeNote ReadNote(SqliteDataReader r) => new()
     {
         Id = r.GetInt32(0),
         NodeId = r.GetGuidText(1),
@@ -286,19 +345,8 @@ public sealed class WbsService
     };
 
     /// <summary>Whether <paramref name="predecessorId"/> is already reachable from <paramref name="successorId"/>, so the new edge would close a loop.</summary>
-    private static bool WouldCreateCycle(
-        Guid predecessorId,
-        Guid successorId,
-        IReadOnlyList<NodeDependency> existing)
+    internal static bool WouldCreateCycle(Guid predecessorId, Guid successorId, Func<Guid, IEnumerable<Guid>> successorsOf)
     {
-        var adj = new Dictionary<Guid, List<Guid>>();
-        foreach (NodeDependency dep in existing)
-        {
-            if (!adj.TryGetValue(dep.PredecessorId, out List<Guid>? list))
-                adj[dep.PredecessorId] = list = [];
-            list.Add(dep.SuccessorId);
-        }
-
         var visited = new HashSet<Guid>();
         var stack   = new Stack<Guid>();
         stack.Push(successorId);
@@ -308,9 +356,8 @@ public sealed class WbsService
             Guid current = stack.Pop();
             if (current == predecessorId) return true;
             if (!visited.Add(current)) continue;
-            if (adj.TryGetValue(current, out List<Guid>? neighbors))
-                foreach (Guid neighbor in neighbors)
-                    stack.Push(neighbor);
+            foreach (Guid neighbor in successorsOf(current))
+                stack.Push(neighbor);
         }
 
         return false;

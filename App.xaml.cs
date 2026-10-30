@@ -52,6 +52,7 @@ public partial class App : Application
         navService.RegisterPage("GanttPage", typeof(GanttPage));
         navService.RegisterPage("ReportsPage", typeof(ReportsPage));
         navService.RegisterPage("MilestonesPage", typeof(MilestonesPage));
+        navService.RegisterPage("RisksPage", typeof(RisksPage));
         navService.RegisterPage("SettingsPage", typeof(SettingsPage));
 
         MainWindow = new ShellWindow();

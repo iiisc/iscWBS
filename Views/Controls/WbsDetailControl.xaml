@@ -258,6 +258,17 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
 
+                <NumberBox
+                    x:Uid="WbsDetail_DependencyLag"
+                    Header="Delay (days)"
+                    Value="{x:Bind ViewModel.NewDepLagDays, Mode=TwoWay}"
+                    Minimum="-365"
+                    Maximum="365"
+                    SmallChange="1"
+                    SpinButtonPlacementMode="Compact"
+                    HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="Delay in days" />
+
                 <Button
                     x:Uid="WbsDetail_AddPredecessorBtn"
                     Content="Add Predecessor"

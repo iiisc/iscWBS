@@ -32,6 +32,21 @@ public class SchedulerTests
         Assert.Equal((start, due), Days(successor));
     }
 
+    [Theory]
+    [InlineData(3, 13, 18)]     // waits three days after the predecessor finishes
+    [InlineData(-2, 8, 13)]     // may start two days before it finishes
+    public void ADelay_MovesTheSuccessorThatMuchFurther(int lagDays, int start, int due)
+    {
+        WbsNode predecessor = Work(4, 10);
+        WbsNode successor = Work(0, 5);
+        NodeDependency dependency = Dep(predecessor, successor);
+        dependency.LagDays = lagDays;
+
+        Scheduler.PushSuccessors([predecessor, successor], [dependency], [predecessor.Id]);
+
+        Assert.Equal((start, due), Days(successor));
+    }
+
     [Fact]
     public void Pushes_CascadeDownTheChain_AndReportWhatMoved()
     {

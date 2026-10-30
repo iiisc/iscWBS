@@ -7,16 +7,18 @@ namespace iscWBS.Core.Data;
 public sealed class WbsDatabase
 {
     /// <summary>
-    /// Version 2 is the first released layout; 3 adds baseline dates and notes. When the schema changes, bump this
-    /// and upgrade files whose SchemaVersion row is lower before the app reads them.
+    /// Version 2 is the first released layout; 3 adds baseline dates and notes; 4 adds dependency delays and risks.
+    /// When the schema changes, bump this and upgrade files whose SchemaVersion row is lower before the app reads them.
     /// </summary>
-    private const int _currentSchemaVersion = 3;
+    private const int _currentSchemaVersion = 4;
 
     /// <summary>Columns added since version 2. Earlier versions of the app ignore them, so they can still open the file.</summary>
-    private static readonly (string Table, string Column)[] _addedColumns =
+    private static readonly (string Table, string Column, string Definition)[] _addedColumns =
     [
-        ("WbsNodes", "BaselineStart"),
-        ("WbsNodes", "BaselineDue"),
+        ("WbsNodes", "BaselineStart", "TEXT"),
+        ("WbsNodes", "BaselineDue", "TEXT"),
+        // The default fills existing rows, and the rows earlier versions insert.
+        ("NodeDependencies", "LagDays", "INTEGER NOT NULL DEFAULT 0"),
     ];
 
     private const int _appId = 0x49534357; // "ISCW"
@@ -41,12 +43,16 @@ public sealed class WbsDatabase
         "CREATE INDEX IF NOT EXISTS \"MilestoneNodeLinks_MilestoneId\" ON \"MilestoneNodeLinks\" (\"MilestoneId\")",
         "CREATE INDEX IF NOT EXISTS \"MilestoneNodeLinks_NodeId\" ON \"MilestoneNodeLinks\" (\"NodeId\")",
         "CREATE TABLE IF NOT EXISTS \"NodeDependencies\" (\"Id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " +
-            "\"PredecessorId\" TEXT, \"SuccessorId\" TEXT, \"Type\" INTEGER)",
+            "\"PredecessorId\" TEXT, \"SuccessorId\" TEXT, \"Type\" INTEGER, \"LagDays\" INTEGER NOT NULL DEFAULT 0)",
         "CREATE INDEX IF NOT EXISTS \"NodeDependencies_PredecessorId\" ON \"NodeDependencies\" (\"PredecessorId\")",
         "CREATE INDEX IF NOT EXISTS \"NodeDependencies_SuccessorId\" ON \"NodeDependencies\" (\"SuccessorId\")",
         "CREATE TABLE IF NOT EXISTS \"NodeNotes\" (\"Id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " +
             "\"NodeId\" TEXT, \"CreatedAt\" TEXT, \"Text\" TEXT)",
         "CREATE INDEX IF NOT EXISTS \"NodeNotes_NodeId\" ON \"NodeNotes\" (\"NodeId\")",
+        "CREATE TABLE IF NOT EXISTS \"Risks\" (\"Id\" TEXT NOT NULL PRIMARY KEY, \"ProjectId\" TEXT, \"Title\" TEXT, " +
+            "\"Description\" TEXT, \"Likelihood\" INTEGER, \"Impact\" INTEGER, \"Owner\" TEXT, \"Response\" TEXT, " +
+            "\"IsClosed\" INTEGER, \"CreatedAt\" TEXT)",
+        "CREATE INDEX IF NOT EXISTS \"Risks_ProjectId\" ON \"Risks\" (\"ProjectId\")",
     ];
 
     // Calling the bundle directly rather than letting Microsoft.Data.Sqlite find it by reflection keeps it AOT-safe.
@@ -101,10 +107,10 @@ public sealed class WbsDatabase
         foreach (string statement in _schema)
             await Connection.ExecuteAsync(statement);
 
-        foreach ((string table, string column) in _addedColumns)
+        foreach ((string table, string column, string definition) in _addedColumns)
         {
             if (await Connection.ScalarAsync<int>($"SELECT COUNT(*) FROM pragma_table_info('{table}') WHERE name = '{column}'") == 0)
-                await Connection.ExecuteAsync($"ALTER TABLE \"{table}\" ADD COLUMN \"{column}\" TEXT");
+                await Connection.ExecuteAsync($"ALTER TABLE \"{table}\" ADD COLUMN \"{column}\" {definition}");
         }
 
         if (await Connection.ScalarAsync<int>("SELECT IFNULL(MAX(Version), 0) FROM SchemaVersion") < _currentSchemaVersion)

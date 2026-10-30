@@ -50,6 +50,21 @@
                 </Button.KeyboardAccelerators>
             </Button>
             <Button
+                x:Uid="WbsTreePage_DuplicateBtn"
+                Command="{x:Bind ViewModel.DuplicateNodeCommand}"
+                CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
+                IsEnabled="{x:Bind ViewModel.IsDetailVisible, Mode=OneWay}"
+                ToolTipService.ToolTip="Copy the node and everything under it (Ctrl+D)"
+                AutomationProperties.Name="Copy node with its branch">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE8C8;" FontSize="16" />
+                    <TextBlock x:Uid="WbsTreePage_DuplicateText" Text="Copy" />
+                </StackPanel>
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Control" Key="D" ScopeOwner="{x:Bind WbsDiagram}" />
+                </Button.KeyboardAccelerators>
+            </Button>
+            <Button
                 x:Uid="WbsTreePage_DeleteNodeBtn"
                 Command="{x:Bind ViewModel.DeleteNodeCommand}"
                 CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}"
@@ -188,6 +203,15 @@
                                 AutomationProperties.Name="Add sibling node">
                                 <MenuFlyoutItem.Icon>
                                     <PathIcon helpers:IscIcon.Kind="AddSibling" Width="24" Height="24" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem
+                                x:Uid="WbsTreePage_ContextDuplicate"
+                                Text="Copy with Branch"
+                                Command="{x:Bind ViewModel.DuplicateNodeCommand}"
+                                CommandParameter="{x:Bind ViewModel.SelectedNode, Mode=OneWay}">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE8C8;" />
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutSeparator />

@@ -22,6 +22,36 @@
 
         <StackPanel Spacing="4">
             <TextBlock
+                x:Uid="NewProject_StartFrom"
+                Text="Start From"
+                Style="{ThemeResource CaptionTextBlockStyle}" />
+            <TextBlock
+                x:Name="TxtSource"
+                Style="{ThemeResource BodyTextBlockStyle}"
+                TextWrapping="Wrap" />
+            <TextBlock
+                x:Uid="NewProject_SourceHint"
+                Text="Copy another project's plan, with progress cleared and dates moved to start today, or import a workbook exported from iscWBS."
+                Style="{ThemeResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button
+                    x:Uid="NewProject_BtnPickSource"
+                    Content="Choose File..."
+                    AutomationProperties.Name="Choose a project or workbook to start from"
+                    Click="BtnPickSource_Click" />
+                <Button
+                    x:Name="BtnClearSource"
+                    x:Uid="NewProject_BtnClearSource"
+                    Content="Start Empty"
+                    Visibility="Collapsed"
+                    Click="BtnClearSource_Click" />
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+            <TextBlock
                 x:Uid="NewProject_SaveLocation"
                 Text="Save Location *"
                 Style="{ThemeResource CaptionTextBlockStyle}" />

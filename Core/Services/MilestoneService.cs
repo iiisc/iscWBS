@@ -22,10 +22,10 @@ public sealed class MilestoneService
 
     private ProjectHistory History => _projectStateService.History;
 
-    public async Task<IReadOnlyList<Milestone>> GetByProjectAsync(Guid projectId)
-        => await Db.QueryAsync(
-            $"SELECT {Columns} FROM Milestones m WHERE m.ProjectId = $1 ORDER BY m.DueDate",
-            Read, projectId);
+    public async Task<IReadOnlyList<Milestone>> GetByProjectAsync(Guid projectId) => await ReadByProjectAsync(Db, projectId);
+
+    internal static Task<List<Milestone>> ReadByProjectAsync(SqliteConnection db, Guid projectId)
+        => db.QueryAsync($"SELECT {Columns} FROM Milestones m WHERE m.ProjectId = $1 ORDER BY m.DueDate", Read, projectId);
 
     public async Task<Milestone> CreateAsync(Guid projectId, string title, DateTime dueDate)
     {
@@ -38,11 +38,14 @@ public sealed class MilestoneService
             Title = title.Trim(),
             DueDate = dueDate
         };
-        await History.ChangeAsync(() => Db.ExecuteAsync(
-            "INSERT INTO Milestones (Id, ProjectId, Title, DueDate, IsComplete) VALUES ($1, $2, $3, $4, $5)",
-            milestone.Id, milestone.ProjectId, milestone.Title, milestone.DueDate, milestone.IsComplete));
+        await History.ChangeAsync(() => InsertAsync(Db, milestone));
         return milestone;
     }
+
+    internal static Task<int> InsertAsync(SqliteConnection db, Milestone milestone)
+        => db.ExecuteAsync(
+            "INSERT INTO Milestones (Id, ProjectId, Title, DueDate, IsComplete) VALUES ($1, $2, $3, $4, $5)",
+            milestone.Id, milestone.ProjectId, milestone.Title, milestone.DueDate, milestone.IsComplete);
 
     public async Task UpdateAsync(Milestone milestone)
     {
@@ -94,8 +97,11 @@ public sealed class MilestoneService
         if ((await GetLinkedNodeIdsAsync(milestoneId)).Contains(nodeId))
             return;
 
-        await History.ChangeAsync(() => Db.ExecuteAsync("INSERT INTO MilestoneNodeLinks (MilestoneId, NodeId) VALUES ($1, $2)", milestoneId, nodeId));
+        await History.ChangeAsync(() => InsertLinkAsync(Db, milestoneId, nodeId));
     }
+
+    internal static Task<int> InsertLinkAsync(SqliteConnection db, Guid milestoneId, Guid nodeId)
+        => db.ExecuteAsync("INSERT INTO MilestoneNodeLinks (MilestoneId, NodeId) VALUES ($1, $2)", milestoneId, nodeId);
 
     public async Task UnlinkNodeAsync(Guid milestoneId, Guid nodeId)
     {

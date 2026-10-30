@@ -972,7 +972,7 @@
     <value>Uppdateringskällan hittades inte. Projektet kan ha flyttats eller bytt namn.</value>
   </data>
   <data name="Settings_RateLimited" xml:space="preserve">
-    <value>Gränsen för GitHubs API har nåtts. Vänta några minuter och försök igen.</value>
+    <value>GitHub begränsar uppdateringskontroller från det här nätverket. Försök igen efter {0}.</value>
   </data>
   <data name="Settings_CheckFailed" xml:space="preserve">
     <value>Det gick inte att söka efter uppdateringar. Kontrollera internetanslutningen.</value>
@@ -1356,5 +1356,344 @@
   </data>
   <data name="SettingsPage_OpenBackupFolderBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Öppna mappen med säkerhetskopior</value>
+  </data>
+  <data name="WbsDetail_DependencyLag.Header" xml:space="preserve">
+    <value>Fördröjning (dagar)</value>
+  </data>
+  <data name="WbsDetail_DependencyLag.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Fördröjning i dagar</value>
+  </data>
+  <data name="Shell_NavRisks.Content" xml:space="preserve">
+    <value>Risker</value>
+  </data>
+  <data name="Shell_NavRisks.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Risker</value>
+  </data>
+  <data name="RiskLevel_Low" xml:space="preserve">
+    <value>Låg</value>
+  </data>
+  <data name="RiskLevel_Medium" xml:space="preserve">
+    <value>Medel</value>
+  </data>
+  <data name="RiskLevel_High" xml:space="preserve">
+    <value>Hög</value>
+  </data>
+  <data name="Risks_Closed" xml:space="preserve">
+    <value>Stängd</value>
+  </data>
+  <data name="Risks_Rating" xml:space="preserve">
+    <value>Sannolikhet {0} · Konsekvens {1}</value>
+  </data>
+  <data name="Risks_DeleteTitle" xml:space="preserve">
+    <value>Ta bort risk</value>
+  </data>
+  <data name="Risks_DeleteConfirm" xml:space="preserve">
+    <value>Ta bort ”{0}”?</value>
+  </data>
+  <data name="ErrorTitle_AddRisk" xml:space="preserve">
+    <value>Det gick inte att lägga till risken</value>
+  </data>
+  <data name="Error_RiskTitleRequired" xml:space="preserve">
+    <value>Risken måste ha en titel.</value>
+  </data>
+  <data name="RisksPage_NewTitleInput.PlaceholderText" xml:space="preserve">
+    <value>Vad kan gå fel?</value>
+  </data>
+  <data name="RisksPage_NewTitleInput.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Titel för ny risk</value>
+  </data>
+  <data name="RisksPage_AddRiskBtn.Content" xml:space="preserve">
+    <value>Lägg till risk</value>
+  </data>
+  <data name="RisksPage_AddRiskBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Lägg till risk</value>
+  </data>
+  <data name="RisksPage_RiskList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Risker</value>
+  </data>
+  <data name="RisksPage_DeleteRisk.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ta bort risk</value>
+  </data>
+  <data name="RisksPage_Empty.Title" xml:space="preserve">
+    <value>Inga risker loggade</value>
+  </data>
+  <data name="RisksPage_Empty.Body" xml:space="preserve">
+    <value>Skriv ner vad som kan försena eller stoppa projektet, hur troligt det är och vad som görs åt det.</value>
+  </data>
+  <data name="RisksPage_DetailTitle.Text" xml:space="preserve">
+    <value>Riskdetaljer</value>
+  </data>
+  <data name="RisksPage_RiskTitle.Header" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="RisksPage_RiskTitle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Riskens titel</value>
+  </data>
+  <data name="RisksPage_RiskDescription.Header" xml:space="preserve">
+    <value>Beskrivning</value>
+  </data>
+  <data name="RisksPage_RiskDescription.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Riskens beskrivning</value>
+  </data>
+  <data name="RisksPage_Likelihood.Header" xml:space="preserve">
+    <value>Sannolikhet</value>
+  </data>
+  <data name="RisksPage_Likelihood.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Sannolikhet</value>
+  </data>
+  <data name="RisksPage_Impact.Header" xml:space="preserve">
+    <value>Konsekvens</value>
+  </data>
+  <data name="RisksPage_Impact.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Konsekvens</value>
+  </data>
+  <data name="RisksPage_RiskOwner.Header" xml:space="preserve">
+    <value>Ansvarig</value>
+  </data>
+  <data name="RisksPage_RiskOwner.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Riskens ansvarige</value>
+  </data>
+  <data name="RisksPage_RiskResponse.Header" xml:space="preserve">
+    <value>Åtgärd</value>
+  </data>
+  <data name="RisksPage_RiskResponse.PlaceholderText" xml:space="preserve">
+    <value>Vad som görs för att förhindra eller mildra den</value>
+  </data>
+  <data name="RisksPage_RiskResponse.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Åtgärd för risken</value>
+  </data>
+  <data name="RisksPage_RiskClosed.Content" xml:space="preserve">
+    <value>Stängd (inte längre en risk)</value>
+  </data>
+  <data name="RisksPage_SaveBtn.Content" xml:space="preserve">
+    <value>Spara</value>
+  </data>
+  <data name="RisksPage_SaveBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Spara risk</value>
+  </data>
+  <data name="Report_OpenRisks" xml:space="preserve">
+    <value>ÖPPNA RISKER</value>
+  </data>
+  <data name="Report_ColSeverity" xml:space="preserve">
+    <value>Allvar</value>
+  </data>
+  <data name="Report_ColRisk" xml:space="preserve">
+    <value>Risk</value>
+  </data>
+  <data name="Report_ColOwner" xml:space="preserve">
+    <value>Ansvarig</value>
+  </data>
+  <data name="ReportsPage_ToggleRisks.Header" xml:space="preserve">
+    <value>Öppna risker</value>
+  </data>
+  <data name="ReportsPage_ToggleRisks.OnContent" xml:space="preserve">
+    <value>Ingår</value>
+  </data>
+  <data name="ReportsPage_ToggleRisks.OffContent" xml:space="preserve">
+    <value>Ingår inte</value>
+  </data>
+  <data name="ReportsPage_ToggleRisks.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Inkludera avsnittet öppna risker</value>
+  </data>
+  <data name="ReportsPage_ExcelTitle.Text" xml:space="preserve">
+    <value>Excel</value>
+  </data>
+  <data name="ReportsPage_ExcelBody.Text" xml:space="preserve">
+    <value>Hela projektet som en arbetsbok: uppgifter, beroenden, milstolpar, risker och anteckningar. Om du vill ta tillbaka en redigerad arbetsbok väljer du den under Utgå från när du skapar ett nytt projekt.</value>
+  </data>
+  <data name="ReportsPage_ExportExcelButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Exportera till Excel</value>
+  </data>
+  <data name="ReportsPage_ExportExcelText.Text" xml:space="preserve">
+    <value>Exportera till Excel</value>
+  </data>
+  <data name="Picker_ExcelWorkbook" xml:space="preserve">
+    <value>Excel-arbetsbok</value>
+  </data>
+  <data name="NewProject_StartFrom.Text" xml:space="preserve">
+    <value>Utgå från</value>
+  </data>
+  <data name="NewProject_EmptyProject" xml:space="preserve">
+    <value>Ett tomt projekt</value>
+  </data>
+  <data name="NewProject_SourceHint.Text" xml:space="preserve">
+    <value>Kopiera ett annat projekts plan, med framstegen nollställda och datumen flyttade så att den börjar i dag, eller importera en arbetsbok som exporterats från iscWBS.</value>
+  </data>
+  <data name="NewProject_BtnPickSource.Content" xml:space="preserve">
+    <value>Välj fil...</value>
+  </data>
+  <data name="NewProject_BtnPickSource.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Välj ett projekt eller en arbetsbok att utgå från</value>
+  </data>
+  <data name="NewProject_BtnClearSource.Content" xml:space="preserve">
+    <value>Börja tomt</value>
+  </data>
+  <data name="WbsTreePage_DuplicateText.Text" xml:space="preserve">
+    <value>Kopiera</value>
+  </data>
+  <data name="WbsTreePage_DuplicateBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Kopiera noden med sin gren</value>
+  </data>
+  <data name="WbsTreePage_DuplicateBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Kopiera noden och allt under den (Ctrl+D)</value>
+  </data>
+  <data name="WbsTreePage_ContextDuplicate.Text" xml:space="preserve">
+    <value>Kopiera med gren</value>
+  </data>
+  <data name="ErrorTitle_Duplicate" xml:space="preserve">
+    <value>Det gick inte att kopiera noden</value>
+  </data>
+  <data name="DashboardPage_WorkloadTitle.Text" xml:space="preserve">
+    <value>Arbetsbelastning</value>
+  </data>
+  <data name="DashboardPage_WorkloadList.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Kvarvarande arbete per person</value>
+  </data>
+  <data name="Dashboard_Unassigned" xml:space="preserve">
+    <value>Ej tilldelad</value>
+  </data>
+  <data name="Dashboard_WorkloadSummary" xml:space="preserve">
+    <value>{0} öppna · {1} tim kvar</value>
+  </data>
+  <data name="Workbook_Tasks" xml:space="preserve">
+    <value>Uppgifter</value>
+  </data>
+  <data name="Workbook_Tasks_Code" xml:space="preserve">
+    <value>Kod</value>
+  </data>
+  <data name="Workbook_Tasks_Title" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="Workbook_Tasks_Description" xml:space="preserve">
+    <value>Beskrivning</value>
+  </data>
+  <data name="Workbook_Tasks_AssignedTo" xml:space="preserve">
+    <value>Ansvarig</value>
+  </data>
+  <data name="Workbook_Tasks_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Workbook_Tasks_EstimatedHours" xml:space="preserve">
+    <value>Uppskattade timmar</value>
+  </data>
+  <data name="Workbook_Tasks_ActualHours" xml:space="preserve">
+    <value>Faktiska timmar</value>
+  </data>
+  <data name="Workbook_Tasks_Start" xml:space="preserve">
+    <value>Startdatum</value>
+  </data>
+  <data name="Workbook_Tasks_Due" xml:space="preserve">
+    <value>Förfallodatum</value>
+  </data>
+  <data name="Workbook_Tasks_Deliverable" xml:space="preserve">
+    <value>Leverans</value>
+  </data>
+  <data name="Workbook_Tasks_BaselineStart" xml:space="preserve">
+    <value>Baslinje start</value>
+  </data>
+  <data name="Workbook_Tasks_BaselineDue" xml:space="preserve">
+    <value>Baslinje förfallodatum</value>
+  </data>
+  <data name="Workbook_Dependencies" xml:space="preserve">
+    <value>Beroenden</value>
+  </data>
+  <data name="Workbook_Dependencies_Predecessor" xml:space="preserve">
+    <value>Föregångare</value>
+  </data>
+  <data name="Workbook_Dependencies_PredecessorTitle" xml:space="preserve">
+    <value>Föregångarens titel</value>
+  </data>
+  <data name="Workbook_Dependencies_Successor" xml:space="preserve">
+    <value>Efterföljare</value>
+  </data>
+  <data name="Workbook_Dependencies_SuccessorTitle" xml:space="preserve">
+    <value>Efterföljarens titel</value>
+  </data>
+  <data name="Workbook_Dependencies_Type" xml:space="preserve">
+    <value>Typ (FS, SS, FF, SF)</value>
+  </data>
+  <data name="Workbook_Dependencies_Delay" xml:space="preserve">
+    <value>Fördröjning (dagar)</value>
+  </data>
+  <data name="Workbook_Milestones" xml:space="preserve">
+    <value>Milstolpar</value>
+  </data>
+  <data name="Workbook_Milestones_Title" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="Workbook_Milestones_Due" xml:space="preserve">
+    <value>Förfallodatum</value>
+  </data>
+  <data name="Workbook_Milestones_Complete" xml:space="preserve">
+    <value>Klar</value>
+  </data>
+  <data name="Workbook_Milestones_Tasks" xml:space="preserve">
+    <value>Länkade uppgifter</value>
+  </data>
+  <data name="Workbook_Risks" xml:space="preserve">
+    <value>Risker</value>
+  </data>
+  <data name="Workbook_Risks_Title" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="Workbook_Risks_Description" xml:space="preserve">
+    <value>Beskrivning</value>
+  </data>
+  <data name="Workbook_Risks_Likelihood" xml:space="preserve">
+    <value>Sannolikhet</value>
+  </data>
+  <data name="Workbook_Risks_Impact" xml:space="preserve">
+    <value>Konsekvens</value>
+  </data>
+  <data name="Workbook_Risks_Severity" xml:space="preserve">
+    <value>Allvar</value>
+  </data>
+  <data name="Workbook_Risks_Owner" xml:space="preserve">
+    <value>Ansvarig</value>
+  </data>
+  <data name="Workbook_Risks_Response" xml:space="preserve">
+    <value>Åtgärd</value>
+  </data>
+  <data name="Workbook_Risks_Closed" xml:space="preserve">
+    <value>Stängd</value>
+  </data>
+  <data name="Workbook_Notes" xml:space="preserve">
+    <value>Anteckningar</value>
+  </data>
+  <data name="Workbook_Notes_Code" xml:space="preserve">
+    <value>Uppgift</value>
+  </data>
+  <data name="Workbook_Notes_TaskTitle" xml:space="preserve">
+    <value>Uppgiftens titel</value>
+  </data>
+  <data name="Workbook_Notes_Date" xml:space="preserve">
+    <value>Datum</value>
+  </data>
+  <data name="Workbook_Notes_Text" xml:space="preserve">
+    <value>Anteckning</value>
+  </data>
+  <data name="Error_ImportNotWorkbook" xml:space="preserve">
+    <value>Filen kunde inte läsas som en Excel-arbetsbok.</value>
+  </data>
+  <data name="Error_ImportCode" xml:space="preserve">
+    <value>{0}, rad {1}: ”{2}” är inte en kod som 1.2.3.</value>
+  </data>
+  <data name="Error_ImportDuplicateCode" xml:space="preserve">
+    <value>{0}, rad {1}: det finns redan en uppgift {2}.</value>
+  </data>
+  <data name="Error_ImportNoParent" xml:space="preserve">
+    <value>{0}, rad {1}: uppgift {2} saknar uppgiften {3} att ligga under.</value>
+  </data>
+  <data name="Error_ImportUnknownTask" xml:space="preserve">
+    <value>{0}, rad {1}: det finns ingen uppgift {2}.</value>
+  </data>
+  <data name="Error_ImportCircular" xml:space="preserve">
+    <value>{0}, rad {1}: beroendet skulle bilda en slinga.</value>
+  </data>
+  <data name="Error_ImportValue" xml:space="preserve">
+    <value>{0}, rad {1}, {2}: ”{3}” kunde inte läsas.</value>
+  </data>
+  <data name="Error_ImportMissing" xml:space="preserve">
+    <value>{0}, rad {1}, {2}: får inte vara tomt.</value>
   </data>
 </root>

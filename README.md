@@ -12,7 +12,8 @@ Work Breakdown Structure planning for Windows. Break a project down, track statu
 
 - **WBS Tree and Outline**: diagram and list views with automatic codes, status, hour estimates and dependencies
 - **Gantt**, **Dashboard** and **PDF reports** (beta): timeline, KPIs and status reports
-- **Milestones** linked to WBS nodes
+- **Milestones** linked to WBS nodes, and a **risk log**
+- **Excel** export and import, and new projects started from another project's plan
 - English and Swedish, light and dark mode, keyboard shortcuts
 
 ## Install

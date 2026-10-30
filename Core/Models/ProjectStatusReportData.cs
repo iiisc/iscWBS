@@ -8,4 +8,5 @@ public sealed record ProjectStatusReportData(
     IReadOnlyList<ProgressRow> Deliverables,
     IReadOnlyList<(string Title, DateTime DueDate)> Milestones,
     IReadOnlyList<WbsTreeEntry> WbsTree,
-    IReadOnlyList<(DateTime Date, string Node, string Text)> Notes);
+    IReadOnlyList<(DateTime Date, string Node, string Text)> Notes,
+    IReadOnlyList<Risk> OpenRisks);

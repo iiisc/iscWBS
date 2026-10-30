@@ -10,6 +10,7 @@ public sealed class ReportOptions
     public bool IncludeMilestones { get; set; } = true;
     public bool IncludeWbsTree { get; set; } = true;
     public bool IncludeNotes { get; set; } = true;
+    public bool IncludeRisks { get; set; } = true;
 
     public static ReportOptions All => new();
 }

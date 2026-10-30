@@ -25,7 +25,7 @@ public static class Scheduler
                     || successor.Status is WbsStatus.InProgress or WbsStatus.Complete
                     || successor.StartDate is not { } start || successor.DueDate is not { } due)
                     continue;
-                TimeSpan shift = RequiredShift(dependency.Type, predecessor, start, due);
+                TimeSpan shift = RequiredShift(dependency, predecessor, start, due);
                 if (shift <= TimeSpan.Zero)
                     continue;
                 successor.StartDate = start + shift;
@@ -63,7 +63,7 @@ public static class Scheduler
             foreach (NodeDependency dependency in incoming[node.Id])
             {
                 if (dated.TryGetValue(dependency.PredecessorId, out WbsNode? predecessor)
-                    && RequiredShift(dependency.Type, predecessor, node.StartDate!.Value, node.DueDate!.Value) == TimeSpan.Zero)
+                    && RequiredShift(dependency, predecessor, node.StartDate!.Value, node.DueDate!.Value) == TimeSpan.Zero)
                     stack.Push(predecessor);
             }
         }
@@ -71,12 +71,12 @@ public static class Scheduler
     }
 
     /// <summary>How much later the successor must move for the dependency to hold; zero or less when it already does.</summary>
-    private static TimeSpan RequiredShift(DependencyType type, WbsNode predecessor, DateTime successorStart, DateTime successorDue)
-        => type switch
+    private static TimeSpan RequiredShift(NodeDependency dependency, WbsNode predecessor, DateTime successorStart, DateTime successorDue)
+        => dependency.Type switch
         {
             DependencyType.StartToStart   => predecessor.StartDate - successorStart,
             DependencyType.FinishToFinish => predecessor.DueDate - successorDue,
             DependencyType.StartToFinish  => predecessor.StartDate - successorDue,
             _                             => predecessor.DueDate - successorStart,
-        } ?? TimeSpan.MinValue;
+        } + TimeSpan.FromDays(dependency.LagDays) ?? TimeSpan.MinValue;
 }

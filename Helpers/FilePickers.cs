@@ -30,6 +30,26 @@ public static class FilePickers
         return (await picker.PickSaveFileAsync())?.Path;
     }
 
+    public static async Task<string?> PickWorkbookSaveFileAsync()
+    {
+        var picker = new FileSavePicker(Owner)
+        {
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = App.Services.ProjectState.ActiveProject?.Name ?? "iscWBS",
+        };
+        picker.FileTypeChoices.Add(Strings.Get("Picker_ExcelWorkbook"), new List<string> { ".xlsx" });
+        return (await picker.PickSaveFileAsync())?.Path;
+    }
+
+    /// <summary>A project to copy the plan of, or a workbook exported from iscWBS, for a new project to start from.</summary>
+    public static async Task<string?> PickProjectSourceAsync()
+    {
+        var picker = new FileOpenPicker(Owner);
+        picker.FileTypeFilter.Add(".iscwbs");
+        picker.FileTypeFilter.Add(".xlsx");
+        return (await picker.PickSingleFileAsync())?.Path;
+    }
+
     public static async Task<string?> PickFolderAsync()
         => (await new FolderPicker(Owner).PickSingleFolderAsync())?.Path;
 }

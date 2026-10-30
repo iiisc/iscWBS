@@ -47,11 +47,13 @@ public sealed partial class WelcomeViewModel : ObservableObject
         }
     }
 
-    public async Task CreateProjectAsync(string name, string filePath, string owner)
+    /// <param name="sourcePath">A project whose plan to copy, or a workbook to import; null for an empty project.</param>
+    public async Task CreateProjectAsync(string name, string filePath, string owner, string? sourcePath)
     {
         try
         {
-            await _projectStateService.CreateProjectAsync(name, filePath, owner);
+            ProjectContent? content = sourcePath is null ? null : await ProjectContent.FromFileAsync(sourcePath, Strings.Get);
+            await _projectStateService.CreateProjectAsync(name, filePath, owner, content);
         }
         catch (Exception ex)
         {

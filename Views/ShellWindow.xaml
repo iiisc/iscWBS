@@ -7,7 +7,8 @@
     xmlns:local="using:iscWBS.Views"
     xmlns:controls="using:iscWBS.Views.Controls">
 
-    <Grid x:Name="RootGrid" Background="{ThemeResource IscBackgroundBrush}">
+    <!-- The window-wide shortcuts live on this grid; without Hidden, hovering anywhere shows their keys as a tooltip. -->
+    <Grid x:Name="RootGrid" Background="{ThemeResource IscBackgroundBrush}" KeyboardAcceleratorPlacementMode="Hidden">
         <NavigationView
             x:Name="NavView"
             PaneDisplayMode="LeftCompact"
@@ -110,6 +111,17 @@
                     IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
                     <NavigationViewItem.Icon>
                         <PathIcon helpers:IscIcon.Kind="Milestone" Width="24" Height="24" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItem
+                    Tag="RisksPage"
+                    x:Uid="Shell_NavRisks"
+                    Content="Risks"
+                    AutomationProperties.Name="Risks"
+                    IsEnabled="{x:Bind ViewModel.HasActiveProject, Mode=OneWay}">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE7BA;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>

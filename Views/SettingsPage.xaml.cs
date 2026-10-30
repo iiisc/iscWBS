@@ -32,7 +32,7 @@ public sealed partial class SettingsPage : Page
     private async void BtnNewProject_Click(object sender, RoutedEventArgs e)
     {
         if (await NewProjectControl.ShowAsync(XamlRoot) is { } project)
-            await ViewModel.CreateProjectAsync(project.ProjectName, project.FilePath, project.Owner);
+            await ViewModel.CreateProjectAsync(project.ProjectName, project.FilePath, project.Owner, project.SourcePath);
     }
 
     private async void BtnOpenProject_Click(object sender, RoutedEventArgs e)

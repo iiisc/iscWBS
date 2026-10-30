@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using iscWBS.Core.Services;
@@ -24,6 +25,18 @@ public sealed class UpdateServiceTests : IDisposable
     }
 
     public void Dispose() => _dir.Dispose();
+
+    [Fact]
+    public void RateLimitReset_ReadsGitHubsHeader_OrAssumesTheFullHour()
+    {
+        var now = new DateTimeOffset(2026, 10, 30, 11, 41, 0, TimeSpan.Zero);
+        using var limited = new HttpResponseMessage();
+        limited.Headers.Add("X-RateLimit-Reset", "1793360100");
+        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1793360100), UpdateService.RateLimitReset(limited.Headers, now));
+
+        using var noHeader = new HttpResponseMessage();
+        Assert.Equal(now.AddHours(1), UpdateService.RateLimitReset(noHeader.Headers, now));
+    }
 
     [Fact]
     public void SwapIn_ReplacesAndAddsFiles_MovesOldOnesAside_AndLeavesOtherFilesAlone()

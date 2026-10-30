@@ -193,6 +193,9 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     [ObservableProperty]
     public partial DependencyTypeOption? NewDepTypeOption { get; set; }
 
+    [ObservableProperty]
+    public partial double NewDepLagDays { get; set; }
+
     public bool IsDetailVisible => SelectedNode is not null;
 
     /// <summary>The id of <see cref="SelectedNode"/> for the diagram highlight, or <see cref="Guid.Empty"/> when nothing is selected.</summary>
@@ -401,6 +404,13 @@ public sealed partial class WbsTreeViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task DuplicateNodeAsync(WbsNode? node)
+    {
+        if (node is not null)
+            await AddNodeAsync(_ => _wbsService.DuplicateNodeAsync(node.Id), "ErrorTitle_Duplicate");
+    }
+
+    [RelayCommand]
     private async Task DeleteNodeAsync(WbsNode? node)
     {
         if (node is null) return;
@@ -496,12 +506,15 @@ public sealed partial class WbsTreeViewModel : ObservableObject
         {
             PredecessorId = NewDepPredecessor.Id,
             SuccessorId = SelectedNode.Id,
-            Type = NewDepTypeOption?.Type ?? DependencyType.FinishToStart
+            Type = NewDepTypeOption?.Type ?? DependencyType.FinishToStart,
+            // A cleared NumberBox gives NaN.
+            LagDays = double.IsNaN(NewDepLagDays) ? 0 : (int)NewDepLagDays
         };
         try
         {
             IReadOnlyList<WbsNode> moved = await _wbsService.AddDependencyAsync(dep);
             NewDepPredecessor = null;
+            NewDepLagDays = 0;
             await LoadDiagramNodesAsync(PageToken);
             ReportRescheduled(moved);
         }
@@ -582,7 +595,7 @@ public sealed partial class WbsTreeViewModel : ObservableObject
                     Dependency       = d,
                     PredecessorCode  = pred.Code,
                     PredecessorTitle = pred.Title,
-                    TypeLabel        = DependencyConstraints.GetAbbreviation(d.Type),
+                    TypeLabel        = DependencyConstraints.GetAbbreviation(d.Type) + (d.LagDays == 0 ? "" : $" {d.LagDays:+0;-0} d"),
                     TypeDescription  = DisplayText.GetDescription(d.Type),
                     IsBlocking       = DependencyConstraints.IsViolated(d.Type, pred.Status),
                     BlockingReason   = DisplayText.GetBlockingReason(d.Type, pred.Status),

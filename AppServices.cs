@@ -13,6 +13,7 @@ public sealed class AppServices
     public DialogService Dialog { get; } = new();
     public WbsService Wbs { get; }
     public MilestoneService Milestones { get; }
+    public RiskService Risks { get; }
     public ReportExportService ReportExport { get; }
     public LocalizationService Localization { get; }
     public UpdateService Update { get; } = new();
@@ -24,7 +25,8 @@ public sealed class AppServices
         ProjectState = new ProjectStateService(settings, new BackupService(BackupService.DefaultFolder, Logger.Write));
         Wbs = new WbsService(ProjectState);
         Milestones = new MilestoneService(ProjectState);
-        ReportExport = new ReportExportService(ProjectState, Wbs, Milestones);
+        Risks = new RiskService(ProjectState);
+        ReportExport = new ReportExportService(ProjectState, Wbs, Milestones, Risks);
         Localization = new LocalizationService(settings);
         Undo = new UndoViewModel(ProjectState, Navigation, Dialog);
     }
@@ -37,5 +39,6 @@ public sealed class AppServices
     public GanttViewModel CreateGanttViewModel() => new(ProjectState, Wbs, Dialog, Milestones);
     public ReportsViewModel CreateReportsViewModel() => new(ReportExport, Dialog, Settings);
     public MilestonesViewModel CreateMilestonesViewModel() => new(Milestones, Wbs, ProjectState, Dialog);
+    public RisksViewModel CreateRisksViewModel() => new(Risks, ProjectState, Dialog);
     public SettingsViewModel CreateSettingsViewModel() => new(Settings, Update, Dialog, ProjectState, Navigation, Localization);
 }

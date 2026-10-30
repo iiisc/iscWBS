@@ -14,6 +14,8 @@ public sealed record DeliverableRow(
 
     public string ProgressPercentText => $"{ProgressPercent}%";
 
+    public override string ToString() => $"{Code} {Title}, {ProgressPercentText}";
+
     /// <summary>
     /// One row per deliverable node, leaving out those with nothing in <paramref name="matchingIds"/> when given.
     /// Rows are in outline order; progress and the due date cover the whole subtree.

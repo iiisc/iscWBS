@@ -16,4 +16,7 @@ public class WbsNode
     public DateTime? DueDate { get; set; }
     public int SortOrder { get; set; }
     public bool IsDeliverable { get; set; }
+
+    // Screen readers announce list and picker items by their ToString.
+    public override string ToString() => $"{Code} {Title}";
 }

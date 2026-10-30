@@ -19,4 +19,6 @@ public sealed class MilestoneRowViewModel
         1 => Strings.Get("Milestones_OneNode"),
         _ => Strings.Format("Milestones_NodeCount", LinkedNodeCount)
     };
+
+    public override string ToString() => $"{Milestone.Title}, {DueDateLabel}";
 }

@@ -19,4 +19,6 @@ public sealed class WbsOutlineRowViewModel
     public double    EstimatedHours => Node.EstimatedHours;
     public double    ActualHours    => Node.ActualHours;
     public string    DueDateText    => Node.DueDate?.ToString("d MMM yyyy") ?? string.Empty;
+
+    public override string ToString() => Node.ToString();
 }

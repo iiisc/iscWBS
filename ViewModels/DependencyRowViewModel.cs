@@ -12,7 +12,12 @@ public sealed class DependencyRowViewModel
     public string TypeDescription { get; init; } = string.Empty;
     public bool IsBlocking { get; init; }
     public string BlockingReason { get; init; } = string.Empty;
+
+    public override string ToString() => $"{PredecessorCode} {PredecessorTitle}, {TypeLabel}";
 }
 
 /// <summary>Display option for a <see cref="DependencyType"/> value in a picker.</summary>
-public sealed record DependencyTypeOption(DependencyType Type, string Label, string Description);
+public sealed record DependencyTypeOption(DependencyType Type, string Label, string Description)
+{
+    public override string ToString() => Label;
+}
